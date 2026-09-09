@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>नगर पालिका सुमेरपुर आम चुनाव 2026 | कंट्रोल रूम पोर्टल</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Login & Operator Registration Modal -->
+<div id="loginOverlay">
+    <div class="login-box" style="width: 470px; max-width: 95%;">
+        <div style="font-size: 32px; color: var(--accent); margin-bottom: 4px;"><i class="fas fa-vote-yea"></i></div>
+        <h2 style="font-size: 19px; margin-bottom: 3px;">सुमेरपुर चुनाव कंट्रोल रूम 2026</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">कार्यालय रिटर्निंग ऑफिसर (SDM), नगर पालिका सुमेरपुर</p>
+
+        <!-- 3 Auth Tabs (Operator Login vs Operator Register vs RO Login) -->
+        <div style="display: flex; gap: 4px; margin-bottom: 16px; background: #f1f5f9; padding: 4px; border-radius: 8px;">
+            <button id="authTabOpLoginBtn" class="btn-primary" style="flex: 1; padding: 7px 4px; font-size: 11.5px;" onclick="switchAuthTab('op_login')">
+                <i class="fas fa-user-check"></i> ऑपरेटर लॉगिन
+            </button>
+            <button id="authTabOpRegBtn" class="btn-secondary" style="flex: 1; padding: 7px 4px; font-size: 11.5px;" onclick="switchAuthTab('op_register')">
+                <i class="fas fa-user-plus"></i> ऑपरेटर पंजीयन
+            </button>
+            <button id="authTabRoLoginBtn" class="btn-secondary" style="flex: 1; padding: 7px 4px; font-size: 11.5px;" onclick="switchAuthTab('ro_login')">
+                <i class="fas fa-shield-halved"></i> RO (SDM) लॉगिन
+            </button>
+        </div>
+
+        <!-- ================= 1. OPERATOR LOGIN FORM ================= -->
+        <div id="opLoginFormContainer" style="text-align: left;">
+            <div style="font-size: 12px; font-weight: bold; color: var(--primary); margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+                <i class="fas fa-right-to-bracket"></i> ज़ोन ऑपरेटर लॉगिन
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> ऑपरेटर यूज़रनेम (Username)</label>
+                <input type="text" id="opUsername" class="form-control" placeholder="पंजीकृत ऑपरेटर यूज़रनेम" autofocus>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> पासवर्ड (Password)</label>
+                <input type="password" id="opPassword" class="form-control" placeholder="••••••••" onkeypress="if(event.key==='Enter') attemptOpLogin()">
+            </div>
+            <div style="text-align: right; margin-top: -6px; margin-bottom: 12px;">
+                <a href="javascript:void(0)" onclick="switchAuthTab('forgot_password')" style="font-size: 11.5px; color: #0284c7; text-decoration: none; font-weight: 600;">
+                    <i class="fas fa-key"></i> पासवर्ड भूल गए / रीसेट करें?
+                </a>
+            </div>
+            <button class="btn-primary" style="width: 100%; margin-top: 2px; padding: 11px;" onclick="attemptOpLogin()">
+                <i class="fas fa-sign-in-alt"></i> ऑपरेटर लॉगिन करें
+            </button>
+            <div style="font-size: 11.5px; color: #64748b; margin-top: 14px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                ℹ️ <b>नया ऑपरेटर:</b> यदि आपने अभी तक पंजीयन नहीं किया है, तो ऊपर <b>"ऑपरेटर पंजीयन"</b> टैब पर क्लिक करके अपना नाम व ज़ोन पंजीकृत करें।
+            </div>
+        </div>
+
+        <!-- ================= 2. OPERATOR REGISTRATION FORM ================= -->
+        <div id="opRegisterFormContainer" style="display: none; text-align: left;">
+            <div style="font-size: 12px; font-weight: bold; color: #166534; margin-bottom: 10px; border-bottom: 1px solid #dcfce7; padding-bottom: 4px;">
+                <i class="fas fa-id-card-clip"></i> नया ज़ोन ऑपरेटर पंजीयन (Zone-wise Registration)
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> कर्मचारी / ऑपरेटर का पूरा नाम <span style="color:var(--danger);">*</span></label>
+                <input type="text" id="regName" class="form-control" placeholder="उदा. श्री दिनेश कुमार">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> मोबाइल नंबर</label>
+                    <input type="tel" id="regMobile" class="form-control" placeholder="9876543210" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-briefcase"></i> पदनाम / विभाग</label>
+                    <input type="text" id="regDesignation" class="form-control" placeholder="उदा. कनिष्ठ सहायक">
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-layer-group"></i> आवंटित ज़ोन (Zone Selection) <span style="color:var(--danger);">*</span></label>
+                <select id="regRole" class="form-control" style="padding: 8px; font-weight: 600;">
+                    <option value="OP1">जोन 1 (बूथ 1 से 8 — कुल 8 मतदान केंद्र)</option>
+                    <option value="OP2">जोन 2 (बूथ 9 से 15 — कुल 7 मतदान केंद्र)</option>
+                    <option value="OP3">जोन 3 (बूथ 16 से 20 — कुल 5 मतदान केंद्र)</option>
+                    <option value="OP4">जोन 4 (बूथ 21 से 27 — कुल 7 मतदान केंद्र)</option>
+                    <option value="OP5">जोन 5 (बूथ 28 से 32 — कुल 5 मतदान केंद्र)</option>
+                    <option value="OP6">जोन 6 (बूथ 33 से 36 — कुल 4 मतदान केंद्र)</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag"></i> यूज़रनेम <span style="color:var(--danger);">*</span></label>
+                    <input type="text" id="regUsername" class="form-control" placeholder="उदा. dinesh_z1">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> पासवर्ड <span style="color:var(--danger);">*</span></label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="न्यूनतम 4 अक्षर">
+                </div>
+            </div>
+            <button class="btn-success" style="width: 100%; margin-top: 6px; padding: 11px; font-size: 13px;" onclick="attemptRegister()">
+                <i class="fas fa-user-check"></i> ऑपरेटर पंजीकृत करें एवं लॉगिन करें
+            </button>
+        </div>
+
+        <!-- ================= 3. RO (SDM) LOGIN FORM ================= -->
+        <div id="roLoginFormContainer" style="display: none; text-align: left;">
+            <div style="font-size: 12px; font-weight: bold; color: #9a3412; margin-bottom: 10px; border-bottom: 1px solid #fed7aa; padding-bottom: 4px;">
+                <i class="fas fa-shield-halved"></i> रिटर्निंग ऑफिसर (SDM) सुपर-एडमिन लॉगिन
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user-shield"></i> RO यूज़रनेम (Username)</label>
+                <input type="text" id="roUsername" class="form-control" placeholder="RO यूज़रनेम दर्ज करें">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> पासवर्ड (Password)</label>
+                <input type="password" id="roPassword" class="form-control" placeholder="••••••••" onkeypress="if(event.key==='Enter') attemptRoLogin()">
+            </div>
+            <button class="btn-primary" style="width: 100%; margin-top: 6px; padding: 11px; background: #0f172a; border-color: #0f172a;" onclick="attemptRoLogin()">
+                <i class="fas fa-shield-halved"></i> RO सुपर-एडमिन लॉगिन करें
+            </button>
+        </div>
+
+        <!-- ================= 4. FORGOT / RESET PASSWORD FORM ================= -->
+        <div id="forgotPasswordFormContainer" style="display: none; text-align: left;">
+            <div style="font-size: 12px; font-weight: bold; color: #b45309; margin-bottom: 10px; border-bottom: 1px solid #fef3c7; padding-bottom: 4px;">
+                <i class="fas fa-key"></i> पासवर्ड रीसेट (Password Reset / Recovery)
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> यूज़रनेम (Username) <span style="color:var(--danger);">*</span></label>
+                <input type="text" id="resetUsername" class="form-control" placeholder="पंजीकृत यूज़रनेम">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-phone"></i> पंजीकृत मोबाइल नंबर (Mobile Number)</label>
+                <input type="tel" id="resetMobile" class="form-control" placeholder="10 अंकों का मोबाइल नंबर" maxlength="10">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> नया पासवर्ड <span style="color:var(--danger);">*</span></label>
+                    <input type="password" id="resetNewPassword" class="form-control" placeholder="न्यूनतम 4 अक्षर">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-check-double"></i> पासवर्ड पुष्टि <span style="color:var(--danger);">*</span></label>
+                    <input type="password" id="resetConfirmPassword" class="form-control" placeholder="पुनः दर्ज करें">
+                </div>
+            </div>
+            <button class="btn-primary" style="width: 100%; margin-top: 6px; padding: 11px; background: #d97706; border-color: #d97706;" onclick="attemptSelfResetPassword()">
+                <i class="fas fa-rotate"></i> पासवर्ड रीसेट करें एवं सेव करें
+            </button>
+            <div style="text-align: center; margin-top: 14px;">
+                <a href="javascript:void(0)" onclick="switchAuthTab('op_login')" style="font-size: 12px; color: #0284c7; font-weight: 600; text-decoration: none;">
+                    <i class="fas fa-arrow-left"></i> वापस लॉगिन स्क्रीन पर जाएं
+                </a>
+            </div>
+        </div>
+
+        <!-- ================= 5. CITIZEN / PUBLIC GUEST VIEW OPTION ================= -->
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed #cbd5e1; text-align: center;">
+            <p style="font-size: 12px; color: #475569; margin-bottom: 8px; font-weight: 600;">
+                <i class="fas fa-users" style="color:#059669;"></i> आम नागरिक / मीडिया बंधु (Public / Guest):
+            </p>
+            <button type="button" class="btn-primary" style="width: 100%; padding: 11px 14px; font-size: 13.5px; background: linear-gradient(135deg, #059669 0%, #047857 100%); border: none; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; cursor: pointer; border-radius: 6px;" onclick="enterPublicGuestMode()">
+                <i class="fas fa-tv"></i> <span>🌐 नागरिक लाइव डिस्प्ले देखें (बिना लॉगिन)</span>
+            </button>
+            <p style="font-size: 10.5px; color: #94a3b8; margin-top: 6px; margin-bottom: 0;">
+                (केवल लाइव मतदान स्थिति व शासकीय रिपोर्ट देखने हेतु | डेटा प्रविष्टि पूर्ण सुरक्षित)
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Top Header -->
+<header>
+    <div class="header-left">
+        <div class="header-logo"><i class="fas fa-landmark-dome"></i></div>
+        <div class="header-title">
+            <h1>रिटर्निंग ऑफिसर (SDM) सुमेरपुर — नगर पालिका चुनाव 2026</h1>
+            <p>मतदान दिवस लाइव मॉनिटरिंग एवं कंट्रोल रूम पोर्टल (35 वार्ड | 36 बूथ | 6 जोन)</p>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="sync-pill">
+            <span class="sync-dot"></span>
+            <span id="syncStatusText">लाइव सिंक सक्रिय</span>
+        </div>
+        <div class="clock-badge">
+            <i class="far fa-clock"></i> <span id="portalClock">00:00:00 AM</span>
+        </div>
+        <div class="user-pill">
+            <i class="fas fa-user-circle"></i> <span id="currentUserName">लॉगिन नहीं</span>
+        </div>
+        <button class="btn-logout" id="headerAuthBtn" onclick="handleHeaderAuthAction()"><i class="fas fa-sign-out-alt"></i> बाहर निकलें</button>
+    </div>
+</header>
+
+<!-- Multi-Page Sub-Navigation Bar -->
+<nav class="nav-bar">
+    <a class="nav-link active" data-tab="dashboard" id="navDashboardLink" onclick="navigateTo('dashboard')"><i class="fas fa-chart-pie"></i> RO मास्टर डैशबोर्ड</a>
+    <a class="nav-link" data-tab="booths" id="navBoothsLink" onclick="navigateTo('booths')"><i class="fas fa-list-check"></i> 36 बूथ मॉनिटर</a>
+    <a class="nav-link" data-tab="entry" id="navEntryLink" onclick="navigateTo('entry')"><i class="fas fa-edit"></i> मतदान प्रविष्टि</a>
+    <a class="nav-link" data-tab="zones" id="navZonesLink" onclick="navigateTo('zones')"><i class="fas fa-map-marked-alt"></i> 6 जोनल मजिस्ट्रेट डायरेक्टरी</a>
+    <a class="nav-link" data-tab="reports" id="navReportsLink" onclick="navigateTo('reports')"><i class="fas fa-file-lines" style="color:#e11d48;"></i> रिपोर्ट्स</a>
+    <a class="nav-link" data-tab="livedisplay" id="navLiveDisplayLink" onclick="navigateTo('livedisplay')"><i class="fas fa-tv" style="color:#38bdf8;"></i> कंट्रोल रूम लाइव डिस्प्ले</a>
+    <a class="nav-link" data-tab="admin" id="navAdminLink" style="display:none;" onclick="navigateTo('admin')"><i class="fas fa-shield-halved" style="color:#f59e0b;"></i> RO एडमिन टूल्स</a>
+</nav>
+
+<!-- Main Container for Multi-Page Content -->
+<main class="main-container">
+
+    <!-- ================= PAGE 1: RO MASTER DASHBOARD ================= -->
+    <div id="view_dashboard" class="page-view active">
+        <!-- Highlights Strip -->
+        <div class="highlights-strip">
+            <div class="highlight-card high" style="cursor:pointer;" onclick="openRankingsModal('high')">
+                <div class="icon-box"><i class="fas fa-arrow-trend-up"></i></div>
+                <div class="info" style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h6>सर्वाधिक मतदान केंद्र (Highest)</h6>
+                        <span style="font-size:11px; color:#10b981; font-weight:bold;"><i class="fas fa-list-ol"></i> टॉप 5 देखें</span>
+                    </div>
+                    <div class="title" id="hiVotingBooth">-</div>
+                    <div class="sub" id="hiVotingPct">मतदान प्रतिशत: 0.00%</div>
+                </div>
+            </div>
+            <div class="highlight-card low" style="cursor:pointer;" onclick="openRankingsModal('low')">
+                <div class="icon-box"><i class="fas fa-arrow-trend-down"></i></div>
+                <div class="info" style="flex:1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h6>न्यूनतम / धीमा मतदान केंद्र (Slowest)</h6>
+                        <span style="font-size:11px; color:#ef4444; font-weight:bold;"><i class="fas fa-list-ol"></i> धीमी सूची देखें</span>
+                    </div>
+                    <div class="title" id="loVotingBooth">-</div>
+                    <div class="sub" id="loVotingPct">मतदान प्रतिशत: 0.00%</div>
+                </div>
+            </div>
+            <div class="highlight-card nirv">
+                <div class="icon-box"><i class="fas fa-award"></i></div>
+                <div class="info">
+                    <h6>निर्विरोध वार्ड (No Election)</h6>
+                    <div class="title">वार्ड 26 (बूथ 27)</div>
+                    <div class="sub">श्रीमती वीणा देवड़ा (BJP) — निर्विरोध निर्वाचित</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Key Metric Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card" style="border-top: 4px solid #3b82f6;">
+                <h5>कुल पंजीकृत मतदाता</h5>
+                <div class="number">30,529</div>
+                <small>मतदान वाले: 29,696</small>
+            </div>
+            <div class="kpi-card" style="border-top: 4px solid #06b6d4;">
+                <h5>मॉक पोल पूर्ण (7 AM)</h5>
+                <div class="number" id="kpiMock">0 / 35</div>
+                <small>सत्यापित बूथ</small>
+            </div>
+            <div class="kpi-card" style="border-top: 4px solid #10b981;">
+                <h5>7:15 AM मतदान शुरू</h5>
+                <div class="number" id="kpiStarted">0 / 35</div>
+                <small>शांतिपूर्ण प्रारंभ</small>
+            </div>
+            <div class="kpi-card" style="border-top: 4px solid #f59e0b;">
+                <h5>कुल डाले गए मत</h5>
+                <div class="number" id="kpiVotes">0</div>
+                <small>कतारबद्ध मत सहित</small>
+            </div>
+            <div class="kpi-card" style="border-top: 4px solid #8b5cf6;">
+                <h5>कुल मतदान प्रतिशत</h5>
+                <div class="number" id="kpiTurnout">0.00%</div>
+                <small>35 मतदान केंद्रों पर</small>
+            </div>
+        </div>
+
+        <!-- Hourly Slot Summary Strip -->
+        <div class="slot-summary-strip">
+            <div class="slot-stat-box">
+                <div class="title">10:00 AM कुल मत</div>
+                <div class="count" id="slotSum10">0</div>
+                <div class="subtext" id="slotPct10">0.00%</div>
+            </div>
+            <div class="slot-stat-box">
+                <div class="title">01:00 PM कुल मत</div>
+                <div class="count" id="slotSum13">0</div>
+                <div class="subtext" id="slotPct13">0.00%</div>
+            </div>
+            <div class="slot-stat-box">
+                <div class="title">03:00 PM कुल मत</div>
+                <div class="count" id="slotSum15">0</div>
+                <div class="subtext" id="slotPct15">0.00%</div>
+            </div>
+            <div class="slot-stat-box">
+                <div class="title">06:00 PM कुल मत</div>
+                <div class="count" id="slotSum18">0</div>
+                <div class="subtext" id="slotPct18">0.00%</div>
+            </div>
+            <div class="slot-stat-box" style="background:#fffbeb; border-color:#fef3c7;">
+                <div class="title" style="color:#92400e;">6 PM कतारबद्ध (In Queue)</div>
+                <div class="count" style="color:#b45309;" id="slotSumQueue">0</div>
+                <div class="subtext" style="color:#b45309;">गेट बंद उपरांत</div>
+            </div>
+            <div class="slot-stat-box" style="background:#f0fdf4; border-color:#86efac;">
+                <div class="title" style="color:#15803d;">अंतिम क्लोजिंग मत</div>
+                <div class="count" style="color:#15803d;" id="slotSumFinal">0</div>
+                <div class="subtext" style="color:#15803d;" id="slotPctFinal">0.00%</div>
+            </div>
+        </div>
+
+        <!-- ================= PENDING BOOTHS TRACKER (लंबित प्रविष्टि निगरानी) ================= -->
+        <div class="card pending-tracker-card" id="pendingTrackerSection" style="border: 1px solid #fed7aa; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.08);">
+            <div class="card-header" style="flex-wrap:wrap; gap:10px; background:#fff7ed; border-bottom:1px solid #fed7aa;">
+                <div>
+                    <h3 style="color:#c2410c; display:flex; align-items:center; gap:8px; margin:0;">
+                        <i class="fas fa-clock-rotate-left"></i> समय स्लॉट अनुसार लंबित प्रविष्टि ट्रैकर (Missing Entries Monitor)
+                    </h3>
+                    <span style="font-size:12px; color:#9a3412;">चयनित स्लॉट पर जिन बूथों की एंट्री अभी तक प्राप्त नहीं हुई है उनकी रीयल-टाइम सूची</span>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <button class="btn-secondary" style="font-size:12px; padding:6px 12px; border-color:#86efac; color:#166534;" onclick="copyPendingBoothsList()">
+                        <i class="fab fa-whatsapp" style="color:#16a34a; font-size:14px;"></i> WhatsApp सूची कॉपी करें
+                    </button>
+                    <button class="btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="exportPendingCsv()">
+                        <i class="fas fa-file-csv" style="color:#0284c7; font-size:14px;"></i> लंबित सूची CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="padding:16px;">
+                <!-- Slot Selector Pills & Zone Filter -->
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                    <div class="pending-slot-tabs" id="pendingSlotTabs">
+                        <button class="slot-tab-btn active" data-slot="10" onclick="setPendingTrackerSlot('10')">
+                            10:00 AM <span class="slot-badge" id="slotBadge10">0</span>
+                        </button>
+                        <button class="slot-tab-btn" data-slot="13" onclick="setPendingTrackerSlot('13')">
+                            01:00 PM <span class="slot-badge" id="slotBadge13">0</span>
+                        </button>
+                        <button class="slot-tab-btn" data-slot="15" onclick="setPendingTrackerSlot('15')">
+                            03:00 PM <span class="slot-badge" id="slotBadge15">0</span>
+                        </button>
+                        <button class="slot-tab-btn" data-slot="18" onclick="setPendingTrackerSlot('18')">
+                            06:00 PM <span class="slot-badge" id="slotBadge18">0</span>
+                        </button>
+                        <button class="slot-tab-btn" data-slot="Final" onclick="setPendingTrackerSlot('Final')">
+                            अंतिम क्लोजिंग <span class="slot-badge" id="slotBadgeFinal">0</span>
+                        </button>
+                        <button class="slot-tab-btn" data-slot="mock" onclick="setPendingTrackerSlot('mock')">
+                            मॉक पोल <span class="slot-badge" id="slotBadgeMock">0</span>
+                        </button>
+                        <button class="slot-tab-btn" data-slot="started" onclick="setPendingTrackerSlot('started')">
+                            7:15 प्रारंभ <span class="slot-badge" id="slotBadgeStarted">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Zone Filter for Pending -->
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <label style="font-size:12px; font-weight:bold; color:#475569;"><i class="fas fa-filter"></i> जोन फिल्टर:</label>
+                        <select id="pendingZoneFilter" class="form-control" style="width:auto; padding:6px 10px; font-size:12px;" onchange="renderPendingTracker()">
+                            <option value="ALL">समस्त 6 जोन (All)</option>
+                            <option value="1">जोन 1 (बूथ 1-8)</option>
+                            <option value="2">जोन 2 (बूथ 9-15)</option>
+                            <option value="3">जोन 3 (बूथ 16-20)</option>
+                            <option value="4">जोन 4 (बूथ 21-27)</option>
+                            <option value="5">जोन 5 (बूथ 28-32)</option>
+                            <option value="6">जोन 6 (बूथ 33-36)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Summary Progress Bar Strip -->
+                <div class="pending-summary-strip">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <span style="color:#16a34a; font-weight:700;"><i class="fas fa-circle-check"></i> प्राप्त प्रविष्टियाँ:</span>
+                            <span id="pendingReceivedCount" style="font-weight:700;">0</span> / 35 (<span id="pendingReceivedPct">0%</span>)
+                        </div>
+                        <div>
+                            <span style="color:#dc2626; font-weight:800;"><i class="fas fa-circle-exclamation"></i> 🔴 लंबित / शेष प्रविष्टियाँ:</span>
+                            <span id="pendingMissingCount" style="color:#dc2626; font-weight:800; font-size:14px;">35</span> / 35 (<span id="pendingMissingPct" style="color:#dc2626; font-weight:800;">100%</span>)
+                        </div>
+                    </div>
+                    <div class="pending-bar-track">
+                        <div class="pending-bar-fill-received" id="pendingBarReceived" style="width:0%;"></div>
+                        <div class="pending-bar-fill-missing" id="pendingBarMissing" style="width:100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Pending Booths List Table / Cards -->
+                <div class="table-responsive" style="max-height: 380px; overflow-y: auto; margin-top: 14px; border: 1px solid var(--border); border-radius: 6px;">
+                    <table class="data-table" id="pendingBoothsTable">
+                        <thead>
+                            <tr style="position: sticky; top: 0; z-index: 2; background: #f8fafc;">
+                                <th style="width:65px;">बूथ</th>
+                                <th style="width:55px;">जोन</th>
+                                <th style="width:55px;">वार्ड</th>
+                                <th style="text-align:left;">मतदान केंद्र का नाम</th>
+                                <th>कुल वोटर</th>
+                                <th>ऑपरेटर</th>
+                                <th style="text-align:left;">प्रगणक / केंद्र प्रभारी</th>
+                                <th>सीधा संपर्क</th>
+                                <th>कार्रवाई</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingBoothsTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= RANKINGS DUAL LEADERBOARD ================= -->
+        <div class="ranking-grid">
+            <!-- Top High Voting Booths Card -->
+            <div class="ranking-card high-card">
+                <div class="r-head">
+                    <h4><i class="fas fa-arrow-trend-up" style="color:var(--success);"></i> शीर्ष 5 सर्वाधिक मतदान केंद्र (Top High Turnout)</h4>
+                    <button class="btn-secondary" style="padding:4px 10px; font-size:11.5px;" onclick="openRankingsModal('high')">
+                        <i class="fas fa-expand"></i> सभी देखें
+                    </button>
+                </div>
+                <div class="ranking-list" id="topHighListContainer">
+                    <div style="padding:15px; text-align:center; color:var(--text-muted); font-size:12px;">डेटा लोड हो रहा है...</div>
+                </div>
+            </div>
+
+            <!-- Top Slow Voting Booths Card -->
+            <div class="ranking-card low-card">
+                <div class="r-head">
+                    <h4><i class="fas fa-triangle-exclamation" style="color:var(--danger);"></i> शीर्ष 5 धीमे / न्यूनतम मतदान केंद्र (Slow Turnout Alerts)</h4>
+                    <button class="btn-secondary" style="padding:4px 10px; font-size:11.5px;" onclick="openRankingsModal('low')">
+                        <i class="fas fa-expand"></i> सभी देखें
+                    </button>
+                </div>
+                <div class="ranking-list" id="topLowListContainer">
+                    <div style="padding:15px; text-align:center; color:var(--text-muted); font-size:12px;">डेटा लोड हो रहा है...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Turnout Growth Chart Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-line" style="color:var(--accent);"></i> मतदान प्रतिशत प्रगति (Hourly Turnout Progression)</h3>
+                <span style="font-size:12px; color:var(--text-muted);">वास्तविक समय डेटाबेस सिंक</span>
+            </div>
+            <div class="card-body" style="height: 250px;">
+                <canvas id="turnoutChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Summary Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-table-list"></i> लाइव बूथ प्रगति संक्षेप</h3>
+                <button class="btn-secondary" onclick="navigateTo('booths')"><i class="fas fa-up-right-from-square"></i> विस्तृत 36 बूथ व्यू खोलें</button>
+            </div>
+            <div class="table-responsive">
+                <div class="mobile-table-hint"><i class="fas fa-arrows-left-right"></i> टेबल में अन्य स्लॉट देखने हेतु बाएँ-दाएँ स्वाइप करें (Swipe left/right)</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>बूथ</th>
+                            <th>जोन</th>
+                            <th>वार्ड</th>
+                            <th style="text-align:left;">मतदान केंद्र का नाम</th>
+                            <th>कुल वोटर</th>
+                            <th>मॉक पोल</th>
+                            <th>7:15 शुरू</th>
+                            <th>10 AM</th>
+                            <th>01 PM</th>
+                            <th>03 PM</th>
+                            <th>06 PM</th>
+                            <th>6 PM कतारबद्ध</th>
+                            <th>अंतिम मत</th>
+                            <th>%</th>
+                            <th>प्रगणक / संपर्क</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashSummaryTbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 2: COMPREHENSIVE BOOTHS MONITORING ================= -->
+    <div id="view_booths" class="page-view">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-list-check"></i> समस्त 36 मतदान केंद्रों का लाइव मॉनिटरिंग ग्रिड</h3>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <input type="text" id="searchBoothInput" placeholder="बूथ / वार्ड / नाम खोजें..." onkeyup="renderBoothsTable()" style="padding:7px 12px; border:1px solid var(--border); border-radius:6px; font-size:12.5px;">
+                    <select id="filterZoneSelect" onchange="renderBoothsTable()" style="padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:12.5px;">
+                        <option value="ALL">समस्त 6 जोन (36 बूथ)</option>
+                        <option value="1">जोन 1 (8 बूथ)</option>
+                        <option value="2">जोन 2 (7 बूथ)</option>
+                        <option value="3">जोन 3 (5 बूथ)</option>
+                        <option value="4">जोन 4 (7 बूथ)</option>
+                        <option value="5">जोन 5 (5 बूथ)</option>
+                        <option value="6">जोन 6 (4 बूथ)</option>
+                    </select>
+                    <select id="filterPendingSlotSelect" onchange="renderBoothsTable()" style="padding:7px 10px; border:1px solid #fed7aa; background:#fff7ed; color:#c2410c; font-weight:600; border-radius:6px; font-size:12.5px;">
+                        <option value="ALL">सभी प्रविष्टियां (All Status)</option>
+                        <option value="10">🔴 केवल 10:00 AM लंबित</option>
+                        <option value="13">🔴 केवल 01:00 PM लंबित</option>
+                        <option value="15">🔴 केवल 03:00 PM लंबित</option>
+                        <option value="18">🔴 केवल 06:00 PM लंबित</option>
+                        <option value="Final">🔴 केवल अंतिम क्लोजिंग लंबित</option>
+                        <option value="mock">🔴 केवल मॉक पोल लंबित</option>
+                        <option value="started">🔴 केवल 7:15 प्रारंभ लंबित</option>
+                    </select>
+                    <a href="/api/export/csv" class="btn-secondary"><i class="fas fa-file-excel" style="color:#10b981;"></i> CSV डाउनलोड</a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <div class="mobile-table-hint"><i class="fas fa-arrows-left-right"></i> टेबल में अन्य स्लॉट देखने हेतु बाएँ-दाएँ स्वाइप करें (Swipe left/right)</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>बूथ</th>
+                            <th>जोन</th>
+                            <th>वार्ड</th>
+                            <th style="text-align:left;">मतदान केंद्र का नाम व भवन</th>
+                            <th>कुल वोटर</th>
+                            <th>मॉक पोल</th>
+                            <th>7:15 प्रारंभ</th>
+                            <th>10:00 AM</th>
+                            <th>01:00 PM</th>
+                            <th>03:00 PM</th>
+                            <th>06:00 PM</th>
+                            <th>6 PM कतारबद्ध</th>
+                            <th>अंतिम मत</th>
+                            <th>मतदान %</th>
+                            <th>प्रगणक / फोन</th>
+                            <th>रिमार्क</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allBoothsTbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 3: OPERATOR DATA ENTRY PORTAL ================= -->
+    <div id="view_entry" class="page-view">
+        <!-- Time Simulator Bar (Only visible to RO SDM, hidden for regular operators in live mode) -->
+        <div id="timeSimulatorBar" style="display:none; background:#fffbeb; border:1px solid #fef3c7; border-radius:8px; padding:10px 16px; margin-bottom:16px; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="font-size:12.5px; color:#92400e;">
+                <i class="fas fa-clock"></i> <b>समय प्रणाली:</b> <span id="slotModeText">सिस्टम वास्तविक समय (Live Clock) से सिंक है।</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label style="font-size:12px; font-weight:bold; color:#92400e;"><i class="fas fa-flask"></i> RO रिहर्सल मोड:</label>
+                <select id="mockTimeSelect" onchange="changeSimulatedTime(this.value)" style="padding:5px 10px; border-radius:6px; font-size:12px; border:1px solid #cbd5e1; font-weight:600;">
+                    <option value="REAL" selected>वास्तविक समय (Live Real-Time Clock)</option>
+                    <option value="07:05">07:05 AM (मॉक पोल सत्यापन)</option>
+                    <option value="07:20">07:20 AM (07:15 AM मतदान प्रारंभ)</option>
+                    <option value="10:15">10:15 AM (10:00 AM स्लॉट खुला)</option>
+                    <option value="13:10">01:10 PM (01:00 PM स्लॉट खुला)</option>
+                    <option value="15:15">03:15 PM (03:00 PM स्लॉट खुला)</option>
+                    <option value="18:10">06:10 PM (06:00 PM स्लॉट खुला)</option>
+                    <option value="18:35">06:35 PM (06:00 PM पर कतारबद्ध मतदाता)</option>
+                    <option value="19:30">07:30 PM (अंतिम क्लोजिंग स्लॉट)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Zone Selector & Zone Info Banner -->
+        <div class="card" style="margin-bottom:16px;">
+            <div class="card-header" style="background:linear-gradient(135deg, #0a2540 0%, #1e3a8a 100%); color:white;">
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <span style="font-size:14px; font-weight:bold;"><i class="fas fa-map-location-dot" style="color:var(--accent);"></i> जोन चुनें (Zone Select):</span>
+                    <select id="entryZoneSelect" onchange="onZoneSelectChange(this.value)" style="padding:8px 14px; font-size:13.5px; font-weight:bold; border-radius:6px; border:none; background:white; color:var(--primary); cursor:pointer;">
+                        <option value="1">जोन 1 (बूथ 1-5, 7-9 | 8 बूथ)</option>
+                        <option value="2">जोन 2 (बूथ 6, 12-17 | 7 बूथ)</option>
+                        <option value="3">जोन 3 (बूथ 18-22 | 5 बूथ)</option>
+                        <option value="4">जोन 4 (बूथ 10-11, 24-28 | 7 बूथ)</option>
+                        <option value="5">जोन 5 (बूथ 23, 29-32 | 5 बूथ)</option>
+                        <option value="6">जोन 6 (बूथ 33-36 | 4 बूथ)</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-primary" style="background:#10b981; padding:9px 18px; font-weight:600;" onclick="saveAllZoneBooths()">
+                        <i class="fas fa-save"></i> ज़ोन के समस्त बूथों का डेटा एक साथ सुरक्षित करें (Save All)
+                    </button>
+                </div>
+            </div>
+            <div class="card-body" style="padding:12px 20px; background:#f8fafc; font-size:12.5px; border-bottom:1px solid var(--border);">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                    <div><b>एरिया मजिस्ट्रेट:</b> <span id="entryZoneAreaText">-</span></div>
+                    <div><b>जोनल मजिस्ट्रेट:</b> <span id="entryZoneZonalText">-</span></div>
+                    <div><b>जोन मुख्यालय:</b> <span id="entryZoneHqText">-</span></div>
+                    <div><b>कुल मतदाता (Zone):</b> <span id="entryZoneElectorsText" style="font-weight:bold; color:var(--primary);">-</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone All-Booths Bulk Spreadsheet Grid -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-table-cells"></i> <span id="entryZoneTableTitle">जोन 1 — समस्त 8 मतदान केंद्रों का लाइव मतदान प्रविष्टि पत्रक</span></h3>
+                <span id="activeSlotStatusBanner" class="status-badge badge-active"><i class="fas fa-clock"></i> स्लॉट स्थिति जांची जा रही है...</span>
+            </div>
+            <div class="table-responsive">
+                <div class="mobile-table-hint"><i class="fas fa-arrows-left-right"></i> टेबल में अन्य स्लॉट देखने हेतु बाएँ-दाएँ स्वाइप करें (Swipe left/right)</div>
+                <table class="data-table" id="zoneBulkTable">
+                    <thead>
+                        <tr>
+                            <th style="width:5%;">बूथ</th>
+                            <th style="width:5%;">वार्ड</th>
+                            <th style="text-align:left; width:22%;">मतदान केंद्र का नाम</th>
+                            <th style="width:7%;">वोटर</th>
+                            <th style="width:8%;">मॉक पोल</th>
+                            <th style="width:8%;">7:15 शुरू</th>
+                            <th style="width:7%;">10 AM</th>
+                            <th style="width:7%;">01 PM</th>
+                            <th style="width:7%;">03 PM</th>
+                            <th style="width:7%;">06 PM</th>
+                            <th style="width:7%;">6 PM कतारबद्ध</th>
+                            <th style="width:8%;">अंतिम मत</th>
+                            <th style="width:11%;">रिमार्क</th>
+                            <th style="width:6%;">सेव</th>
+                        </tr>
+                    </thead>
+                    <tbody id="zoneBulkEntryTbody"></tbody>
+                </table>
+            </div>
+            <div style="padding:12px 20px; background:#fafcff; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <small style="color:var(--text-muted);"><i class="fas fa-info-circle"></i> * सक्रिय समय विंडो के अनुसार स्लॉट खुले रहेंगे। अंतिम मत 06:00 PM + कतारबद्ध मत से स्वतः संयोजित होता है।</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 4: ZONAL DIRECTORY ================= -->
+    <div id="view_zones" class="page-view">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-map-marked-alt" style="color:var(--primary);"></i> नगर निकाय सुमेरपुर — एरिया मजिस्ट्रेट व जोनल मजिस्ट्रेट निर्देशिका</h3>
+            </div>
+            <div class="card-body">
+                <div class="zone-grid" id="zonesCardGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 5: OFFICIAL REPORTS & PDF STUDIO ================= -->
+    <div id="view_reports" class="page-view">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-file-lines" style="color:#e11d48;"></i> रिपोर्ट्स स्टूडियो (मतदान बुलेटिन व अधिकृत रिपोर्ट)</h3>
+            </div>
+            <div class="card-body">
+                <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
+                    निर्वाचन विभाग राजस्थान एवं रिटर्निंग ऑफिसर (SDM) सुमेरपुर के अधिकृत प्रारूप में रिपोर्ट को अलग नए टैब में खोलें एवं PDF / प्रिंट जनरेट करें।
+                </p>
+
+                <div style="background:#f8fafc; padding:20px; border-radius:12px; border:1px solid var(--border); display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:24px;">
+                    <div style="flex:1; min-width:280px;">
+                        <label style="font-size:13px; font-weight:700; display:block; margin-bottom:6px;">रिपोर्ट स्लॉट का चयन करें:</label>
+                        <select id="pdfSlotSelector" class="form-control" style="font-size:14px; padding:10px;">
+                            <option value="10">10:00 AM मतदान प्रगति बुलेटिन (Slot 1)</option>
+                            <option value="13">01:00 PM मतदान प्रगति बुलेटिन (Slot 2)</option>
+                            <option value="15">03:00 PM मतदान प्रगति बुलेटिन (Slot 3)</option>
+                            <option value="18">06:00 PM मतदान प्रगति बुलेटिन (Slot 4)</option>
+                            <option value="Queue">06:00 PM पर कतारबद्ध मतदाता रिपोर्ट</option>
+                            <option value="Final">अंतिम क्लोजिंग मतदान रिपोर्ट (Final Closing)</option>
+                            <option value="ALL">समस्त स्लॉट्स मास्टर रिपोर्ट (Comprehensive Master)</option>
+                            <option value="Magistrate">बूथ-वार एरिया/जोनल मजिस्ट्रेट एवं प्रगणक डायरेक्टरी रिपोर्ट</option>
+                        </select>
+                    </div>
+                    <div style="padding-top:22px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn-primary" style="background:#0284c7; padding:12px 20px;" onclick="openReportInNewTab(false)">
+                            <i class="fas fa-arrow-up-right-from-square"></i> अलग टैब में रिपोर्ट खोलें (New Tab)
+                        </button>
+                        <button class="btn-primary" style="background:#e11d48; padding:12px 20px;" onclick="openReportInNewTab(true)">
+                            <i class="fas fa-print"></i> सीधे PDF / प्रिंट करें
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick One-Click Report Cards Grid -->
+                <h4 style="margin:0 0 12px 0; color:var(--primary);"><i class="fas fa-bolt" style="color:var(--warning);"></i> 1-क्लिक त्वरित रिपोर्ट लिंक्स (अलग टैब में खोलें):</h4>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
+                    <a href="report.html?slot=10" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #38bdf8;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">स्लॉट 1</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">10:00 AM बुलेटिन <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#0284c7;">PDF / प्रिंट प्रारूप</small>
+                    </a>
+                    <a href="report.html?slot=13" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #06b6d4;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">स्लॉट 2</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">01:00 PM बुलेटिन <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#0284c7;">PDF / प्रिंट प्रारूप</small>
+                    </a>
+                    <a href="report.html?slot=15" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #10b981;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">स्लॉट 3</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">03:00 PM बुलेटिन <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#0284c7;">PDF / प्रिंट प्रारूप</small>
+                    </a>
+                    <a href="report.html?slot=18" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #f59e0b;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">स्लॉट 4</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">06:00 PM बुलेटिन <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#0284c7;">PDF / प्रिंट प्रारूप</small>
+                    </a>
+                    <a href="report.html?slot=Queue" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #d97706;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">गेट बंद उपरांत</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">06:00 PM कतारबद्ध रिपोर्ट <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#d97706;">कतारबद्ध मतदाता पत्रक</small>
+                    </a>
+                    <a href="report.html?slot=Final" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #8b5cf6;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">अंतिम क्लोजिंग</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">फाइनल टर्नआउट <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#8b5cf6;">हस्ताक्षरित महायोग</small>
+                    </a>
+                    <a href="report.html?slot=ALL" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #e11d48;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">समेकित मास्टर</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">मास्टर समेकित रिपोर्ट <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#e11d48;">सभी स्लॉट्स एक साथ</small>
+                    </a>
+                    <a href="report.html?slot=Magistrate" target="_blank" class="card" style="padding:14px; text-decoration:none; color:inherit; margin:0; border-left:4px solid #0d9488;">
+                        <div style="font-size:11px; color:#64748b; font-weight:bold;">प्रशासनिक डायरेक्टरी</div>
+                        <div style="font-size:14px; font-weight:bold; color:var(--primary); margin:4px 0;">मजिस्ट्रेट व प्रगणक रिपोर्ट <i class="fas fa-arrow-up-right-from-square" style="font-size:11px; float:right;"></i></div>
+                        <small style="color:#0d9488;">एरिया, जोनल व प्रगणक संपर्क</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 6: LIVE BIG SCREEN / TV DISPLAY ================= -->
+    <div id="view_livedisplay" class="page-view">
+        <div class="live-tv-container" id="liveTvContainer">
+            <!-- TV Header -->
+            <div class="tv-header">
+                <div>
+                    <h2><i class="fas fa-tv" style="color:#38bdf8;"></i> सुमेरपुर नगर पालिका चुनाव 2026 — लाइव कंट्रोल रूम</h2>
+                    <small style="color:#94a3b8;"><span class="live-pulse-dot"></span> <b>लाइव ऑटो-सिंक सक्रिय</b> | नियंत्रण कक्ष डिस्प्ले मोड</small>
+                </div>
+                <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                    <div style="font-size:22px; font-weight:bold; color:#facc15; background:#0f2238; padding:6px 14px; border-radius:8px; border:1px solid #1e3a5f;" id="tvLiveClock">00:00:00</div>
+                    <button class="btn-tv-fullscreen" id="btnTvFullscreen" onclick="toggleTvFullscreen()" title="फुल स्क्रीन मोड टॉगल करें">
+                        <i class="fas fa-expand"></i> ⛶ फुल स्क्रीन (Full Screen)
+                    </button>
+                </div>
+            </div>
+
+            <!-- TV Big KPIs -->
+            <div class="tv-kpi-row">
+                <div class="tv-kpi-card" style="border-top:4px solid #38bdf8;">
+                    <div class="tv-lbl">कुल मतदान प्रतिशत</div>
+                    <div class="tv-val" id="tvTurnout" style="color:#38bdf8;">0.00%</div>
+                </div>
+                <div class="tv-kpi-card" style="border-top:4px solid #4ade80;">
+                    <div class="tv-lbl">कुल डाले गए मत</div>
+                    <div class="tv-val" id="tvTotalVotes" style="color:#4ade80;">0</div>
+                </div>
+                <div class="tv-kpi-card" style="border-top:4px solid #facc15;">
+                    <div class="tv-lbl">सक्रिय मतदाता</div>
+                    <div class="tv-val" id="tvElectors" style="color:#facc15;">29,696</div>
+                </div>
+                <div class="tv-kpi-card" style="border-top:4px solid #c084fc;">
+                    <div class="tv-lbl">मॉक पोल पूर्ण</div>
+                    <div class="tv-val" id="tvMockCount" style="color:#c084fc;">0/35</div>
+                </div>
+                <div class="tv-kpi-card" style="border-top:4px solid #fb7185;">
+                    <div class="tv-lbl">7:15 AM मतदान प्रारंभ</div>
+                    <div class="tv-val" id="tvStartedCount" style="color:#fb7185;">0/35</div>
+                </div>
+                <div class="tv-kpi-card" style="border-top:4px solid #f97316;">
+                    <div class="tv-lbl">6:00 PM कतारबद्ध</div>
+                    <div class="tv-val" id="tvQueueCount" style="color:#f97316;">0</div>
+                </div>
+            </div>
+
+            <!-- Hourly Turnout Trend Timeline -->
+            <div class="tv-slot-trend-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <h3 style="color:#e2e8f0; margin:0; font-size:15px;"><i class="fas fa-chart-line" style="color:#38bdf8;"></i> समय स्लॉट मतदान प्रगति (Hourly Poll Turnout Trend)</h3>
+                    <span style="font-size:12px; color:#94a3b8;"><i class="fas fa-satellite-dish" style="color:#10b981;"></i> वास्तविक समय पर संकलित</span>
+                </div>
+                <div class="tv-slot-timeline">
+                    <div class="tv-slot-card" id="slotCard_mock">
+                        <div class="slot-name"><i class="fas fa-vial"></i> 07:05 AM</div>
+                        <div class="slot-pct" id="tvSlotMock">0/35</div>
+                        <div class="slot-sub">मॉक पोल पूर्ण</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_started">
+                        <div class="slot-name"><i class="fas fa-play"></i> 07:15 AM</div>
+                        <div class="slot-pct" id="tvSlotStarted">0/35</div>
+                        <div class="slot-sub">मतदान प्रारंभ</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_10">
+                        <div class="slot-name">10:00 AM</div>
+                        <div class="slot-pct" id="tvSlot10">0.00%</div>
+                        <div class="slot-sub" id="tvSlotVotes10">0 मत</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_13">
+                        <div class="slot-name">01:00 PM</div>
+                        <div class="slot-pct" id="tvSlot13">0.00%</div>
+                        <div class="slot-sub" id="tvSlotVotes13">0 मत</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_15">
+                        <div class="slot-name">03:00 PM</div>
+                        <div class="slot-pct" id="tvSlot15">0.00%</div>
+                        <div class="slot-sub" id="tvSlotVotes15">0 मत</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_18">
+                        <div class="slot-name">06:00 PM</div>
+                        <div class="slot-pct" id="tvSlot18">0.00%</div>
+                        <div class="slot-sub" id="tvSlotVotes18">0 मत</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_queue">
+                        <div class="slot-name">6 PM कतारबद्ध</div>
+                        <div class="slot-pct" id="tvSlotQueue" style="color:#f97316;">0</div>
+                        <div class="slot-sub">लाइन में मतदाता</div>
+                    </div>
+                    <div class="tv-slot-card" id="slotCard_final">
+                        <div class="slot-name" style="color:#38bdf8;">अंतिम क्लोजिंग</div>
+                        <div class="slot-pct" id="tvSlotFinal" style="color:#38bdf8;">0.00%</div>
+                        <div class="slot-sub" id="tvSlotVotesFinal">0 मत</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Highlights & Pending Reporting Alert Bar -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:16px; margin-bottom:24px;">
+                <div style="background:#0e243f; padding:16px; border-radius:10px; border-left:5px solid #4ade80;">
+                    <div style="font-size:12px; color:#94a3b8; text-transform:uppercase;">सर्वाधिक मतदान बूथ (Highest)</div>
+                    <div style="font-size:19px; font-weight:bold; color:#4ade80; margin-top:4px;" id="tvHiBooth">-</div>
+                </div>
+                <div style="background:#0e243f; padding:16px; border-radius:10px; border-left:5px solid #f87171;">
+                    <div style="font-size:12px; color:#94a3b8; text-transform:uppercase;">धीमा मतदान बूथ (Slowest)</div>
+                    <div style="font-size:19px; font-weight:bold; color:#f87171; margin-top:4px;" id="tvLoBooth">-</div>
+                </div>
+                <!-- Pending Reporting Booths Alert -->
+                <div style="background:#0e243f; padding:16px; border-radius:10px; border-left:5px solid #f59e0b;" id="tvPendingContainer">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:12px; color:#94a3b8; text-transform:uppercase;">वर्तमान स्लॉट रिपोर्टिंग स्थिति</div>
+                        <span id="tvReportingBadge" style="font-size:11px; background:#f59e0b; color:black; font-weight:bold; padding:2px 8px; border-radius:12px;">जांच जारी</span>
+                    </div>
+                    <div style="font-size:13.5px; font-weight:bold; color:#facc15; margin-top:5px;" id="tvPendingText">डेटा लोड हो रहा है...</div>
+                </div>
+                <div style="background:#0e243f; padding:16px; border-radius:10px; border-left:5px solid #c084fc;">
+                    <div style="font-size:12px; color:#94a3b8; text-transform:uppercase;">निर्विरोध वार्ड (No Election)</div>
+                    <div style="font-size:18px; font-weight:bold; color:#c084fc; margin-top:4px;">वार्ड 26 (वीणा देवड़ा - BJP)</div>
+                </div>
+            </div>
+
+            <!-- Zone-wise Progress Bars on TV -->
+            <div style="margin-bottom:24px;">
+                <h3 style="color:#e2e8f0; margin-bottom:12px; font-size:15px;"><i class="fas fa-layer-group" style="color:#38bdf8;"></i> 6 जोन मतदान प्रगति (Zone Breakdown)</h3>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px;" id="tvZoneBarsGrid"></div>
+            </div>
+
+            <!-- 35 Booths Live Heatmap Matrix -->
+            <div class="tv-heatmap-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                    <h3 style="color:#e2e8f0; margin:0; font-size:15px;"><i class="fas fa-border-all" style="color:#4ade80;"></i> समस्त 35 मतदान केंद्रों की लाइव स्थिति मैट्रिक्स (35 Booths Live Heatmap)</h3>
+                    <div class="tv-heatmap-legend">
+                        <span class="tv-heatmap-legend-item"><span class="tv-legend-color" style="background:#10b981;"></span> 60%+ (उत्कृष्ट)</span>
+                        <span class="tv-heatmap-legend-item"><span class="tv-legend-color" style="background:#f59e0b;"></span> 40-59.9% (सामान्य)</span>
+                        <span class="tv-heatmap-legend-item"><span class="tv-legend-color" style="background:#ef4444;"></span> 40% से कम (धीमा)</span>
+                        <span class="tv-heatmap-legend-item"><span class="tv-legend-color" style="background:#a855f7;"></span> निर्विरोध (वार्ड 26)</span>
+                    </div>
+                </div>
+                <div class="tv-heatmap-grid" id="tvBoothsHeatmapGrid"></div>
+            </div>
+
+            <!-- TV Live News Ticker -->
+            <div class="tv-ticker-bar">
+                <div class="tv-ticker-badge"><i class="fas fa-bullhorn"></i> लाइव बुलेटिन</div>
+                <div class="tv-ticker-wrapper">
+                    <div class="tv-ticker-text" id="tvLiveTickerText">
+                        🏛️ सुमेरपुर नगर पालिका आम चुनाव 2026 लाइव कंट्रोल रूम | कुल 35 मतदान केंद्रों पर मतदान शांतिपूर्ण एवं निष्पक्ष जारी | मॉक पोल व 7:15 प्रारंभ समय पर संपन्न | समस्त व्यवस्थाएं चाक-चौबंद
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 7: RO ADMIN CONTROL PANEL ================= -->
+    <div id="view_admin" class="page-view">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-shield-halved" style="color:var(--warning);"></i> RO सुपर-एडमिनिस्ट्रेटर नियंत्रण कक्ष</h3>
+            </div>
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px; margin-bottom:24px;">
+                    <!-- 1. Emergency Time Unlock Switch -->
+                    <div style="background:#f8fafc; padding:18px; border-radius:10px; border:1px solid var(--border);">
+                        <h4 style="margin:0 0 8px 0; color:var(--primary);"><i class="fas fa-lock-open"></i> टाइम-लॉक ओवरराइड स्विच</h4>
+                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+                            आपातकालीन स्थिति में सभी ऑपरेटरों के लिए सभी समय स्लॉट अनलॉक करें।
+                        </p>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-success" onclick="toggleGlobalOverride(true)"><i class="fas fa-unlock"></i> ग्लोबल अनलॉक सक्षम करें</button>
+                            <button class="btn-secondary" onclick="toggleGlobalOverride(false)"><i class="fas fa-lock"></i> सामान्य ऑटो-लॉक बहाल करें</button>
+                        </div>
+                    </div>
+
+                    <!-- 2. Live Election Day Freeze Security Lock -->
+                    <div style="background:#f0fdf4; padding:18px; border-radius:10px; border:1px solid #bbf7d0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <h4 style="margin:0; color:#166534;"><i class="fas fa-shield-halved"></i> लाइव मतदान दिवस सुरक्षा लॉक</h4>
+                            <span id="adminResetLockBadge" class="status-badge badge-locked" style="font-size:11px;">सुरक्षा स्थिति</span>
+                        </div>
+                        <p style="font-size:12px; color:#166534; margin-bottom:14px;">
+                            लाइव मतदान दिवस पर किसी भी आकस्मिक अथवा अनाधिकृत डेटा रीसेट को पूर्ण रूप से ब्लॉक करने हेतु सुरक्षा लॉक लगाएं।
+                        </p>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn-primary" style="background:#15803d; border-color:#15803d;" onclick="promptToggleResetLock(true)">
+                                <i class="fas fa-lock"></i> 🛡️ लाइव लॉक लगाएं (Freeze Reset)
+                            </button>
+                            <button class="btn-secondary" style="border-color:#86efac; color:#166534;" onclick="promptToggleResetLock(false)">
+                                <i class="fas fa-lock-open"></i> 🔓 टेस्ट मोड हेतु अनलॉक करें
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 3. Database Rehearsal Reset (Multi-Factor Protected) -->
+                    <div style="background:#fef2f2; padding:18px; border-radius:10px; border:1px solid #fecaca;">
+                        <h4 style="margin:0 0 8px 0; color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> सुरक्षित रिहर्सल डेटा रीसेट (Danger Zone)</h4>
+                        <p style="font-size:12px; color:#991b1b; margin-bottom:14px;">
+                            केवल मॉक रिहर्सल के बाद वास्तविक मतदान शुरू होने से पूर्व। इसमें RO मास्टर पासवर्ड एवं पुष्टिकरण कोड अनिवार्य है।
+                        </p>
+                        <button id="btnOpenResetModal" class="btn-danger" onclick="openSecureResetModal()">
+                            <i class="fas fa-shield-halved"></i> 🔒 सुरक्षित डेटा रीसेट विंडो खोलें
+                        </button>
+                        <div id="resetLockedNotice" style="display:none; margin-top:8px; font-size:11.5px; color:#15803d; font-weight:bold;">
+                            🛡️ 'लाइव मतदान सुरक्षा लॉक' सक्रिय है — डेटा रीसेट पूरी तरह ब्लॉक है।
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registered Operators Table -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 10px 0;">
+                    <h4 style="margin:0; color:var(--primary);"><i class="fas fa-users-gear"></i> पंजीकृत ऑपरेटर एवं नोडल अधिकारी (Registered Personnel & Last Login)</h4>
+                    <button class="btn-secondary" style="font-size:12px; padding:5px 10px;" onclick="loadAdminUsersList()"><i class="fas fa-rotate"></i> रिफ्रेश</button>
+                </div>
+                <div class="table-responsive" style="margin-bottom:24px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>यूज़रनेम</th>
+                                <th style="text-align:left;">नाम</th>
+                                <th>पदनाम / विभाग</th>
+                                <th>मोबाइल</th>
+                                <th>अधिकार क्षेत्र (Role/Zone)</th>
+                                <th>पंजीयन समय</th>
+                                <th>अंतिम लॉगिन</th>
+                                <th>कार्रवाई (Actions)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUsersTbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Audit Logs Table -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:24px 0 12px 0; flex-wrap:wrap; gap:10px;">
+                    <h4 style="margin:0; color:var(--primary);"><i class="fas fa-history"></i> सिस्टम ऑडिट लॉग्स (Recent Activity - IST)</h4>
+                    <button onclick="renderAdminLogs()" class="btn-primary" style="padding:5px 12px; font-size:12px; background:#475569; border-color:#475569; display:inline-flex; align-items:center; gap:6px;">
+                        <i class="fas fa-rotate"></i> रीफ्रेश लॉग्स
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>समय (IST)</th>
+                                <th>उपयोगकर्ता</th>
+                                <th>क्रिया</th>
+                                <th>बूथ ID</th>
+                                <th style="text-align:left;">विवरण</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminLogsTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ================= DYNAMIC PRINTABLE PDF REPORT CONTAINER ================= -->
+<div id="printableReportArea">
+    <div class="pdf-header">
+        <h2>कार्यालय रिटर्निंग ऑफिसर (उपखण्ड मजिस्ट्रेट), सुमेरपुर</h2>
+        <h3>नगर पालिका आम चुनाव 2026 — मतदान दिवस प्रगति रिपोर्ट</h3>
+        <p><b id="pdfSlotHeading">10:00 AM मतदान प्रगति बुलेटिन</b> | सुमेरपुर, जिला पाली (राजस्थान)</p>
+    </div>
+
+    <table class="pdf-meta-table">
+        <tr>
+            <td><b>कुल वार्ड:</b> 35 (मतदान वाले: 34)</td>
+            <td><b>कुल मतदान केंद्र:</b> 36 (मतदान वाले: 35)</td>
+            <td><b>कुल मतदाता:</b> 30,529 (मतदान वाले: 29,696)</td>
+            <td><b>रिपोर्ट समय:</b> <span id="pdfGenTime">-</span></td>
+        </tr>
+        <tr>
+            <td colspan="2"><b>इस समय स्लॉट तक कुल डाले गए मत:</b> <span id="pdfTotalPolledSlot">-</span></td>
+            <td colspan="2"><b>इस समय स्लॉट तक कुल मतदान प्रतिशत:</b> <span id="pdfTotalPctSlot">-</span></td>
+        </tr>
+        <tr>
+            <td colspan="2"><b>सर्वाधिक मतदान केंद्र (High):</b> <span id="pdfHighBooth">-</span></td>
+            <td colspan="2"><b>न्यूनतम/धीमा मतदान केंद्र (Slow):</b> <span id="pdfLowBooth">-</span></td>
+        </tr>
+    </table>
+
+    <table class="pdf-data-table">
+        <thead>
+            <tr id="pdfTableHeaderRow"></tr>
+        </thead>
+        <tbody id="pdfTableBody"></tbody>
+        <tfoot id="pdfTableFoot"></tfoot>
+    </table>
+
+    <div class="pdf-footer-sign">
+        <div>
+            <p>हस्ताक्षर नोडल अधिकारी<br>सांख्यिकी प्रकोष्ठ / चुनाव कंट्रोल रूम</p>
+        </div>
+        <div style="text-align: right;">
+            <p>हस्ताक्षर रिटर्निंग ऑफिसर (SDM)<br>नगर पालिका सुमेरपुर, जिला पाली (राज.)</p>
+        </div>
+    </div>
+</div> <!-- Close printableReportArea -->
+
+<!-- ================= FULL RANKINGS MODAL DIALOG ================= -->
+<div id="rankingModal" class="modal-overlay" onclick="if(event.target===this) closeRankingsModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="rankingModalTitle"><i class="fas fa-ranking-star" style="color:var(--accent);"></i> मतदान केंद्र रैंकिंग विश्लेषण</h3>
+            <button class="btn-secondary" onclick="closeRankingsModal()" style="border:none; font-size:16px; cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div style="background:#f1f5f9; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+            <div style="display:flex; gap:8px;">
+                <button class="btn-primary" id="btnModalTabHigh" style="padding:6px 14px; font-size:12px;" onclick="renderRankingsModalList('high')">
+                    <i class="fas fa-arrow-trend-up"></i> सर्वाधिक मतदान केंद्र (High to Low)
+                </button>
+                <button class="btn-secondary" id="btnModalTabLow" style="padding:6px 14px; font-size:12px;" onclick="renderRankingsModalList('low')">
+                    <i class="fas fa-arrow-trend-down"></i> धीमे / न्यूनतम मतदान केंद्र (Low to High)
+                </button>
+            </div>
+            <span style="font-size:12px; color:var(--text-muted); font-weight:bold;">35 सक्रिय मतदान केंद्र</span>
+        </div>
+        <div class="modal-body">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width:6%;">रैंक</th>
+                            <th style="width:7%;">बूथ</th>
+                            <th style="width:7%;">जोन</th>
+                            <th style="width:7%;">वार्ड</th>
+                            <th style="text-align:left; width:35%;">मतदान केंद्र का नाम</th>
+                            <th style="width:10%;">डाले गए मत</th>
+                            <th style="width:10%;">कुल वोटर</th>
+                            <th style="width:10%;">मतदान %</th>
+                            <th style="text-align:left; width:18%;">प्रगणक / फोन</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rankingModalTbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= SECURE DATA RESET CONFIRMATION MODAL ================= -->
+<div id="secureResetModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeSecureResetModal()">
+    <div class="modal-box" style="max-width: 480px; border-top: 5px solid #dc2626;">
+        <div class="modal-header" style="background: #fef2f2; border-bottom: 1px solid #fecaca;">
+            <h3 style="color:#991b1b; margin:0; font-size:16px;">
+                <i class="fas fa-shield-halved" style="color:#dc2626;"></i> RO अधिकृत डेटा रीसेट प्रमाणीकरण
+            </h3>
+            <button class="btn-secondary" onclick="closeSecureResetModal()" style="border:none; background:transparent; font-size:18px; cursor:pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+            <div style="background: #fff1f2; border: 1px solid #fda4af; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #9f1239;">
+                <i class="fas fa-triangle-exclamation" style="font-size:14px; margin-right:4px;"></i>
+                <b>चेतावनी:</b> यह क्रिया सुमेरपुर नगर पालिका के सभी 35 सक्रिय मतदान केंद्रों के मतों (10AM, 1PM, 3PM, 6PM, कतार एवं फाइनल) को <b>शून्य (0)</b> कर देगी। यह केवल मॉक रिहर्सल हेतु है।
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">
+                    <i class="fas fa-user-shield"></i> RO यूज़रनेम (Master Username)
+                </label>
+                <input type="text" id="resetAuthRoUser" class="form-control" placeholder="ro_sumerpur" readonly style="background:#f8fafc; font-weight:bold;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">
+                    <i class="fas fa-key"></i> RO मास्टर पासवर्ड (Master Password) <span style="color:var(--danger);">*</span>
+                </label>
+                <input type="password" id="resetAuthRoPassword" class="form-control" placeholder="अपना RO पासवर्ड दर्ज करें" autofocus>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: bold; color: var(--text-main);">
+                    <i class="fas fa-terminal"></i> पुष्टिकरण कोड दर्ज करें: <code style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px;">RESET_SUMERPUR_2026</code> <span style="color:var(--danger);">*</span>
+                </label>
+                <input type="text" id="resetAuthConfirmCode" class="form-control" placeholder="RESET_SUMERPUR_2026" style="text-transform: uppercase;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-danger" style="flex: 1; padding: 11px; font-size: 13px;" onclick="executeSecureDatabaseReset()">
+                    <i class="fas fa-trash-can"></i> रीसेट की पुष्टि करें एवं मिटाएं
+                </button>
+                <button class="btn-secondary" style="flex: 1; padding: 11px; font-size: 13px;" onclick="closeSecureResetModal()">
+                    <i class="fas fa-times"></i> रद्द करें
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Alert -->
+<div id="toast">संदेश</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

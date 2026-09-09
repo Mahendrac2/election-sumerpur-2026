@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>शासकीय मतदान प्रगति रिपोर्ट | नगर पालिका सुमेरपुर 2026</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { margin: 0; padding: 20px; background: #f1f5f9; color: #1e293b; font-size: 12px; }
+
+        /* Floating Action Bar on Screen */
+        .action-bar {
+            max-width: 1000px; margin: 0 auto 20px auto; background: #0a2540; color: white;
+            padding: 12px 20px; border-radius: 10px; display: flex; justify-content: space-between;
+            align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.15); flex-wrap: wrap; gap: 10px;
+        }
+        .action-bar select {
+            padding: 7px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600;
+        }
+        .btn-action {
+            background: #e11d48; color: white; border: none; padding: 8px 16px; border-radius: 6px;
+            font-size: 13px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 6px; text-decoration: none; transition: background 0.2s;
+        }
+        .btn-action:hover { background: #be123c; }
+        .btn-secondary {
+            background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25);
+            padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+
+        /* Sheet Layout (A4 formatted) */
+        .report-sheet {
+            max-width: 1000px; margin: 0 auto; background: white; padding: 30px 40px;
+            border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); min-height: 800px;
+        }
+
+        .pdf-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 12px; }
+        .pdf-header h2 { margin: 0 0 4px 0; font-size: 18px; text-transform: uppercase; color: #000; letter-spacing: 0.5px; }
+        .pdf-header h3 { margin: 0 0 4px 0; font-size: 14px; color: #111; }
+        .pdf-header p { margin: 0; font-size: 12px; color: #333; }
+
+        .pdf-meta-table { width: 100%; margin-bottom: 14px; font-size: 11.5px; border: 1px solid #333; border-collapse: collapse; }
+        .pdf-meta-table td { padding: 5px 8px; border: 1px solid #333; }
+
+        .pdf-data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .pdf-data-table th, .pdf-data-table td { border: 1px solid #444; padding: 5px 4px; text-align: center; }
+        .pdf-data-table th { background-color: #f1f5f9 !important; color: #000; font-weight: bold; }
+        .pdf-data-table tr.nirvirodh-row { background-color: #fdf4ff !important; color: #701a75; font-weight: bold; }
+
+        .pdf-footer-sign {
+            display: flex; justify-content: space-between; margin-top: 40px; padding: 0 20px;
+            font-weight: bold; font-size: 11.5px; line-height: 1.6;
+        }
+
+        /* Print Media Styles */
+        @media print {
+            body { background: white !important; padding: 0 !important; color: black !important; font-size: 10.5px; }
+            .action-bar { display: none !important; }
+            .report-sheet { box-shadow: none !important; border-radius: 0 !important; padding: 5px 0 !important; max-width: 100% !important; }
+            .pdf-header h2 { font-size: 16px; }
+            .pdf-header h3 { font-size: 13px; }
+            .pdf-data-table { font-size: 10px; }
+            .pdf-data-table th { background-color: #eaeaea !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .pdf-footer-sign { margin-top: 35px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Floating Action Bar (Hidden in Print) -->
+<div class="action-bar">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <span style="font-weight:bold; font-size:14px;"><i class="fas fa-file-invoice" style="color:#ff6b35;"></i> रिपोर्ट्स:</span>
+        <select id="reportSlotSelect" onchange="changeReportSlot(this.value)">
+            <option value="10">10:00 AM मतदान बुलेटिन (Slot 1)</option>
+            <option value="13">01:00 PM मतदान बुलेटिन (Slot 2)</option>
+            <option value="15">03:00 PM मतदान बुलेटिन (Slot 3)</option>
+            <option value="18">06:00 PM मतदान बुलेटिन (Slot 4)</option>
+            <option value="Queue">06:00 PM पर कतारबद्ध मतदाता रिपोर्ट</option>
+            <option value="Final">अंतिम क्लोजिंग मतदान रिपोर्ट (Final Turnout)</option>
+            <option value="ALL">समस्त स्लॉट्स मास्टर रिपोर्ट (Comprehensive)</option>
+            <option value="Magistrate">बूथ-वार एरिया मजिस्ट्रेट, जोनल मजिस्ट्रेट एवं प्रगणक रिपोर्ट</option>
+        </select>
+        <button class="btn-secondary" onclick="loadReportData()"><i class="fas fa-rotate"></i> रिफ्रेश</button>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <button class="btn-action" onclick="window.print()"><i class="fas fa-print"></i> प्रिंट करें / PDF सेव करें</button>
+        <button class="btn-secondary" onclick="window.close()"><i class="fas fa-xmark"></i> टैब बंद करें</button>
+    </div>
+</div>
+
+<!-- Formatted Printable Report Sheet -->
+<div class="report-sheet">
+    <div class="pdf-header">
+        <h2>कार्यालय रिटर्निंग ऑफिसर (उपखण्ड मजिस्ट्रेट), सुमेरपुर</h2>
+        <h3>नगर पालिका आम चुनाव 2026 — मतदान दिवस प्रगति रिपोर्ट</h3>
+        <p><b id="sheetSlotHeading">10:00 AM मतदान प्रगति बुलेटिन</b> | सुमेरपुर, जिला पाली (राजस्थान)</p>
+    </div>
+
+    <table class="pdf-meta-table">
+        <tr>
+            <td style="width:25%;"><b>कुल वार्ड:</b> 35 (मतदान वाले: 34)</td>
+            <td style="width:25%;"><b>कुल मतदान केंद्र:</b> 36 (मतदान वाले: 35)</td>
+            <td style="width:25%;"><b>कुल मतदाता:</b> 30,529 (मतदान वाले: 29,696)</td>
+            <td style="width:25%;"><b>रिपोर्ट समय:</b> <span id="sheetGenTime">-</span></td>
+        </tr>
+        <tr id="sheetMetaRowTurnout">
+            <td colspan="2"><b>इस समय स्लॉट तक कुल डाले गए मत:</b> <span id="sheetTotalVotes" style="font-weight:bold;">-</span></td>
+            <td colspan="2"><b>इस समय स्लॉट तक कुल मतदान प्रतिशत:</b> <span id="sheetTotalPct" style="font-weight:bold;">-</span></td>
+        </tr>
+        <tr id="sheetMetaRowHighlights">
+            <td colspan="2"><b>सर्वाधिक मतदान केंद्र (High):</b> <span id="sheetHighBooth">-</span></td>
+            <td colspan="2"><b>धीमा/न्यूनतम मतदान केंद्र (Slow):</b> <span id="sheetLowBooth">-</span></td>
+        </tr>
+        <tr id="sheetMetaRowAdmin" style="display:none; background:#f8fafc;">
+            <td colspan="2"><b>प्रशासनिक नियंत्रण:</b> 6 ज़ोन मुख्यालय | 2 एरिया मजिस्ट्रेट</td>
+            <td colspan="2"><b>क्षेत्रीय पर्यवेक्षण:</b> 6 जोनल मजिस्ट्रेट | 36 प्रगणक / बूथ प्रभारी</td>
+        </tr>
+    </table>
+
+    <table class="pdf-data-table">
+        <thead>
+            <tr id="sheetTableHeaderRow"></tr>
+        </thead>
+        <tbody id="sheetTableBody"></tbody>
+        <tfoot id="sheetTableFoot"></tfoot>
+    </table>
+
+    <div class="pdf-footer-sign">
+        <div>
+            <p>हस्ताक्षर नोडल अधिकारी<br>सांख्यिकी प्रकोष्ठ / चुनाव कंट्रोल रूम<br>नगर पालिका सुमेरपुर (पाली)</p>
+        </div>
+        <div style="text-align: right;">
+            <p>हस्ताक्षर रिटर्निंग ऑफिसर (SDM)<br>नगर पालिका सुमेरपुर<br>जिला पाली (राजस्थान)</p>
+        </div>
+    </div>
+</div>
+
+<script>
+let reportData = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const slot = urlParams.get('slot') || '10';
+    document.getElementById("reportSlotSelect").value = slot;
+    loadReportData();
+});
+
+function changeReportSlot(val) {
+    const url = new URL(window.location);
+    url.searchParams.set('slot', val);
+    window.history.replaceState({}, '', url);
+    renderReportSheet();
+}
+
+async function loadReportData() {
+    try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        if (data.success) {
+            reportData = data;
+            renderReportSheet();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('print') === '1') {
+                setTimeout(() => { window.print(); }, 400);
+            }
+        }
+    } catch(e) {
+        alert("डेटा लोड करने में त्रुटि!");
+    }
+}
+
+function renderReportSheet() {
+    if (!reportData) return;
+    const selectedSlot = document.getElementById("reportSlotSelect").value;
+    const headingEl = document.getElementById("sheetSlotHeading");
+    const theadTr = document.getElementById("sheetTableHeaderRow");
+    const tbody = document.getElementById("sheetTableBody");
+    const tfoot = document.getElementById("sheetTableFoot");
+
+    tbody.innerHTML = "";
+    tfoot.innerHTML = "";
+
+    const now = new Date();
+    document.getElementById("sheetGenTime").innerText = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + " (" + now.toLocaleDateString('en-IN') + ")";
+
+    let slotTitle = "";
+    let slotKey = "";
+
+    if (selectedSlot === "10") {
+        slotTitle = "10:00 AM मतदान प्रगति बुलेटिन (Slot 1)";
+        slotKey = "v10";
+    } else if (selectedSlot === "13") {
+        slotTitle = "01:00 PM मतदान प्रगति बुलेटिन (Slot 2)";
+        slotKey = "v13";
+    } else if (selectedSlot === "15") {
+        slotTitle = "03:00 PM मतदान प्रगति बुलेटिन (Slot 3)";
+        slotKey = "v15";
+    } else if (selectedSlot === "18") {
+        slotTitle = "06:00 PM मतदान प्रगति बुलेटिन (Slot 4)";
+        slotKey = "v18";
+    } else if (selectedSlot === "Queue") {
+        slotTitle = "06:00 PM पर कतारबद्ध मतदाता रिपोर्ट";
+        slotKey = "v_queue";
+    } else if (selectedSlot === "Final") {
+        slotTitle = "अंतिम मतदान क्लोजिंग रिपोर्ट (Final Turnout)";
+        slotKey = "v_final";
+    } else if (selectedSlot === "Magistrate") {
+        slotTitle = "बूथ-वार एरिया मजिस्ट्रेट, जोनल मजिस्ट्रेट एवं प्रगणक डायरेक्टरी रिपोर्ट";
+        slotKey = "Magistrate";
+    } else {
+        slotTitle = "समस्त समय स्लॉट्स व जोनल समेकित रिपोर्ट (Master Comprehensive)";
+        slotKey = "ALL";
+    }
+
+    headingEl.innerText = slotTitle;
+    document.title = slotTitle + " - सुमेरपुर चुनाव 2026";
+
+    const votingElectors = 29696;
+    let slotTotalVotes = 0;
+
+    const metaTurnout = document.getElementById("sheetMetaRowTurnout");
+    const metaHighLow = document.getElementById("sheetMetaRowHighlights");
+    const metaAdmin = document.getElementById("sheetMetaRowAdmin");
+
+    if (slotKey === "Magistrate") {
+        if (metaTurnout) metaTurnout.style.display = "none";
+        if (metaHighLow) metaHighLow.style.display = "none";
+        if (metaAdmin) metaAdmin.style.display = "table-row";
+
+        theadTr.innerHTML = `
+            <th style="width:5%;">बूथ</th>
+            <th style="width:5%;">जोन</th>
+            <th style="width:5%;">वार्ड</th>
+            <th style="text-align:left; width:25%;">मतदान केंद्र का नाम व भवन</th>
+            <th style="width:6%;">वोटर</th>
+            <th style="text-align:left; width:18%;">एरिया मजिस्ट्रेट</th>
+            <th style="text-align:left; width:18%;">जोनल मजिस्ट्रेट व HQ</th>
+            <th style="text-align:left; width:18%;">प्रगणक / बूथ प्रभारी</th>
+        `;
+
+        let totalElectorsSum = 0;
+        reportData.booths.forEach(r => {
+            totalElectorsSum += r.electors;
+            const zm = (reportData.zones && reportData.zones[r.zone]) ? reportData.zones[r.zone] : {};
+            const areaInfo = zm.area || "-";
+            const zonalInfo = zm.zonal || "-";
+            const hqInfo = zm.hq ? `<br><small style="color:#64748b;"><b>मुख्यालय:</b> ${zm.hq}</small>` : "";
+            const nirvTag = r.is_nirvirodh ? `<br><span style="color:#701a75; font-size:10px; font-weight:bold;">(वार्ड 26 निर्विरोध)</span>` : "";
+
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><b>${r.id}</b></td>
+                <td>जोन ${r.zone}</td>
+                <td>वार्ड ${r.ward}</td>
+                <td style="text-align:left;"><b>${r.name}</b>${nirvTag}</td>
+                <td>${r.electors.toLocaleString('hi-IN')}</td>
+                <td style="text-align:left; font-size:10.5px;">${areaInfo}</td>
+                <td style="text-align:left; font-size:10.5px;">${zonalInfo}${hqInfo}</td>
+                <td style="text-align:left; font-size:10.5px;"><b>${r.praganak_name || '-'}</b><br><i class="fas fa-phone" style="color:#0284c7; font-size:9.5px;"></i> ${r.praganak_mob || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        tfoot.innerHTML = `
+            <tr style="font-weight:bold; background:#eaeaea;">
+                <td colspan="4" style="text-align:center;">कुल महायोग (समस्त 6 जोन)</td>
+                <td>${totalElectorsSum.toLocaleString('hi-IN')}</td>
+                <td style="text-align:left;">2 एरिया मजिस्ट्रेट</td>
+                <td style="text-align:left;">6 जोनल मजिस्ट्रेट (6 मुख्यालय)</td>
+                <td style="text-align:left;">36 प्रगणक / बूथ प्रभारी</td>
+            </tr>
+        `;
+        return;
+    } else {
+        if (metaTurnout) metaTurnout.style.display = "table-row";
+        if (metaHighLow) metaHighLow.style.display = "table-row";
+        if (metaAdmin) metaAdmin.style.display = "none";
+    }
+
+    let pdfHi = null, pdfLo = null, hiP = -1, loP = 999;
+    reportData.booths.forEach(b => {
+        if (!b.is_nirvirodh) {
+            let v = Number(b[slotKey==='ALL'?'v_final':slotKey]) || 0;
+            let p = (v / b.electors) * 100;
+            if (p > hiP) { hiP = p; pdfHi = `बूथ ${b.id} (${p.toFixed(2)}%)`; }
+            if (p < loP) { loP = p; pdfLo = `बूथ ${b.id} (${p.toFixed(2)}%)`; }
+        }
+    });
+
+    document.getElementById("sheetHighBooth").innerText = pdfHi || "-";
+    document.getElementById("sheetLowBooth").innerText = pdfLo || "-";
+
+    if (slotKey !== "ALL") {
+        theadTr.innerHTML = `
+            <th style="width:6%;">बूथ</th>
+            <th style="width:7%;">जोन</th>
+            <th style="width:7%;">वार्ड</th>
+            <th style="text-align:left; width:38%;">मतदान केंद्र का नाम व भवन</th>
+            <th style="width:9%;">कुल मतदाता</th>
+            <th style="width:11%;">${selectedSlot === 'Queue' ? '06:00 PM कतारबद्ध' : 'दर्ज मतदान'}</th>
+            <th style="width:9%;">प्रतिशत (%)</th>
+            <th style="text-align:left; width:13%;">प्रगणक / फोन</th>
+        `;
+
+        reportData.booths.forEach(r => {
+            if (r.is_nirvirodh) {
+                let tr = document.createElement("tr");
+                tr.className = "nirvirodh-row";
+                tr.innerHTML = `
+                    <td><b>${r.id}</b></td>
+                    <td>जोन ${r.zone}</td>
+                    <td>वार्ड ${r.ward}</td>
+                    <td style="text-align:left;">${r.name}</td>
+                    <td>${r.electors}</td>
+                    <td colspan="3" style="font-weight:bold;color:#701a75;">वार्ड 26 निर्विरोध निर्वाचित (No Election)</td>
+                `;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            let votes = Number(r[slotKey]) || 0;
+            slotTotalVotes += votes;
+            let pct = ((votes / r.electors) * 100).toFixed(2);
+
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><b>${r.id}</b></td>
+                <td>जोन ${r.zone}</td>
+                <td>वार्ड ${r.ward}</td>
+                <td style="text-align:left;">${r.name}</td>
+                <td>${r.electors}</td>
+                <td><b>${votes || '0'}</b></td>
+                <td><b>${pct}%</b></td>
+                <td style="text-align:left;font-size:9.5px;">${r.praganak_name}<br>${r.praganak_mob}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        let overallSlotPct = ((slotTotalVotes / votingElectors) * 100).toFixed(2);
+        document.getElementById("sheetTotalVotes").innerText = slotTotalVotes.toLocaleString('hi-IN') + " मत";
+        document.getElementById("sheetTotalPct").innerText = overallSlotPct + "%";
+
+        tfoot.innerHTML = `
+            <tr style="font-weight:bold; background:#eaeaea;">
+                <td colspan="4" style="text-align:center;">कुल महायोग (35 मतदान बूथ)</td>
+                <td>29,696</td>
+                <td><b>${slotTotalVotes.toLocaleString('hi-IN')}</b></td>
+                <td><b>${overallSlotPct}%</b></td>
+                <td>-</td>
+            </tr>
+        `;
+    } else {
+        theadTr.innerHTML = `
+            <th>बूथ</th>
+            <th>जोन</th>
+            <th>वार्ड</th>
+            <th style="text-align:left;">मतदान केंद्र का नाम</th>
+            <th>वोटर</th>
+            <th>10 AM</th>
+            <th>01 PM</th>
+            <th>03 PM</th>
+            <th>06 PM</th>
+            <th>अंतिम मत</th>
+            <th>%</th>
+        `;
+
+        let s10 = 0, s13 = 0, s15 = 0, s18 = 0, sFin = 0;
+        reportData.booths.forEach(r => {
+            if (r.is_nirvirodh) {
+                let tr = document.createElement("tr");
+                tr.className = "nirvirodh-row";
+                tr.innerHTML = `
+                    <td><b>${r.id}</b></td>
+                    <td>जोन ${r.zone}</td>
+                    <td>वार्ड ${r.ward}</td>
+                    <td style="text-align:left;">${r.name}</td>
+                    <td>${r.electors}</td>
+                    <td colspan="6" style="font-weight:bold;color:#701a75;">वार्ड 26 निर्विरोध निर्वाचित (No Election)</td>
+                `;
+                tbody.appendChild(tr);
+                return;
+            }
+
+            s10 += Number(r.v10) || 0;
+            s13 += Number(r.v13) || 0;
+            s15 += Number(r.v15) || 0;
+            s18 += Number(r.v18) || 0;
+            sFin += Number(r.v_final) || 0;
+
+            let latest = Number(r.v_final || r.v18 || r.v15 || r.v13 || r.v10 || 0);
+            slotTotalVotes += latest;
+            let pct = ((latest / r.electors) * 100).toFixed(2);
+
+            let tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${r.id}</td>
+                <td>जोन ${r.zone}</td>
+                <td>${r.ward}</td>
+                <td style="text-align:left;">${r.name}</td>
+                <td>${r.electors}</td>
+                <td>${r.v10 || '0'}</td>
+                <td>${r.v13 || '0'}</td>
+                <td>${r.v15 || '0'}</td>
+                <td>${r.v18 || '0'}</td>
+                <td><b>${r.v_final || '0'}</b></td>
+                <td><b>${pct}%</b></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        let overallSlotPct = ((slotTotalVotes / votingElectors) * 100).toFixed(2);
+        document.getElementById("sheetTotalVotes").innerText = slotTotalVotes.toLocaleString('hi-IN') + " मत";
+        document.getElementById("sheetTotalPct").innerText = overallSlotPct + "%";
+
+        tfoot.innerHTML = `
+            <tr style="font-weight:bold; background:#eaeaea;">
+                <td colspan="4" style="text-align:center;">कुल महायोग</td>
+                <td>29,696</td>
+                <td>${s10}</td>
+                <td>${s13}</td>
+                <td>${s15}</td>
+                <td>${s18}</td>
+                <td>${sFin}</td>
+                <td><b>${overallSlotPct}%</b></td>
+            </tr>
+        `;
+    }
+}
+</script>
+</body>
+</html>
