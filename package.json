@@ -1,8 +1,8 @@
 {
   "name": "election",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sumerpur Municipal Election 2026 Control Room Portal",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
