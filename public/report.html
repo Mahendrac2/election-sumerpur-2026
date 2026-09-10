@@ -220,7 +220,8 @@ function renderReportSheet() {
     headingEl.innerText = slotTitle;
     document.title = slotTitle + " - सुमेरपुर चुनाव 2026";
 
-    const votingElectors = 29696;
+    const votingElectors = (reportData.kpi && reportData.kpi.votingElectors) ? reportData.kpi.votingElectors : 29757;
+    const totalElectors = (reportData.kpi && reportData.kpi.totalElectors) ? reportData.kpi.totalElectors : 30598;
     let slotTotalVotes = 0;
 
     const metaTurnout = document.getElementById("sheetMetaRowTurnout");
@@ -286,7 +287,7 @@ function renderReportSheet() {
     reportData.booths.forEach(b => {
         if (!b.is_nirvirodh) {
             let v = Number(b[slotKey==='ALL'?'v_final':slotKey]) || 0;
-            let p = (v / b.electors) * 100;
+            let p = b.electors > 0 ? (v / b.electors) * 100 : 0;
             if (p > hiP) { hiP = p; pdfHi = `बूथ ${b.id} (${p.toFixed(2)}%)`; }
             if (p < loP) { loP = p; pdfLo = `बूथ ${b.id} (${p.toFixed(2)}%)`; }
         }
@@ -325,7 +326,7 @@ function renderReportSheet() {
 
             let votes = Number(r[slotKey]) || 0;
             slotTotalVotes += votes;
-            let pct = ((votes / r.electors) * 100).toFixed(2);
+            let pct = r.electors > 0 ? ((votes / r.electors) * 100).toFixed(2) : 0;
 
             let tr = document.createElement("tr");
             tr.innerHTML = `
@@ -341,14 +342,14 @@ function renderReportSheet() {
             tbody.appendChild(tr);
         });
 
-        let overallSlotPct = ((slotTotalVotes / votingElectors) * 100).toFixed(2);
+        let overallSlotPct = votingElectors > 0 ? ((slotTotalVotes / votingElectors) * 100).toFixed(2) : 0;
         document.getElementById("sheetTotalVotes").innerText = slotTotalVotes.toLocaleString('hi-IN') + " मत";
         document.getElementById("sheetTotalPct").innerText = overallSlotPct + "%";
 
         tfoot.innerHTML = `
             <tr style="font-weight:bold; background:#eaeaea;">
                 <td colspan="4" style="text-align:center;">कुल महायोग (35 मतदान बूथ)</td>
-                <td>29,696</td>
+                <td>${votingElectors.toLocaleString('hi-IN')}</td>
                 <td><b>${slotTotalVotes.toLocaleString('hi-IN')}</b></td>
                 <td><b>${overallSlotPct}%</b></td>
                 <td>-</td>
@@ -394,7 +395,7 @@ function renderReportSheet() {
 
             let latest = Number(r.v_final || r.v18 || r.v15 || r.v13 || r.v10 || 0);
             slotTotalVotes += latest;
-            let pct = ((latest / r.electors) * 100).toFixed(2);
+            let pct = r.electors > 0 ? ((latest / r.electors) * 100).toFixed(2) : 0;
 
             let tr = document.createElement("tr");
             tr.innerHTML = `
@@ -413,14 +414,14 @@ function renderReportSheet() {
             tbody.appendChild(tr);
         });
 
-        let overallSlotPct = ((slotTotalVotes / votingElectors) * 100).toFixed(2);
+        let overallSlotPct = votingElectors > 0 ? ((slotTotalVotes / votingElectors) * 100).toFixed(2) : 0;
         document.getElementById("sheetTotalVotes").innerText = slotTotalVotes.toLocaleString('hi-IN') + " मत";
         document.getElementById("sheetTotalPct").innerText = overallSlotPct + "%";
 
         tfoot.innerHTML = `
             <tr style="font-weight:bold; background:#eaeaea;">
                 <td colspan="4" style="text-align:center;">कुल महायोग</td>
-                <td>29,696</td>
+                <td>${votingElectors.toLocaleString('hi-IN')}</td>
                 <td>${s10}</td>
                 <td>${s13}</td>
                 <td>${s15}</td>
