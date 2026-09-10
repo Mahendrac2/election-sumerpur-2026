@@ -5,16 +5,16 @@ let currentTab = 'dashboard';
 let simulatedMinutes = null;
 let turnoutChart = null;
 
-// Time Windows Config (Minutes from Midnight)
+// Time Windows Config (Minutes from Midnight) - Progressive Election Windows
 const timeWindows = {
-    mock:    { start: 390,  end: 435,  name: "Mock Poll (07:00 AM)", input: "inpMock",    badge: "badgeMock" },
-    started: { start: 435,  end: 465,  name: "07:15 AM Start",       input: "inpStarted", badge: "badgeStarted" },
-    v10:     { start: 600,  end: 630,  name: "10:00 AM Slot",        input: "inpV10",     badge: "badge10" },
-    v13:     { start: 780,  end: 810,  name: "01:00 PM Slot",        input: "inpV13",     badge: "badge13" },
-    v15:     { start: 900,  end: 930,  name: "03:00 PM Slot",        input: "inpV15",     badge: "badge15" },
-    v18:     { start: 1080, end: 1110, name: "06:00 PM Slot",        input: "inpV18",     badge: "badge18" },
-    vQueue:  { start: 1080, end: 1130, name: "6 PM Queue (Gate)",    input: "inpQueue",   badge: "badgeQueue" },
-    vFinal:  { start: 1110, end: 1440, name: "Final Closing",        input: "inpVFinal",  badge: "badgeFinal" }
+    mock:    { start: 390,  name: "Mock Poll (06:30 AM)",   input: "inpMock",    badge: "badgeMock" },
+    started: { start: 435,  name: "07:15 AM मतदान प्रारंभ", input: "inpStarted", badge: "badgeStarted" },
+    v10:     { start: 600,  name: "10:00 AM स्लॉट",        input: "inpV10",     badge: "badge10" },
+    v13:     { start: 780,  name: "01:00 PM स्लॉट",        input: "inpV13",     badge: "badge13" },
+    v15:     { start: 900,  name: "03:00 PM स्लॉट",        input: "inpV15",     badge: "badge15" },
+    v18:     { start: 1080, name: "06:00 PM स्लॉट",        input: "inpV18",     badge: "badge18" },
+    vQueue:  { start: 1080, name: "6:00 PM कतारबद्ध मत",   input: "inpQueue",   badge: "badgeQueue" },
+    vFinal:  { start: 1080, name: "अंतिम क्लोजिंग मत",     input: "inpVFinal",  badge: "badgeFinal" }
 };
 
 // Robust helper to parse SQLite UTC timestamps into accurate Indian Standard Time (IST) Date
@@ -1539,33 +1539,39 @@ function applyStrictTimeLocks() {
     const globalOverride = portalData && portalData.config && portalData.config.global_override === "true";
     const statusBanner = document.getElementById("activeSlotStatusBanner");
 
-    let activeSlotName = "कोई स्लॉट सक्रिय नहीं (Locked)";
-
     // Always ensure Mock Poll and 7:15 Poll Start dropdowns are enabled for operator selection
     document.querySelectorAll('[id^="mock_"], [id^="started_"]').forEach(el => {
         el.disabled = false;
         el.classList.remove('input-locked-mock');
     });
 
-    // Identify current active slot for status banner
-    for (const key in timeWindows) {
-        const slot = timeWindows[key];
-        const isCurrentlyOpen = (currentMins >= slot.start && currentMins <= slot.end);
-        if (isRO || globalOverride) {
-            activeSlotName = "RO मास्टर / रिहर्सल मोड (सभी स्लॉट अनलॉक)";
-        } else if (isCurrentlyOpen) {
-            const remaining = slot.end - currentMins;
-            activeSlotName = `${slot.name} खुला (${remaining} मिनट शेष)`;
-        }
+    // Determine current primary active slot for banner display
+    let activeSlotName = "मतदान प्रारंभ प्रतीक्षारत";
+    if (isRO || globalOverride) {
+        activeSlotName = "RO मास्टर / रिहर्सल मोड (सभी स्लॉट अनलॉक)";
+    } else if (currentMins >= 1080) {
+        activeSlotName = "06:00 PM एवं अंतिम क्लोजिंग स्लॉट सक्रिय (अनलॉक)";
+    } else if (currentMins >= 900) {
+        activeSlotName = "03:00 PM स्लॉट सक्रिय (03:00 PM तक के सभी स्लॉट खुले)";
+    } else if (currentMins >= 780) {
+        activeSlotName = "01:00 PM स्लॉट सक्रिय (01:00 PM तक के सभी स्लॉट खुले)";
+    } else if (currentMins >= 600) {
+        activeSlotName = "10:00 AM स्लॉट सक्रिय (10:00 AM स्लॉट खुला)";
+    } else if (currentMins >= 435) {
+        activeSlotName = "07:15 AM मतदान प्रारंभ स्लॉट सक्रिय";
+    } else if (currentMins >= 390) {
+        activeSlotName = "06:30 AM मॉक पोल स्लॉट सक्रिय";
     }
 
-    // Only apply time-window and prerequisite locks to VOTING input slots
+    // Voting input slot keys
     const voteSlotKeys = ['v10', 'v13', 'v15', 'v18', 'vQueue', 'vFinal'];
 
     voteSlotKeys.forEach(key => {
         const slot = timeWindows[key];
         if (!slot) return;
-        const isCurrentlyOpen = (currentMins >= slot.start && currentMins <= slot.end);
+
+        // Progressive logic: slot is open if current time has reached its start time
+        const isSlotTimeReached = (currentMins >= slot.start);
 
         const inputs = document.querySelectorAll(`.slot-${key}`);
         inputs.forEach(el => {
@@ -1588,15 +1594,19 @@ function applyStrictTimeLocks() {
                 el.title = '';
             }
 
-            if (isRO || globalOverride) {
+            // Once the time arrives (e.g. 6 PM for final/queue), it stays permanently open throughout the night!
+            if (isRO || globalOverride || isSlotTimeReached) {
                 el.disabled = false;
-                el.classList.remove("active-field");
-            } else if (isCurrentlyOpen) {
-                el.disabled = false;
-                el.classList.add("active-field");
+                if (key === 'vFinal' || key === 'vQueue' || isCurrentlyActiveSlot(key, currentMins)) {
+                    el.classList.add("active-field");
+                } else {
+                    el.classList.remove("active-field");
+                }
             } else {
+                // Future slot not yet reached
                 el.disabled = true;
                 el.classList.remove("active-field");
+                el.title = `🔒 यह स्लॉट निर्धारित समय (${slot.name}) पर खुलेगा।`;
             }
         });
     });
@@ -1605,6 +1615,14 @@ function applyStrictTimeLocks() {
         statusBanner.className = isRO || globalOverride ? "status-badge badge-active" : "status-badge badge-ok";
         statusBanner.innerHTML = `<i class="fas fa-clock"></i> ${activeSlotName}`;
     }
+}
+
+function isCurrentlyActiveSlot(key, mins) {
+    if (key === 'v10') return mins >= 600 && mins < 780;
+    if (key === 'v13') return mins >= 780 && mins < 900;
+    if (key === 'v15') return mins >= 900 && mins < 1080;
+    if (key === 'v18' || key === 'vQueue' || key === 'vFinal') return mins >= 1080;
+    return false;
 }
 
 // Save Single Booth from Zone Spreadsheet
