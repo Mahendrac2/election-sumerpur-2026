@@ -56,44 +56,44 @@ const zonesMaster = {
     }
 };
 
-// 36 Booths Master Data with Zone, Ward, Elector, and Official in charge
+// 36 Booths Master Data with Ward, Part, Male, Female, TG and Total Electors
 const masterBooths = [
-  { b: 1,  z: 1, w: 1,  name: "रा.उ.प्रा.वि., संजय नगर (भाग 1)", el: 851, op: "OP1", pName: "श्री रामस्वरूप छाबा (अध्यापक)", pMob: "9680355685" },
-  { b: 2,  z: 1, w: 1,  name: "रा.व.उ. संस्कृत वि., संजय नगर (भाग 2)", el: 960, op: "OP1", pName: "श्री गणेश राम (सहा. प्रशा. अधि.)", pMob: "8560055330" },
-  { b: 3,  z: 1, w: 2,  name: "रा.प्रा.वि., विवेकानन्द नगर", el: 595, op: "OP1", pName: "श्री अंकित चतुर्वेदी (अध्यापक)", pMob: "7891826768" },
-  { b: 4,  z: 1, w: 3,  name: "महाराणा प्रताप गाडोलिया लौहार सभा भवन", el: 861, op: "OP1", pName: "श्री नारायण लाल लखारा (वरिष्ठ सहायक)", pMob: "7742526889" },
-  { b: 5,  z: 1, w: 4,  name: "सामुदायिक भवन, तहसील के पीछे", el: 369, op: "OP1", pName: "श्री दिलीप सिंह (प्रयोगशाला सहायक)", pMob: "9680003880" },
-  { b: 6,  z: 2, w: 5,  name: "पीएम श्री रा.उ.मा.वि. (दाया भाग)", el: 893, op: "OP2", pName: "श्री फूजाराम (पर्यवेक्षक)", pMob: "7073956394" },
-  { b: 7,  z: 1, w: 6,  name: "डॉ. अम्बेडकर सामुदायिक भवन, हाथी गडा", el: 1134, op: "OP1", pName: "श्री महेन्द्र सिंह राठौड़ (कनिष्ठ सहायक)", pMob: "9983114557" },
-  { b: 8,  z: 1, w: 7,  name: "रा.उ.प्रा.वि. नं.3 नया भवन उषापुरी गेट", el: 972, op: "OP1", pName: "श्री करणसिंह देवड़ा (वरिष्ठ सहायक)", pMob: "7742689419" },
-  { b: 9,  z: 1, w: 8,  name: "रैन बसेरा भवन बाईपास रोड (बायां भाग)", el: 1032, op: "OP1", pName: "श्री हिमांशु (कनिष्ठ लिपिक)", pMob: "9971893668" },
-  { b: 10, z: 4, w: 9,  name: "रैन बसेरा भवन बाईपास रोड (दायां भाग)", el: 780, op: "OP4", pName: "श्री अशोक कुमार माली (कनिष्ठ लिपिक)", pMob: "8441067097" },
-  { b: 11, z: 4, w: 10, name: "रा.उ.प्रा.वि. नं.2 (बांया भाग)", el: 805, op: "OP4", pName: "श्री योगेश गर्ग (वरिष्ठ सहायक)", pMob: "7073373171" },
-  { b: 12, z: 2, w: 11, name: "रा.उ.प्रा.वि. नं.2 (दांया भाग)", el: 860, op: "OP2", pName: "श्री भरत कुमार (वरिष्ठ प्रबोधक)", pMob: "7791893959" },
-  { b: 13, z: 2, w: 12, name: "कार्यालय CBEO जवाई बांध रोड़ (बायां)", el: 820, op: "OP2", pName: "श्री शंभु कुमार (कनिष्ठ लिपिक)", pMob: "9983946132" },
-  { b: 14, z: 2, w: 13, name: "कार्यालय CBEO जवाई बांध रोड़ (दायां)", el: 966, op: "OP2", pName: "श्री भीखाराम (पर्यवेक्षक)", pMob: "9079852688" },
-  { b: 15, z: 2, w: 14, name: "रा.बा.उ.मा.वि., कमरा नं. 2", el: 807, op: "OP2", pName: "श्री नरेश परमार (अध्यापक)", pMob: "8107286454" },
-  { b: 16, z: 2, w: 15, name: "रा.बा.उ.मा.वि., कमरा नं. 3", el: 939, op: "OP2", pName: "श्री महेश पालीवाल (वरिष्ठ लिपिक)", pMob: "7610085209" },
-  { b: 17, z: 2, w: 16, name: "कार्यालय गृह एवं नगरीय विकास कर", el: 660, op: "OP2", pName: "श्री रिडमल राम (वरिष्ठ प्रयोगशाला सहा.)", pMob: "9982493610" },
-  { b: 18, z: 3, w: 17, name: "रा.बा.उ.मा.वि., कमरा नं. 9", el: 1039, op: "OP3", pName: "श्री ईमरान मोहम्मद (अध्यापक)", pMob: "9602959723" },
-  { b: 19, z: 3, w: 18, name: "सरदार वल्लभ भाई पटेल विवाह स्थल", el: 912, op: "OP3", pName: "श्री सुरेश कुमार (अध्यापक)", pMob: "9982935583" },
-  { b: 20, z: 3, w: 19, name: "कृषि उपज मण्डी श्रमिक विश्राम गृह", el: 949, op: "OP3", pName: "श्री पुकाराम (वरिष्ठ सहायक)", pMob: "8619885001" },
-  { b: 21, z: 3, w: 20, name: "रा.उ.प्रा.वि. नं.1 वासू पूज्य काॅलोनी (बांया)", el: 368, op: "OP3", pName: "श्री दिनेश कुमार बगठिया (वरिष्ठ सहा.)", pMob: "9929884975" },
-  { b: 22, z: 3, w: 21, name: "रा.उ.प्रा.वि. नं.1 वासू पूज्य काॅलोनी (दांया)", el: 725, op: "OP3", pName: "श्री छोगाराम देवासी (अध्यापक)", pMob: "7742747519" },
-  { b: 23, z: 5, w: 22, name: "कार्यालय अधिशाषी अभियंता जवाई नहर (बांया)", el: 818, op: "OP5", pName: "श्री हनुवन्तसिंह (कनिष्ठ लिपिक)", pMob: "8233193295" },
-  { b: 24, z: 4, w: 23, name: "रा.बा.उ.मा.वि., कमरा नं. 11", el: 767, op: "OP4", pName: "श्री प्रधान बैरवा (अध्यापक)", pMob: "9602328272" },
-  { b: 25, z: 4, w: 24, name: "सुमेरपुर क्रय-विक्रय सहकारी समिति", el: 834, op: "OP4", pName: "श्री मनीष कुमार (अध्यापक)", pMob: "8432470870" },
-  { b: 26, z: 4, w: 25, name: "महावीर जीवावत वाचनालय", el: 766, op: "OP4", pName: "श्री धर्मेन्द्र सिंह (प्रयोगशाला सहायक)", pMob: "8619796516" },
-  { b: 27, z: 4, w: 26, name: "कार्यालय अधिशाषी अभियंता जवाई नहर (दायां)", el: 833, op: "OP4", pName: "निर्विरोध निर्वाचित (वीणा देवड़ा - BJP)", pMob: "-", isNirvirodh: 1 },
-  { b: 28, z: 4, w: 27, name: "लालबहादुर शास्त्री वाचनालय", el: 919, op: "OP4", pName: "श्री कृष्णपाल सिंह (कनिष्ठ लिपिक)", pMob: "9950565481" },
-  { b: 29, z: 5, w: 28, name: "रा.उ.प्रा.वि. नं.1 वासू पूज्य काॅलोनी (मध्य)", el: 826, op: "OP5", pName: "श्री जोगाराम मीणा (वरिष्ठ सहायक)", pMob: "6377310993" },
-  { b: 30, z: 5, w: 29, name: "डाॅ. श्यामा प्रसाद मुखर्जी सामुदायिक भवन", el: 977, op: "OP5", pName: "श्री मनीष कुमार (कनिष्ठ लिपिक)", pMob: "9772309165" },
-  { b: 31, z: 5, w: 30, name: "सामुदायिक सभा भवन, बाणमाता मन्दिर", el: 622, op: "OP5", pName: "श्री मनीष सांखला (कनिष्ठ लिपिक)", pMob: "9358693913" },
-  { b: 32, z: 5, w: 31, name: "रा.उ.प्रा.वि. नं.5 जूना जाखोडा (बाँया)", el: 712, op: "OP5", pName: "श्री अश्विन सिंह राव (कनिष्ठ लिपिक)", pMob: "9667161210" },
-  { b: 33, z: 6, w: 32, name: "रा.उ.प्रा.वि. नं.5 जूना जाखोडा (दांया)", el: 935, op: "OP6", pName: "श्री देवेन्द्र सिंह (वरिष्ठ लिपिक)", pMob: "8094145551" },
-  { b: 34, z: 6, w: 33, name: "रा.उ.प्रा.वि., जाखानगर दाया भाग", el: 1123, op: "OP6", pName: "श्री हस्तीमल (प्रयोगशाला सहायक)", pMob: "8442047725" },
-  { b: 35, z: 6, w: 34, name: "रा.उ.प्रा.वि., जाखानगर बांया भाग", el: 1260, op: "OP6", pName: "श्री राहुल राज (प्रयोगशाला सहायक)", pMob: "8290269639" },
-  { b: 36, z: 6, w: 35, name: "कार्यालय सहायक अभियंता जलदाय विभाग", el: 843, op: "OP6", pName: "श्री जितेन्द्र सिंह (सहा. प्रशा. अधि.)", pMob: "7726017808" }
+  { b: 1,  z: 1, w: 1,  part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय,संजय नगर सुमेरपुर", el: 851, male_el: 445, female_el: 406, tg_el: 0, op: "OP1", pName: "श्री रामस्वरूप छाबा (अध्यापक)", pMob: "9680355685" },
+  { b: 2,  z: 1, w: 1,  part: 2, name: "राजकीय वरिष्ठ उपाध्याय संस्कृत विद्यालय, संजय नगर सुमेरपुर", el: 960, male_el: 501, female_el: 459, tg_el: 0, op: "OP1", pName: "श्री गणेश राम (सहा. प्रशा. अधि.)", pMob: "8560055330" },
+  { b: 3,  z: 1, w: 2,  part: 1, name: "राजकीय प्राथमिक विद्यालय,विवेकानन्द नगर सुमेरपुर", el: 612, male_el: 302, female_el: 310, tg_el: 0, op: "OP1", pName: "श्री अंकित चतुर्वेदी (अध्यापक)", pMob: "7891826768" },
+  { b: 4,  z: 1, w: 3,  part: 1, name: "महाराणा प्रताप गाडोलिया लौहार सभा भवन टेलिफोन एक्सचेंज के पास, ,सुमेरपुर", el: 829, male_el: 414, female_el: 415, tg_el: 0, op: "OP1", pName: "श्री नारायण लाल लखारा (वरिष्ठ सहायक)", pMob: "7742526889" },
+  { b: 5,  z: 1, w: 4,  part: 1, name: "सामुदायिक भवन,तहसील के पीछे, संजय नगर, सुमेरपुर", el: 430, male_el: 229, female_el: 201, tg_el: 0, op: "OP1", pName: "श्री दिलीप सिंह (प्रयोगशाला सहायक)", pMob: "9680003880" },
+  { b: 6,  z: 2, w: 5,  part: 1, name: "पीएम श्री राजकीय उच्च माध्यमिक विद्यालय (दाया भाग), सुमेरपुर", el: 902, male_el: 451, female_el: 451, tg_el: 0, op: "OP2", pName: "श्री फूजाराम (पर्यवेक्षक)", pMob: "7073956394" },
+  { b: 7,  z: 1, w: 6,  part: 1, name: "डॉ. भीमराव अम्बेडकर सामुदायिक भवन,हाथी गडा,पानी टंकी के पास, सुमेरपुर", el: 1120, male_el: 562, female_el: 558, tg_el: 0, op: "OP1", pName: "श्री महेन्द्र सिंह राठौड़ (कनिष्ठ सहायक)", pMob: "9983114557" },
+  { b: 8,  z: 1, w: 7,  part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.3, नया भवन उषापुरी गेट के अन्दर,सुमेरपुर", el: 976, male_el: 498, female_el: 478, tg_el: 0, op: "OP1", pName: "श्री करणसिंह देवड़ा (वरिष्ठ सहायक)", pMob: "7742689419" },
+  { b: 9,  z: 1, w: 8,  part: 1, name: "आश्रय स्थल रैन बसेरा भवन बाईपास रोड, सुमेरपुर (बायां भाग)", el: 1071, male_el: 541, female_el: 530, tg_el: 0, op: "OP1", pName: "श्री हिमांशु (कनिष्ठ लिपिक)", pMob: "9971893668" },
+  { b: 10, z: 4, w: 9,  part: 1, name: "आश्रय स्थल रैन बसेरा भवन बाईपास रोड, सुमेरपुर (दायां भाग)", el: 736, male_el: 371, female_el: 365, tg_el: 0, op: "OP4", pName: "श्री अशोक कुमार माली (कनिष्ठ लिपिक)", pMob: "8441067097" },
+  { b: 11, z: 4, w: 10, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.2,सुमेरपुर(बांया भाग)", el: 784, male_el: 390, female_el: 394, tg_el: 0, op: "OP4", pName: "श्री योगेश गर्ग (वरिष्ठ सहायक)", pMob: "7073373171" },
+  { b: 12, z: 2, w: 11, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.2,सुमेरपुर(दांया भाग)", el: 871, male_el: 446, female_el: 425, tg_el: 0, op: "OP2", pName: "श्री भरत कुमार (वरिष्ठ प्रबोधक)", pMob: "7791893959" },
+  { b: 13, z: 2, w: 12, part: 1, name: "कार्यालय मुख्य ब्लॉक शिक्षा अधिकारी,जवाई बांध रोड ,सुमेरपुर (बायां भाग)", el: 822, male_el: 424, female_el: 398, tg_el: 0, op: "OP2", pName: "श्री शंभु कुमार (कनिष्ठ लिपिक)", pMob: "9983946132" },
+  { b: 14, z: 2, w: 13, part: 1, name: "कार्यालय मुख्य ब्लॉक शिक्षा अधिकारी,जवाई बांध रोड ,सुमेरपुर (दायां भाग)", el: 965, male_el: 489, female_el: 476, tg_el: 0, op: "OP2", pName: "श्री भीखाराम (पर्यवेक्षक)", pMob: "9079852688" },
+  { b: 15, z: 2, w: 14, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर, कमरा नं. 2", el: 825, male_el: 413, female_el: 412, tg_el: 0, op: "OP2", pName: "श्री नरेश परमार (अध्यापक)", pMob: "8107286454" },
+  { b: 16, z: 2, w: 15, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर, कमरा नं. 3", el: 902, male_el: 444, female_el: 458, tg_el: 0, op: "OP2", pName: "श्री महेश पालीवाल (वरिष्ठ लिपिक)", pMob: "7610085209" },
+  { b: 17, z: 2, w: 16, part: 1, name: "कार्यालय गृह एवं नगरीय विकास कर,नगरपालिका,सुमेरपुर", el: 653, male_el: 318, female_el: 335, tg_el: 0, op: "OP2", pName: "श्री रिडमल राम (वरिष्ठ प्रयोगशाला सहा.)", pMob: "9982493610" },
+  { b: 18, z: 3, w: 17, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर कमरा नं. 9", el: 1036, male_el: 530, female_el: 506, tg_el: 0, op: "OP3", pName: "श्री ईमरान मोहम्मद (अध्यापक)", pMob: "9602959723" },
+  { b: 19, z: 3, w: 18, part: 1, name: "सरदार वल्लभ भाई पटेल विवाह स्थल,आदर्श काॅलोनी,सुमेरपुर", el: 920, male_el: 482, female_el: 438, tg_el: 0, op: "OP3", pName: "श्री सुरेश कुमार (अध्यापक)", pMob: "9982935583" },
+  { b: 20, z: 3, w: 19, part: 1, name: "कृषि उपज मण्डी श्रमिक विश्राम गृह,सुमेरपुर", el: 944, male_el: 492, female_el: 452, tg_el: 0, op: "OP3", pName: "श्री पुकाराम (वरिष्ठ सहायक)", pMob: "8619885001" },
+  { b: 21, z: 3, w: 20, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.1,वासू पूज्य काॅलोनी,सुमेरपुर (बांया भाग)", el: 406, male_el: 203, female_el: 203, tg_el: 0, op: "OP3", pName: "श्री दिनेश कुमार बगठिया (वरिष्ठ सहा.)", pMob: "9929884975" },
+  { b: 22, z: 3, w: 21, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.1,वासू पूज्य काॅलोनी,सुमेरपुर(दांया भाग)", el: 717, male_el: 361, female_el: 356, tg_el: 0, op: "OP3", pName: "श्री छोगाराम देवासी (अध्यापक)", pMob: "7742747519" },
+  { b: 23, z: 5, w: 22, part: 1, name: "कार्यालय अधिशाषी अभियंता,जवाई नहर खण्ड,भैरू चौक,सुमेरपुर(बांया भाग)", el: 835, male_el: 433, female_el: 402, tg_el: 0, op: "OP5", pName: "श्री हनुवन्तसिंह (कनिष्ठ लिपिक)", pMob: "8233193295" },
+  { b: 24, z: 4, w: 23, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर, कमरा नं. 11", el: 744, male_el: 388, female_el: 356, tg_el: 0, op: "OP4", pName: "श्री प्रधान बैरवा (अध्यापक)", pMob: "9602328272" },
+  { b: 25, z: 4, w: 24, part: 1, name: "सुमेरपुर क्रय-विक्रय सहकारी समिति लि., नगरपालिका रोड,सुमेरपुर", el: 813, male_el: 409, female_el: 404, tg_el: 0, op: "OP4", pName: "श्री मनीष कुमार (अध्यापक)", pMob: "8432470870" },
+  { b: 26, z: 4, w: 25, part: 1, name: "महावीर जीवावत वाचनालय, नगरपालिका रोड,सुमेरपुर", el: 776, male_el: 385, female_el: 391, tg_el: 0, op: "OP4", pName: "श्री धर्मेन्द्र सिंह (प्रयोगशाला सहायक)", pMob: "8619796516" },
+  { b: 27, z: 4, w: 26, part: 1, name: "कार्यालय अधिशाषी अभियंता,जवाई नहर खण्ड,भैरू चौक,सुमेरपुर (दायां भाग)", el: 841, male_el: 429, female_el: 412, tg_el: 0, op: "OP4", pName: "निर्विरोध निर्वाचित (वीणा देवड़ा - BJP)", pMob: "-", isNirvirodh: 1 },
+  { b: 28, z: 4, w: 27, part: 1, name: "लालबहादुर शास्त्री वाचनालय,भैरू चौक, सुमेरपुर", el: 906, male_el: 471, female_el: 435, tg_el: 0, op: "OP4", pName: "श्री कृष्णपाल सिंह (कनिष्ठ लिपिक)", pMob: "9950565481" },
+  { b: 29, z: 5, w: 28, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.1,वासू पूज्य काॅलोनी,सुमेरपुर(मध्य भाग)", el: 880, male_el: 464, female_el: 416, tg_el: 0, op: "OP5", pName: "श्री जोगाराम मीणा (वरिष्ठ सहायक)", pMob: "6377310993" },
+  { b: 30, z: 5, w: 29, part: 1, name: "डाॅ. श्यामा प्रसाद मुखर्जी सामुदायिक भवन, शनि महाराज मन्दिर के सामने, नहर के पास,सुमेर", el: 951, male_el: 477, female_el: 474, tg_el: 0, op: "OP5", pName: "श्री मनीष कुमार (कनिष्ठ लिपिक)", pMob: "9772309165" },
+  { b: 31, z: 5, w: 30, part: 1, name: "सामुदायिक सभा भवन, बाणमाता मन्दिर के पास, सुमेरपुर", el: 652, male_el: 347, female_el: 305, tg_el: 0, op: "OP5", pName: "श्री मनीष सांखला (कनिष्ठ लिपिक)", pMob: "9358693913" },
+  { b: 32, z: 5, w: 31, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.5,जूना जाखोडा रोड,सुमेरपुर(बाँया भाग)", el: 746, male_el: 408, female_el: 338, tg_el: 0, op: "OP5", pName: "श्री अश्विन सिंह राव (कनिष्ठ लिपिक)", pMob: "9667161210" },
+  { b: 33, z: 6, w: 32, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.5,जूना जाखोडा रोड,सुमेरपुर(दांया भाग)", el: 941, male_el: 471, female_el: 470, tg_el: 0, op: "OP6", pName: "श्री देवेन्द्र सिंह (वरिष्ठ लिपिक)", pMob: "8094145551" },
+  { b: 34, z: 6, w: 33, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय, जाखानगर दाया भाग,सुमेरपुर", el: 1071, male_el: 542, female_el: 529, tg_el: 0, op: "OP6", pName: "श्री हस्तीमल (प्रयोगशाला सहायक)", pMob: "8442047725" },
+  { b: 35, z: 6, w: 34, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय, जाखानगर बांया भाग,सुमेरपुर", el: 1234, male_el: 626, female_el: 599, tg_el: 9, op: "OP6", pName: "श्री राहुल राज (प्रयोगशाला सहायक)", pMob: "8290269639" },
+  { b: 36, z: 6, w: 35, part: 1, name: "कार्यालय सहायक अभियंता जलदाय विभाग तखतगढ रोड ,सुमेरपुर", el: 876, male_el: 453, female_el: 423, tg_el: 0, op: "OP6", pName: "श्री जितेन्द्र सिंह (सहा. प्रशा. अधि.)", pMob: "7726017808" }
 ];
 
 const defaultUsers = [
@@ -115,13 +115,23 @@ function initDatabase() {
                 id INTEGER PRIMARY KEY,
                 zone INTEGER NOT NULL,
                 ward INTEGER NOT NULL,
+                ward_part INTEGER DEFAULT 1,
                 name TEXT NOT NULL,
                 electors INTEGER NOT NULL,
+                male_electors INTEGER DEFAULT 0,
+                female_electors INTEGER DEFAULT 0,
+                tg_electors INTEGER DEFAULT 0,
                 operator_role TEXT NOT NULL,
                 praganak_name TEXT,
                 praganak_mob TEXT,
                 is_nirvirodh INTEGER DEFAULT 0
             )`);
+
+            // Safe column additions for existing db
+            db.run(`ALTER TABLE booths ADD COLUMN ward_part INTEGER DEFAULT 1`, () => {});
+            db.run(`ALTER TABLE booths ADD COLUMN male_electors INTEGER DEFAULT 0`, () => {});
+            db.run(`ALTER TABLE booths ADD COLUMN female_electors INTEGER DEFAULT 0`, () => {});
+            db.run(`ALTER TABLE booths ADD COLUMN tg_electors INTEGER DEFAULT 0`, () => {});
 
             // Polling stats table
             db.run(`CREATE TABLE IF NOT EXISTS polling_stats (
@@ -152,7 +162,7 @@ function initDatabase() {
                 last_login DATETIME
             )`);
 
-            // Safe column additions for existing db
+            // Safe column additions for existing users table
             db.run(`ALTER TABLE users ADD COLUMN mobile TEXT DEFAULT ''`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN designation TEXT DEFAULT ''`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`, () => {});
@@ -184,28 +194,23 @@ function initDatabase() {
             defaultUsers.forEach(u => userStmt.run(u.username, u.pass, u.role, u.name));
             userStmt.finalize();
 
-            // Seed Booths
-            db.get(`SELECT COUNT(*) as count FROM booths`, (err, row) => {
-                if (err) return reject(err);
-                if (row.count === 0) {
-                    const bStmt = db.prepare(`INSERT INTO booths (id, zone, ward, name, electors, operator_role, praganak_name, praganak_mob, is_nirvirodh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-                    const sStmt = db.prepare(`INSERT INTO polling_stats (booth_id, mock_done, started, v10, v13, v15, v18, v_queue, v_final, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+            // Always update/synchronize master booths data (electors, names, male/female/tg, etc.)
+            const bStmt = db.prepare(`INSERT OR REPLACE INTO booths (id, zone, ward, ward_part, name, electors, male_electors, female_electors, tg_electors, operator_role, praganak_name, praganak_mob, is_nirvirodh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+            const sStmt = db.prepare(`INSERT OR IGNORE INTO polling_stats (booth_id, mock_done, started, v10, v13, v15, v18, v_queue, v_final, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
-                    masterBooths.forEach(b => {
-                        bStmt.run(b.b, b.z, b.w, b.name, b.el, b.op, b.pName, b.pMob, b.isNirvirodh ? 1 : 0);
-                        if (b.isNirvirodh) {
-                            sStmt.run(b.b, 'N/A', 'N/A', '0', '0', '0', '0', 0, '0', 'वार्ड 26 निर्विरोध निर्वाचित (No Election)');
-                        } else {
-                            sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'शांतिपूर्ण');
-                        }
-                    });
-
-                    bStmt.finalize();
-                    sStmt.finalize();
-                    console.log('✅ SQLite Database Seeded with 36 Booths and 6 Users!');
+            masterBooths.forEach(b => {
+                bStmt.run(b.b, b.z, b.w, b.part || 1, b.name, b.el, b.male_el || 0, b.female_el || 0, b.tg_el || 0, b.op, b.pName, b.pMob, b.isNirvirodh ? 1 : 0);
+                if (b.isNirvirodh) {
+                    sStmt.run(b.b, 'N/A', 'N/A', '0', '0', '0', '0', 0, '0', 'वार्ड 26 निर्विरोध निर्वाचित (No Election)');
+                } else {
+                    sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'शांतिपूर्ण');
                 }
-                resolve();
             });
+
+            bStmt.finalize();
+            sStmt.finalize();
+            console.log('✅ SQLite Database Synchronized with 36 Booths and 30,598 Electors!');
+            resolve();
         });
     });
 }
@@ -213,5 +218,6 @@ function initDatabase() {
 module.exports = {
     db,
     zonesMaster,
+    masterBooths,
     initDatabase
 };
