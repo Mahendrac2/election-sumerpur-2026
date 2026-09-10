@@ -158,6 +158,7 @@ function initDatabase() {
                 name TEXT NOT NULL,
                 mobile TEXT DEFAULT '',
                 designation TEXT DEFAULT '',
+                status TEXT DEFAULT 'APPROVED',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 last_login DATETIME
             )`);
@@ -165,6 +166,7 @@ function initDatabase() {
             // Safe column additions for existing users table
             db.run(`ALTER TABLE users ADD COLUMN mobile TEXT DEFAULT ''`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN designation TEXT DEFAULT ''`, () => {});
+            db.run(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'APPROVED'`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN last_login DATETIME`, () => {});
 

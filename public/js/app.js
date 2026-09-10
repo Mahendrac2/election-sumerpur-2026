@@ -432,6 +432,22 @@ function initLiveStream() {
             fetchData(false);
         });
 
+        liveEventSource.addEventListener('user_registered', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                if (currentUser && currentUser.role === 'RO') {
+                    showToast(`🔔 नया ऑपरेटर पंजीकरण: ${data.name} (जोन ${data.role.replace('OP','')}) — अनुमोदन प्रतीक्षारत!`);
+                    loadAdminUsersList();
+                }
+            } catch(err) {}
+        });
+
+        liveEventSource.addEventListener('user_status_changed', () => {
+            if (currentUser && currentUser.role === 'RO') {
+                loadAdminUsersList();
+            }
+        });
+
         liveEventSource.onerror = () => {
             if (syncStatus) syncStatus.innerText = "लाइव सिंक (ऑटो-पोलिंग सक्रिय)";
             setTimeout(() => {
@@ -2086,43 +2102,198 @@ async function loadAdminUsersList() {
         const res = await fetch('/api/admin/users');
         const data = await res.json();
         const tbody = document.getElementById("adminUsersTbody");
-        if (tbody && data.users) {
-            tbody.innerHTML = "";
-            data.users.forEach(u => {
-                let tr = document.createElement("tr");
-                const lastLoginObj = u.last_login ? formatISTDateTime(u.last_login, true) : null;
-                const lastLoginText = lastLoginObj ? `${lastLoginObj.date}, ${lastLoginObj.time}` : 'कभी नहीं';
-                const createdObj = u.created_at ? formatISTDateTime(u.created_at, true) : null;
-                const createdText = createdObj ? createdObj.date : '-';
-                const roleBadge = u.role === 'RO' ? '<span class="status-badge badge-locked">RO SDM</span>' : `<span class="zone-pill">जोन ${u.role.replace('OP','')}</span>`;
-                const safeName = (u.name || '').replace(/'/g, "\\'");
+        if (!tbody || !data.users) return;
 
-                const actionBtns = `
-                    <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
-                        <button class="btn-primary" style="padding:4px 8px; font-size:11px; background:#d97706; border-color:#d97706;" title="नया पासवर्ड सेट करें" onclick="adminPromptResetPassword('${u.username}', '${safeName}')">
-                            <i class="fas fa-key"></i> पासवर्ड बदलें
+        tbody.innerHTML = "";
+        let totalCount = 0;
+        let approvedCount = 0;
+        let pendingCount = 0;
+
+        data.users.forEach(u => {
+            if (u.username !== 'ro_sumerpur') {
+                totalCount++;
+                if (u.status === 'APPROVED') approvedCount++;
+                if (u.status === 'PENDING') pendingCount++;
+            }
+
+            let tr = document.createElement("tr");
+            const lastLoginObj = u.last_login ? formatISTDateTime(u.last_login, true) : null;
+            const lastLoginText = lastLoginObj ? `${lastLoginObj.date}, ${lastLoginObj.time}` : '<span style="color:#94a3b8;">कभी नहीं</span>';
+            const createdObj = u.created_at ? formatISTDateTime(u.created_at, true) : null;
+            const createdText = createdObj ? `${createdObj.date}` : '-';
+            const roleBadge = u.role === 'RO' ? '<span class="status-badge badge-locked">RO SDM</span>' : `<span class="zone-pill">जोन ${u.role.replace('OP','')}</span>`;
+            const safeName = (u.name || '').replace(/'/g, "\\'");
+            const isRoMain = (u.username === 'ro_sumerpur');
+
+            let statusBadge = '';
+            if (isRoMain || u.status === 'APPROVED') {
+                statusBadge = `<span class="status-badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-weight:700;"><i class="fas fa-circle-check"></i> सक्रिय (Approved)</span>`;
+            } else if (u.status === 'PENDING') {
+                statusBadge = `<span class="status-badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; font-weight:800;"><i class="fas fa-clock"></i> लंबित अनुमोदन</span>`;
+                tr.style.background = "#fffdf7";
+            } else {
+                statusBadge = `<span class="status-badge" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-weight:700;"><i class="fas fa-ban"></i> ब्लॉक (Blocked)</span>`;
+                tr.style.background = "#fff5f5";
+            }
+
+            let actionBtns = '';
+            if (isRoMain) {
+                actionBtns = `<span style="font-size:11px; color:#64748b; font-weight:600;"><i class="fas fa-crown" style="color:#f59e0b;"></i> मुख्य सुपर-एडमिन</span>`;
+            } else if (u.status === 'PENDING') {
+                actionBtns = `
+                    <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                        <button class="btn-primary" style="padding:5px 10px; font-size:11.5px; background:#16a34a; border-color:#16a34a; font-weight:bold;" title="अनुमोदन दें (एक्सेस चालू करें)" onclick="adminToggleUserStatus('${u.username}', 'APPROVED', '${safeName}')">
+                            <i class="fas fa-check"></i> स्वीकृत करें (Approve)
                         </button>
-                        ${u.username !== 'ro_sumerpur' ? `
-                        <button class="btn-danger" style="padding:4px 8px; font-size:11px;" title="यूज़र हटाएं" onclick="adminDeleteUser('${u.username}', '${safeName}')">
-                            <i class="fas fa-trash-can"></i> हटाएं
-                        </button>` : ''}
+                        <button class="btn-danger" style="padding:5px 8px; font-size:11px;" title="अस्वीकार करें" onclick="adminToggleUserStatus('${u.username}', 'BLOCKED', '${safeName}')">
+                            <i class="fas fa-ban"></i> अस्वीकार
+                        </button>
                     </div>
                 `;
-
-                tr.innerHTML = `
-                    <td><b>${u.username}</b></td>
-                    <td style="text-align:left; font-weight:600;">${u.name}</td>
-                    <td>${u.designation || '-'}</td>
-                    <td>${u.mobile ? `<a href="tel:${u.mobile}" style="color:#0284c7; font-weight:bold; text-decoration:none;"><i class="fas fa-phone"></i> ${u.mobile}</a>` : '-'}</td>
-                    <td>${roleBadge}</td>
-                    <td><small style="color:#64748b;">${createdText}</small></td>
-                    <td><b style="color:#15803d; font-size:11px;">${lastLoginText}</b></td>
-                    <td>${actionBtns}</td>
+            } else if (u.status === 'APPROVED') {
+                actionBtns = `
+                    <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                        <button class="btn-secondary" style="padding:4px 8px; font-size:11px; color:#0369a1; border-color:#bae6fd;" title="आवंटित ज़ोन बदलें" onclick="adminChangeUserZone('${u.username}', '${u.role}', '${safeName}')">
+                            <i class="fas fa-arrows-rotate"></i> ज़ोन बदलें
+                        </button>
+                        <button class="btn-primary" style="padding:4px 8px; font-size:11px; background:#d97706; border-color:#d97706;" title="नया पासवर्ड सेट करें" onclick="adminPromptResetPassword('${u.username}', '${safeName}')">
+                            <i class="fas fa-key"></i> पासवर्ड
+                        </button>
+                        <button class="btn-secondary" style="padding:4px 8px; font-size:11px; color:#b91c1c; border-color:#fca5a5;" title="एक्सेस निलंबित / ब्लॉक करें" onclick="adminToggleUserStatus('${u.username}', 'BLOCKED', '${safeName}')">
+                            <i class="fas fa-user-lock"></i> ब्लॉक
+                        </button>
+                        <button class="btn-danger" style="padding:4px 7px; font-size:11px;" title="खाता हटाएं" onclick="adminDeleteUser('${u.username}', '${safeName}')">
+                            <i class="fas fa-trash-can"></i>
+                        </button>
+                    </div>
                 `;
-                tbody.appendChild(tr);
-            });
+            } else {
+                // BLOCKED
+                actionBtns = `
+                    <div style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                        <button class="btn-success" style="padding:4px 10px; font-size:11px; font-weight:bold;" title="पुनः सक्रिय करें" onclick="adminToggleUserStatus('${u.username}', 'APPROVED', '${safeName}')">
+                            <i class="fas fa-lock-open"></i> पुनः सक्रिय (Unblock)
+                        </button>
+                        <button class="btn-danger" style="padding:4px 8px; font-size:11px;" title="खाता हटाएं" onclick="adminDeleteUser('${u.username}', '${safeName}')">
+                            <i class="fas fa-trash-can"></i> हटाएं
+                        </button>
+                    </div>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td><b>${u.username}</b></td>
+                <td style="text-align:left; font-weight:600;">${u.name}</td>
+                <td>${u.designation || '-'}</td>
+                <td>${u.mobile ? `<a href="tel:${u.mobile}" style="color:#0284c7; font-weight:bold; text-decoration:none;"><i class="fas fa-phone"></i> ${u.mobile}</a>` : '-'}</td>
+                <td>${roleBadge}</td>
+                <td>${statusBadge}</td>
+                <td><small style="color:#64748b;">${createdText}</small></td>
+                <td><b style="color:#15803d; font-size:11px;">${lastLoginText}</b></td>
+                <td>${actionBtns}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Update stats pills
+        const statTotalEl = document.getElementById("statTotalUsers");
+        const statApprEl = document.getElementById("statApprovedUsers");
+        const statPendEl = document.getElementById("statPendingUsers");
+        const adminBadgeEl = document.getElementById("adminPendingCountBadge");
+        const roNavBadge = document.getElementById("roPendingBadge");
+
+        if (statTotalEl) statTotalEl.innerText = totalCount;
+        if (statApprEl) statApprEl.innerText = approvedCount;
+        if (statPendEl) statPendEl.innerText = pendingCount;
+
+        if (adminBadgeEl) {
+            if (pendingCount > 0) {
+                adminBadgeEl.style.display = "inline-block";
+                adminBadgeEl.innerHTML = `<i class="fas fa-bell"></i> ${pendingCount} ऑपरेटर अनुमोदन प्रतीक्षारत`;
+            } else {
+                adminBadgeEl.style.display = "none";
+            }
         }
-    } catch(e) {}
+
+        if (roNavBadge) {
+            if (pendingCount > 0) {
+                roNavBadge.style.display = "inline-block";
+                roNavBadge.innerText = `${pendingCount} लंबित`;
+            } else {
+                roNavBadge.style.display = "none";
+            }
+        }
+    } catch(e) {
+        console.error("Error loading admin users:", e);
+    }
+}
+
+// RO User Status Authorization Toggle (Approve / Block / Pending)
+async function adminToggleUserStatus(targetUsername, status, name) {
+    if (!currentUser || currentUser.role !== "RO") return;
+
+    const actionHindi = status === 'APPROVED' ? 'स्वीकृत (Approve)' : (status === 'BLOCKED' ? 'ब्लॉक (Block)' : 'लंबित');
+    if (!confirm(`क्या आप उपयोगकर्ता '${name}' (${targetUsername}) को '${actionHindi}' करना चाहते हैं?`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/admin/user/toggle-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                targetUsername,
+                status,
+                adminUsername: currentUser.name
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            showToast(`✅ ${result.message}`);
+            loadAdminUsersList();
+        } else {
+            alert(result.message || "कार्रवाई विफल!");
+        }
+    } catch(e) {
+        alert("सर्वर से कनेक्ट करने में त्रुटि!");
+    }
+}
+
+// RO Operator Zone Assignment Change
+async function adminChangeUserZone(targetUsername, currentRole, name) {
+    if (!currentUser || currentUser.role !== "RO") return;
+
+    const curZone = currentRole.replace('OP', '');
+    const newZoneInput = prompt(`ऑपरेटर '${name}' (${targetUsername}) हेतु नया ज़ोन नंबर दर्ज करें (1 से 6):`, curZone);
+    if (newZoneInput === null) return; // Cancelled
+
+    const zNum = parseInt(newZoneInput.trim());
+    if (isNaN(zNum) || zNum < 1 || zNum > 6) {
+        alert("कृपया 1 से 6 के मध्य मान्य ज़ोन संख्या दर्ज करें!");
+        return;
+    }
+
+    const newRole = `OP${zNum}`;
+    try {
+        const res = await fetch('/api/admin/user/change-zone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                targetUsername,
+                newRole,
+                adminUsername: currentUser.name
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            showToast(`🔄 ${result.message}`);
+            loadAdminUsersList();
+        } else {
+            alert(result.message || "ज़ोन आवंटन में त्रुटि!");
+        }
+    } catch(e) {
+        alert("सर्वर से कनेक्ट करने में त्रुटि!");
+    }
 }
 
 async function adminPromptResetPassword(targetUsername, name) {

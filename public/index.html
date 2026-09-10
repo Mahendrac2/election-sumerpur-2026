@@ -199,7 +199,10 @@
     <a class="nav-link" data-tab="zones" id="navZonesLink" onclick="navigateTo('zones')"><i class="fas fa-map-marked-alt"></i> 6 जोनल मजिस्ट्रेट डायरेक्टरी</a>
     <a class="nav-link" data-tab="reports" id="navReportsLink" onclick="navigateTo('reports')"><i class="fas fa-file-lines" style="color:#e11d48;"></i> रिपोर्ट्स</a>
     <a class="nav-link" data-tab="livedisplay" id="navLiveDisplayLink" onclick="navigateTo('livedisplay')"><i class="fas fa-tv" style="color:#38bdf8;"></i> कंट्रोल रूम लाइव डिस्प्ले</a>
-    <a class="nav-link" data-tab="admin" id="navAdminLink" style="display:none;" onclick="navigateTo('admin')"><i class="fas fa-shield-halved" style="color:#f59e0b;"></i> RO एडमिन टूल्स</a>
+    <a class="nav-link" data-tab="admin" id="navAdminLink" style="display:none;" onclick="navigateTo('admin')">
+        <i class="fas fa-shield-halved" style="color:#f59e0b;"></i> RO एडमिन टूल्स
+        <span id="roPendingBadge" style="display:none; background:#ef4444; color:white; font-size:10.5px; padding:2px 7px; border-radius:10px; margin-left:6px; font-weight:bold;">0</span>
+    </a>
 </nav>
 
 <!-- Main Container for Multi-Page Content -->
@@ -926,11 +929,35 @@
                     </div>
                 </div>
 
-                <!-- Registered Operators Table -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 10px 0;">
-                    <h4 style="margin:0; color:var(--primary);"><i class="fas fa-users-gear"></i> पंजीकृत ऑपरेटर एवं नोडल अधिकारी (Registered Personnel & Last Login)</h4>
-                    <button class="btn-secondary" style="font-size:12px; padding:5px 10px;" onclick="loadAdminUsersList()"><i class="fas fa-rotate"></i> रिफ्रेश</button>
+                <!-- Registered Operators & Authorization Control Table -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:24px 0 12px 0; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h4 style="margin:0; color:var(--primary); display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-users-gear" style="color:var(--accent);"></i> ऑपरेटर ऑथराइजेशन एवं एक्सेस नियंत्रण (Operator Authorization & Zone Assignment)
+                        </h4>
+                        <span style="font-size:12px; color:var(--text-muted);">केवल RO द्वारा स्वीकृत (Approved) ऑपरेटर ही अपने आवंटित ज़ोन में मतदान डेटा दर्ज कर सकते हैं।</span>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span id="adminPendingCountBadge" style="display:none; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; font-size:12px; font-weight:bold; padding:4px 10px; border-radius:12px;">
+                            <i class="fas fa-bell"></i> 0 अनुमोदन लंबित
+                        </span>
+                        <button class="btn-secondary" style="font-size:12px; padding:6px 12px;" onclick="loadAdminUsersList()"><i class="fas fa-rotate"></i> रिफ्रेश सूची</button>
+                    </div>
                 </div>
+
+                <!-- Summary Status Pills -->
+                <div style="display:flex; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+                    <div style="background:#f8fafc; border:1px solid var(--border); padding:8px 14px; border-radius:6px; font-size:12px;">
+                        <span style="color:#64748b;">कुल ऑपरेटर:</span> <b id="statTotalUsers" style="color:var(--text-dark);">0</b>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:8px 14px; border-radius:6px; font-size:12px;">
+                        <span style="color:#166534;"><i class="fas fa-circle-check"></i> सक्रिय (Approved):</span> <b id="statApprovedUsers" style="color:#15803d;">0</b>
+                    </div>
+                    <div style="background:#fffbeb; border:1px solid #fde68a; padding:8px 14px; border-radius:6px; font-size:12px;">
+                        <span style="color:#92400e;"><i class="fas fa-clock"></i> लंबित अनुमोदन (Pending):</span> <b id="statPendingUsers" style="color:#b45309;">0</b>
+                    </div>
+                </div>
+
                 <div class="table-responsive" style="margin-bottom:24px;">
                     <table class="data-table">
                         <thead>
@@ -939,10 +966,11 @@
                                 <th style="text-align:left;">नाम</th>
                                 <th>पदनाम / विभाग</th>
                                 <th>मोबाइल</th>
-                                <th>अधिकार क्षेत्र (Role/Zone)</th>
-                                <th>पंजीयन समय</th>
+                                <th>आवंटित ज़ोन (Zone)</th>
+                                <th>एक्सेस स्थिति (Status)</th>
+                                <th>पंजीयन तिथि</th>
                                 <th>अंतिम लॉगिन</th>
-                                <th>कार्रवाई (Actions)</th>
+                                <th style="text-align:center;">RO ऑथराइजेशन एवं त्वरित कार्रवाई</th>
                             </tr>
                         </thead>
                         <tbody id="adminUsersTbody"></tbody>
@@ -1116,6 +1144,6 @@
 <!-- Toast Alert -->
 <div id="toast">संदेश</div>
 
-<script src="js/app.js?v=2.6.7"></script>
+<script src="js/app.js?v=2.7.0"></script>
 </body>
 </html>

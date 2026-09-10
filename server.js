@@ -71,10 +71,24 @@ app.post('/api/login', (req, res) => {
         return res.status(400).json({ success: false, message: "यूज़रनेम और पासवर्ड आवश्यक हैं।" });
     }
 
-    db.get('SELECT username, role, name, mobile, designation, last_login FROM users WHERE username = ? AND password = ?', [username.trim(), password.trim()], (err, user) => {
+    db.get('SELECT username, role, name, mobile, designation, status, last_login FROM users WHERE username = ? AND password = ?', [username.trim().toLowerCase(), password.trim()], (err, user) => {
         if (err) return res.status(500).json({ success: false, message: "डेटाबेस त्रुटि" });
         if (!user) {
             return res.status(401).json({ success: false, message: "गलत यूज़रनेम या पासवर्ड!" });
+        }
+
+        const userStatus = user.status || 'APPROVED';
+        if (userStatus === 'PENDING') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "⏳ आपका खाता अनुमोदन हेतु लंबित है! कृपया रिटर्निंग ऑफिसर (SDM) द्वारा एक्सेस स्वीकृत किए जाने की प्रतीक्षा करें।" 
+            });
+        }
+        if (userStatus === 'BLOCKED' || userStatus === 'REJECTED') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "⛔ आपका खाता निष्क्रिय / ब्लॉक कर दिया गया है। कृपया रिटर्निंग ऑफिसर (SDM) से संपर्क करें।" 
+            });
         }
 
         // Update last login timestamp
@@ -91,7 +105,8 @@ app.post('/api/login', (req, res) => {
                 role: user.role,
                 name: user.name,
                 mobile: user.mobile || '',
-                designation: user.designation || ''
+                designation: user.designation || '',
+                status: userStatus
             }
         });
     });
@@ -127,8 +142,8 @@ app.post('/api/register', (req, res) => {
         }
 
         const insertSql = `
-            INSERT INTO users (username, password, role, name, mobile, designation, created_at, last_login)
-            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            INSERT INTO users (username, password, role, name, mobile, designation, status, created_at, last_login)
+            VALUES (?, ?, ?, ?, ?, ?, 'PENDING', CURRENT_TIMESTAMP, NULL)
         `;
 
         db.run(insertSql, [cleanUsername, password.trim(), role, cleanName, cleanMobile, cleanDesig], function(insertErr) {
@@ -140,18 +155,28 @@ app.post('/api/register', (req, res) => {
             db.run('INSERT INTO activity_logs (username, action, details) VALUES (?, ?, ?)', [
                 cleanUsername,
                 'USER_REGISTERED',
-                `नया ऑपरेटर पंजीकृत: ${cleanName} (${cleanDesig || 'ऑपरेटर'}), रोल: ${role}, मो: ${cleanMobile}`
+                `नया ऑपरेटर पंजीकृत (अनुमोदन प्रतीक्षारत): ${cleanName} (${cleanDesig || 'ऑपरेटर'}), रोल: ${role}, मो: ${cleanMobile}`
             ]);
+
+            // Notify connected RO screens via SSE
+            broadcastUpdate('user_registered', {
+                username: cleanUsername,
+                name: cleanName,
+                role: role,
+                mobile: cleanMobile,
+                designation: cleanDesig
+            });
 
             res.json({
                 success: true,
-                message: `ऑपरेटर '${cleanName}' का पंजीयन सफलतापूर्वक हो गया!`,
+                message: `✅ पंजीयन सफल! सुरक्षा कारणों से आपका खाता रिटर्निंग ऑफिसर (SDM) के अनुमोदन हेतु भेजा गया है। SDM द्वारा एक्सेस स्वीकृत होने के पश्चात ही आप लॉगिन कर सकेंगे।`,
                 user: {
                     username: cleanUsername,
                     role: role,
                     name: cleanName,
                     mobile: cleanMobile,
-                    designation: cleanDesig
+                    designation: cleanDesig,
+                    status: 'PENDING'
                 }
             });
         });
@@ -160,7 +185,7 @@ app.post('/api/register', (req, res) => {
 
 // Admin Users List Endpoint
 app.get('/api/admin/users', (req, res) => {
-    db.all('SELECT username, role, name, mobile, designation, created_at, last_login FROM users ORDER BY created_at DESC', [], (err, rows) => {
+    db.all('SELECT username, role, name, mobile, designation, status, created_at, last_login FROM users ORDER BY created_at DESC', [], (err, rows) => {
         if (err) return res.status(500).json({ success: false, error: err.message });
         const users = (rows || []).map(u => {
             let created = u.created_at;
@@ -171,9 +196,87 @@ app.get('/api/admin/users', (req, res) => {
             if (lastLogin && typeof lastLogin === 'string' && !lastLogin.endsWith('Z') && !lastLogin.includes('+')) {
                 lastLogin = lastLogin.replace(' ', 'T') + 'Z';
             }
-            return { ...u, created_at: created, last_login: lastLogin };
+            return { ...u, status: u.status || 'APPROVED', created_at: created, last_login: lastLogin };
         });
         res.json({ success: true, users });
+    });
+});
+
+// Admin User Authorization Status Toggle (Approve / Block / Pending)
+app.post('/api/admin/user/toggle-status', (req, res) => {
+    const { targetUsername, status, adminUsername } = req.body;
+
+    if (!targetUsername || !status) {
+        return res.status(400).json({ success: false, message: "यूज़रनेम एवं स्टेटस आवश्यक हैं।" });
+    }
+
+    const cleanUsername = targetUsername.trim().toLowerCase();
+    if (cleanUsername === 'ro_sumerpur') {
+        return res.status(400).json({ success: false, message: "मुख्य RO खाते की स्थिति नहीं बदली जा सकती।" });
+    }
+
+    const validStatuses = ['APPROVED', 'PENDING', 'BLOCKED'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ success: false, message: "अमान्य स्टेटस!" });
+    }
+
+    db.get('SELECT username, name, role FROM users WHERE username = ?', [cleanUsername], (err, user) => {
+        if (err || !user) return res.status(404).json({ success: false, message: "उपयोगकर्ता नहीं मिला!" });
+
+        db.run('UPDATE users SET status = ? WHERE username = ?', [status, cleanUsername], function(updateErr) {
+            if (updateErr) return res.status(500).json({ success: false, message: "डेटाबेस त्रुटि: " + updateErr.message });
+
+            const statusText = status === 'APPROVED' ? 'सक्रिय (Approved)' : (status === 'BLOCKED' ? 'ब्लॉक (Blocked)' : 'लंबित (Pending)');
+            const actionMsg = `RO (${adminUsername || 'SDM'}) ने उपयोगकर्ता '${user.name}' (${cleanUsername}) का एक्सेस '${statusText}' किया।`;
+
+            db.run('INSERT INTO activity_logs (username, action, details) VALUES (?, ?, ?)', [
+                adminUsername || 'RO',
+                'USER_STATUS_CHANGE',
+                actionMsg
+            ]);
+
+            broadcastUpdate('user_status_changed', { username: cleanUsername, status });
+
+            res.json({
+                success: true,
+                message: `सफलतापूर्वक अपडेट: उपयोगकर्ता '${user.name}' को '${statusText}' कर दिया गया है।`
+            });
+        });
+    });
+});
+
+// Admin Change Operator Assigned Zone Endpoint
+app.post('/api/admin/user/change-zone', (req, res) => {
+    const { targetUsername, newRole, adminUsername } = req.body;
+
+    if (!targetUsername || !newRole) {
+        return res.status(400).json({ success: false, message: "यूज़रनेम एवं नवीन ज़ोन आवश्यक हैं।" });
+    }
+
+    const cleanUsername = targetUsername.trim().toLowerCase();
+    if (cleanUsername === 'ro_sumerpur') {
+        return res.status(400).json({ success: false, message: "मुख्य RO खाते का ज़ोन नहीं बदला जा सकता।" });
+    }
+
+    db.get('SELECT username, name, role FROM users WHERE username = ?', [cleanUsername], (err, user) => {
+        if (err || !user) return res.status(404).json({ success: false, message: "उपयोगकर्ता नहीं मिला!" });
+
+        db.run('UPDATE users SET role = ? WHERE username = ?', [newRole, cleanUsername], function(updateErr) {
+            if (updateErr) return res.status(500).json({ success: false, message: "डेटाबेस त्रुटि: " + updateErr.message });
+
+            const actionMsg = `RO (${adminUsername || 'SDM'}) ने ऑपरेटर '${user.name}' का ज़ोन ${user.role} से बदलकर ${newRole} किया।`;
+
+            db.run('INSERT INTO activity_logs (username, action, details) VALUES (?, ?, ?)', [
+                adminUsername || 'RO',
+                'USER_ZONE_CHANGE',
+                actionMsg
+            ]);
+
+            res.json({
+                success: true,
+                message: `सफलतापूर्वक अपडेट: ऑपरेटर '${user.name}' को अब '${newRole}' आवंटित किया गया है।`
+            });
+        });
     });
 });
 
