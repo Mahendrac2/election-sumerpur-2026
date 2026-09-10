@@ -1583,7 +1583,13 @@ function applyStrictTimeLocks() {
 
 // Save Single Booth from Zone Spreadsheet
 async function saveSingleBoothFromZone(boothId) {
-    const booth = portalData.booths.find(b => b.id === boothId);
+    if (!currentUser || currentUser.isGuest) {
+        alert("🔒 मतदान प्रविष्टि सुरक्षित करने के लिए कृपया पहले लॉगिन करें।");
+        document.getElementById("loginOverlay").style.display = "flex";
+        return;
+    }
+
+    const booth = portalData && portalData.booths ? portalData.booths.find(b => b.id === boothId) : null;
     if (!booth || booth.is_nirvirodh) return;
 
     // Run client-side validation
@@ -1597,18 +1603,28 @@ async function saveSingleBoothFromZone(boothId) {
         return;
     }
 
+    const mockEl = document.getElementById(`mock_${boothId}`);
+    const startedEl = document.getElementById(`started_${boothId}`);
+    const v10El = document.getElementById(`v10_${boothId}`);
+    const v13El = document.getElementById(`v13_${boothId}`);
+    const v15El = document.getElementById(`v15_${boothId}`);
+    const v18El = document.getElementById(`v18_${boothId}`);
+    const qEl = document.getElementById(`vQueue_${boothId}`);
+    const finEl = document.getElementById(`vFinal_${boothId}`);
+    const remEl = document.getElementById(`remark_${boothId}`);
+
     const payload = {
-        username: currentUser ? currentUser.name : "Operator",
-        userRole: currentUser ? currentUser.role : "OP1",
-        mock_done: document.getElementById(`mock_${boothId}`).value,
-        started: document.getElementById(`started_${boothId}`).value,
-        v10: document.getElementById(`v10_${boothId}`).value,
-        v13: document.getElementById(`v13_${boothId}`).value,
-        v15: document.getElementById(`v15_${boothId}`).value,
-        v18: document.getElementById(`v18_${boothId}`).value,
-        v_queue: document.getElementById(`vQueue_${boothId}`).value,
-        v_final: document.getElementById(`vFinal_${boothId}`).value,
-        remark: document.getElementById(`remark_${boothId}`).value
+        username: currentUser ? (currentUser.name || currentUser.username) : "Operator",
+        userRole: (currentUser && currentUser.role) ? currentUser.role : (booth ? booth.operator_role : "RO"),
+        mock_done: mockEl ? mockEl.value : (booth.mock_done || 'No'),
+        started: startedEl ? startedEl.value : (booth.started || 'No'),
+        v10: v10El ? v10El.value : '',
+        v13: v13El ? v13El.value : '',
+        v15: v15El ? v15El.value : '',
+        v18: v18El ? v18El.value : '',
+        v_queue: qEl ? qEl.value : 0,
+        v_final: finEl ? finEl.value : '',
+        remark: remEl ? remEl.value : 'शांतिपूर्ण'
     };
 
     try {
@@ -1619,18 +1635,30 @@ async function saveSingleBoothFromZone(boothId) {
         });
         const result = await res.json();
         if (result.success) {
-            showToast(result.message);
+            showToast(`✅ ${result.message}`);
+            const row = document.getElementById(`zoneRow_${boothId}`);
+            if (row) {
+                row.style.background = "#f0fdf4";
+                setTimeout(() => { row.style.background = ""; }, 2500);
+            }
             await fetchData(false);
         } else {
             alert(result.message);
         }
     } catch(e) {
-        alert("डेटा सुरक्षित करने में त्रुटि!");
+        console.error("Save Error:", e);
+        alert("डेटा सुरक्षित करने में त्रुटि: " + (e.message || "नेटवर्क समस्या"));
     }
 }
 
 // Save All Booths in the Selected Zone at once (Bulk Batch Save)
 async function saveAllZoneBooths() {
+    if (!currentUser || currentUser.isGuest) {
+        alert("🔒 मतदान प्रविष्टि सुरक्षित करने के लिए कृपया पहले लॉगिन करें।");
+        document.getElementById("loginOverlay").style.display = "flex";
+        return;
+    }
+
     const zoneVal = document.getElementById("entryZoneSelect").value;
     const zoneNum = parseInt(zoneVal);
     const zoneBooths = portalData.booths.filter(b => b.zone === zoneNum && !b.is_nirvirodh);
@@ -1661,15 +1689,15 @@ async function saveAllZoneBooths() {
 
         return {
             boothId: b.id,
-            mock_done: mockEl ? mockEl.value : b.mock_done,
-            started: startedEl ? startedEl.value : b.started,
-            v10: v10El ? v10El.value : b.v10,
-            v13: v13El ? v13El.value : b.v13,
-            v15: v15El ? v15El.value : b.v15,
-            v18: v18El ? v18El.value : b.v18,
-            v_queue: qEl ? qEl.value : b.v_queue,
-            v_final: finEl ? finEl.value : b.v_final,
-            remark: remEl ? remEl.value : b.remark
+            mock_done: mockEl ? mockEl.value : (b.mock_done || 'No'),
+            started: startedEl ? startedEl.value : (b.started || 'No'),
+            v10: v10El ? v10El.value : '',
+            v13: v13El ? v13El.value : '',
+            v15: v15El ? v15El.value : '',
+            v18: v18El ? v18El.value : '',
+            v_queue: qEl ? qEl.value : 0,
+            v_final: finEl ? finEl.value : '',
+            remark: remEl ? remEl.value : (b.remark || 'शांतिपूर्ण')
         };
     });
 
@@ -1680,19 +1708,27 @@ async function saveAllZoneBooths() {
             body: JSON.stringify({
                 zone: zoneNum,
                 entries,
-                username: currentUser ? currentUser.name : "Operator",
-                userRole: currentUser ? currentUser.role : `OP${zoneNum}`
+                username: currentUser ? (currentUser.name || currentUser.username) : "Operator",
+                userRole: (currentUser && currentUser.role) ? currentUser.role : `OP${zoneNum}`
             })
         });
         const result = await res.json();
         if (result.success) {
             showToast(`✅ ${result.message}`);
+            zoneBooths.forEach(b => {
+                const row = document.getElementById(`zoneRow_${b.id}`);
+                if (row) {
+                    row.style.background = "#f0fdf4";
+                    setTimeout(() => { row.style.background = ""; }, 2500);
+                }
+            });
             await fetchData(false);
         } else {
             alert(result.message);
         }
     } catch(e) {
-        alert("ज़ोन बल्क डेटा सुरक्षित करने में त्रुटि!");
+        console.error("Bulk Save Error:", e);
+        alert("ज़ोन बल्क डेटा सुरक्षित करने में त्रुटि: " + (e.message || "नेटवर्क समस्या"));
     }
 }
 
