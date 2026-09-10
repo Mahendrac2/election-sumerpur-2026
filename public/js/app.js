@@ -2001,11 +2001,13 @@ function renderLiveDisplay() {
     // 7. TV Live Ticker Text Update
     const tickerEl = document.getElementById("tvLiveTickerText");
     if (tickerEl) {
-        const pendingMsg = pendingBooths.length === 0
-            ? 'समस्त 35 बूथों का डेटा समय पर प्राप्त'
-            : `${targetSlotLabel} स्लॉट में ${pendingBooths.length} बूथ प्रतीक्षारत (${pendingBooths.map(b => b.id).slice(0, 5).join(', ')}${pendingBooths.length > 5 ? '...' : ''})`;
+        const totEl = (kpi.totalElectors || 30598).toLocaleString('hi-IN');
+        const votEl = (kpi.votingElectors || 29757).toLocaleString('hi-IN');
+        const mEl = (kpi.male_electors || 15609).toLocaleString('hi-IN');
+        const fEl = (kpi.female_electors || 14980).toLocaleString('hi-IN');
+        const tgEl = (kpi.tg_electors || 9).toLocaleString('hi-IN');
 
-        tickerEl.innerHTML = `🏛️ सुमेरपुर नगर पालिका आम चुनाव 2026 लाइव कंट्रोल रूम &nbsp;&nbsp;|&nbsp;&nbsp; <b>कुल मतदान: ${kpi.overallPct}% (${kpi.totalLatestVotes.toLocaleString('hi-IN')} मत)</b> &nbsp;&nbsp;|&nbsp;&nbsp; कुल मतदाता: 29,696 &nbsp;&nbsp;|&nbsp;&nbsp; 35 मतदान केंद्र सक्रिय &nbsp;&nbsp;|&nbsp;&nbsp; मॉक पोल: ${kpi.mockDoneCount}/35 &nbsp;&nbsp;|&nbsp;&nbsp; 7:15 प्रारंभ: ${kpi.startedCount}/35 &nbsp;&nbsp;|&nbsp;&nbsp; स्थिति: ${pendingMsg} &nbsp;&nbsp;|&nbsp;&nbsp; शांतिपूर्ण एवं निष्पक्ष मतदान निरंतर जारी`;
+        tickerEl.innerHTML = `🏛️ सुमेरपुर नगर पालिका आम चुनाव 2026 लाइव कंट्रोल रूम &nbsp;&nbsp;|&nbsp;&nbsp; <b>कुल मतदान: ${kpi.overallPct}% (${kpi.totalLatestVotes.toLocaleString('hi-IN')} मत)</b> &nbsp;&nbsp;|&nbsp;&nbsp; <b>कुल पंजीकृत मतदाता: ${totEl}</b> (मतदान वाले: ${votEl} | पुरुष: ${mEl}, महिला: ${fEl}, TG: ${tgEl}) &nbsp;&nbsp;|&nbsp;&nbsp; 35 मतदान केंद्र सक्रिय (वार्ड 26 निर्विरोध) &nbsp;&nbsp;|&nbsp;&nbsp; मॉक पोल: ${kpi.mockDoneCount}/35 &nbsp;&nbsp;|&nbsp;&nbsp; 7:15 प्रारंभ: ${kpi.startedCount}/35 &nbsp;&nbsp;|&nbsp;&nbsp; स्थिति: ${pendingMsg} &nbsp;&nbsp;|&nbsp;&nbsp; शांतिपूर्ण एवं निष्पक्ष मतदान निरंतर जारी`;
     }
 }
 
