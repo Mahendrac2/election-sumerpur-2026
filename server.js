@@ -264,7 +264,7 @@ app.post('/api/admin/user/delete', (req, res) => {
 app.get('/api/data', (req, res) => {
     const query = `
         SELECT 
-            b.id, b.zone, b.ward, b.name, b.electors, b.operator_role, b.praganak_name, b.praganak_mob, b.is_nirvirodh,
+            b.id, b.zone, b.ward, b.ward_part, b.name, b.electors, b.male_electors, b.female_electors, b.tg_electors, b.operator_role, b.praganak_name, b.praganak_mob, b.is_nirvirodh,
             s.mock_done, s.started, s.v10, s.v13, s.v15, s.v18, s.v_queue, s.v_final, s.remark, s.updated_at, s.updated_by
         FROM booths b
         JOIN polling_stats s ON b.id = s.booth_id
@@ -280,9 +280,23 @@ app.get('/api/data', (req, res) => {
                 cfgRows.forEach(c => config[c.key] = c.value);
             }
 
-            // Perform analytical calculations
-            const totalElectors = 30529;
-            const votingElectors = 29696; // 35 voting booths, excluding booth 27
+            // Perform analytical calculations dynamically from database
+            let totalElectors = 0;
+            let totalMale = 0;
+            let totalFemale = 0;
+            let totalTG = 0;
+            let votingElectors = 0; // 35 voting booths, excluding nirvirodh
+
+            rows.forEach(r => {
+                totalElectors += Number(r.electors) || 0;
+                totalMale += Number(r.male_electors) || 0;
+                totalFemale += Number(r.female_electors) || 0;
+                totalTG += Number(r.tg_electors) || 0;
+                if (!r.is_nirvirodh) {
+                    votingElectors += Number(r.electors) || 0;
+                }
+            });
+
             let sum10 = 0, sum13 = 0, sum15 = 0, sum18 = 0, sumQueue = 0, sumFinal = 0;
             let mockDoneCount = 0, startedCount = 0, totalLatestVotes = 0;
 
@@ -311,15 +325,15 @@ app.get('/api/data', (req, res) => {
 
                     const latest = vFinal || v18 || v15 || v13 || v10 || 0;
                     totalLatestVotes += latest;
-                    const pct = Number(((latest / r.electors) * 100).toFixed(2));
+                    const pct = r.electors > 0 ? Number(((latest / r.electors) * 100).toFixed(2)) : 0;
 
                     if (pct > maxPct) {
                         maxPct = pct;
-                        highestBooth = { booth: r.id, ward: r.ward, name: r.name, pct, votes: latest, electors: r.electors };
+                        highestBooth = { booth: r.id, ward: r.ward, ward_part: r.ward_part || 1, name: r.name, pct, votes: latest, electors: r.electors };
                     }
                     if (pct < minPct) {
                         minPct = pct;
-                        lowestBooth = { booth: r.id, ward: r.ward, name: r.name, pct, votes: latest, electors: r.electors };
+                        lowestBooth = { booth: r.id, ward: r.ward, ward_part: r.ward_part || 1, name: r.name, pct, votes: latest, electors: r.electors };
                     }
 
                     return { ...r, latestVotes: latest, turnoutPct: pct };
@@ -328,7 +342,7 @@ app.get('/api/data', (req, res) => {
                 }
             });
 
-            const overallPct = Number(((totalLatestVotes / votingElectors) * 100).toFixed(2));
+            const overallPct = votingElectors > 0 ? Number(((totalLatestVotes / votingElectors) * 100).toFixed(2)) : 0;
 
             const activeBooths = processedRows.filter(r => !r.is_nirvirodh);
             const sortedDesc = [...activeBooths].sort((a, b) => b.turnoutPct - a.turnoutPct);
@@ -339,6 +353,7 @@ app.get('/api/data', (req, res) => {
                 id: r.id,
                 zone: r.zone,
                 ward: r.ward,
+                ward_part: r.ward_part || 1,
                 name: r.name,
                 electors: r.electors,
                 votes: r.latestVotes,
@@ -352,6 +367,7 @@ app.get('/api/data', (req, res) => {
                 id: r.id,
                 zone: r.zone,
                 ward: r.ward,
+                ward_part: r.ward_part || 1,
                 name: r.name,
                 electors: r.electors,
                 votes: r.latestVotes,
@@ -368,6 +384,9 @@ app.get('/api/data', (req, res) => {
                 booths: processedRows,
                 kpi: {
                     totalElectors,
+                    totalMale,
+                    totalFemale,
+                    totalTG,
                     votingElectors,
                     mockDoneCount,
                     startedCount,
@@ -381,16 +400,16 @@ app.get('/api/data', (req, res) => {
                     allRankedAsc: sortedAsc,
                     slotSums: {
                         s10: sum10,
-                        s10Pct: Number(((sum10 / votingElectors) * 100).toFixed(2)),
+                        s10Pct: votingElectors > 0 ? Number(((sum10 / votingElectors) * 100).toFixed(2)) : 0,
                         s13: sum13,
-                        s13Pct: Number(((sum13 / votingElectors) * 100).toFixed(2)),
+                        s13Pct: votingElectors > 0 ? Number(((sum13 / votingElectors) * 100).toFixed(2)) : 0,
                         s15: sum15,
-                        s15Pct: Number(((sum15 / votingElectors) * 100).toFixed(2)),
+                        s15Pct: votingElectors > 0 ? Number(((sum15 / votingElectors) * 100).toFixed(2)) : 0,
                         s18: sum18,
-                        s18Pct: Number(((sum18 / votingElectors) * 100).toFixed(2)),
+                        s18Pct: votingElectors > 0 ? Number(((sum18 / votingElectors) * 100).toFixed(2)) : 0,
                         sQueue: sumQueue,
                         sFinal: sumFinal,
-                        sFinalPct: Number(((sumFinal / votingElectors) * 100).toFixed(2))
+                        sFinalPct: votingElectors > 0 ? Number(((sumFinal / votingElectors) * 100).toFixed(2)) : 0
                     },
                     highestBooth: highestBooth || { booth: '-', ward: '-', pct: 0, votes: 0, electors: 0 },
                     lowestBooth: lowestBooth || { booth: '-', ward: '-', pct: 0, votes: 0, electors: 0 }
@@ -830,7 +849,8 @@ app.get('/api/logs', (req, res) => {
 app.get('/api/export/csv', (req, res) => {
     const query = `
         SELECT 
-            b.id as "बूथ संख्या", b.zone as "जोन", b.ward as "वार्ड", b.name as "मतदान केंद्र", b.electors as "कुल वोटर",
+            b.id as "बूथ संख्या", b.zone as "जोन", b.ward as "वार्ड", b.ward_part as "भाग संख्या", b.name as "मतदान केंद्र", 
+            b.male_electors as "पुरुष वोटर", b.female_electors as "महिला वोटर", b.tg_electors as "TG वोटर", b.electors as "कुल वोटर",
             s.mock_done as "मॉक पोल", s.started as "7:15 प्रारंभ", s.v10 as "10:00 AM", s.v13 as "01:00 PM",
             s.v15 as "03:00 PM", s.v18 as "06:00 PM", s.v_queue as "06:00 PM कतारबद्ध", s.v_final as "अंतिम मत",
             s.remark as "रिमार्क", b.praganak_name as "प्रभारी", b.praganak_mob as "मोबाइल",
