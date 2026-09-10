@@ -1383,6 +1383,7 @@ function validateLiveBoothRow(boothId, changedField) {
 function validateSingleBoothEntry(boothId) {
     const booth = portalData.booths.find(b => b.id === boothId);
     if (!booth || booth.is_nirvirodh) return { valid: true };
+    const electors = booth.electors;
 
     const mockEl = document.getElementById(`mock_${boothId}`);
     const startedEl = document.getElementById(`started_${boothId}`);
