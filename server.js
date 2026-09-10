@@ -26,20 +26,21 @@ function broadcastUpdate(eventType, data) {
     });
 }
 
-// Keep SSE connections alive
+// Keep SSE connections alive (15s interval)
 setInterval(() => {
     sseClients.forEach(client => {
         try {
             client.res.write(': keep-alive\n\n');
         } catch (e) {}
     });
-}, 25000);
+}, 15000);
 
 // SSE Stream Endpoint
 app.get('/api/live-stream', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable proxy buffering (Nginx, Render)
     res.flushHeaders();
 
     const clientId = Date.now() + Math.random();
