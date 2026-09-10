@@ -296,17 +296,26 @@ async function attemptRegister() {
         const result = await res.json();
 
         if (result.success) {
-            currentUser = result.user;
-            sessionStorage.setItem("sumerpur_user", JSON.stringify(currentUser));
-            document.getElementById("loginOverlay").style.display = "none";
-            updateUserInterface();
-            showToast(`🎉 बधाई हो! ऑपरेटर '${currentUser.name}' का पंजीयन सफल।`);
-            await fetchData();
-            if (currentUser.role.startsWith('OP')) {
-                navigateTo('entry');
-            } else {
-                navigateTo('dashboard');
+            alert(`✅ पंजीयन सफलतापूर्वक दर्ज हो गया!\n\nसुरक्षा कारणों से आपका खाता रिटर्निंग ऑफिसर (SDM) के अनुमोदन (Approval) हेतु भेजा गया है।\n\nSDM द्वारा एक्सेस स्वीकृत होने के पश्चात ही आप लॉगिन कर सकेंगे।`);
+            
+            // Clear registration fields
+            document.getElementById("regName").value = "";
+            document.getElementById("regMobile").value = "";
+            document.getElementById("regDesignation").value = "";
+            document.getElementById("regPassword").value = "";
+            
+            // Switch to Operator Login tab and prefill username
+            switchAuthTab('op_login');
+            const opUserEl = document.getElementById("opUsername");
+            if (opUserEl) {
+                opUserEl.value = username;
             }
+            const opPassEl = document.getElementById("opPassword");
+            if (opPassEl) {
+                opPassEl.value = "";
+                opPassEl.focus();
+            }
+            showToast("⏳ खाता अनुमोदन हेतु भेजा गया। SDM अनुमोदन की प्रतीक्षा करें।");
         } else {
             alert(result.message || "पंजीयन विफल!");
         }
