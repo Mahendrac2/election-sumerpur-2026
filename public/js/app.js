@@ -520,6 +520,12 @@ function renderDashboard() {
     }
 
     // Top KPIs
+    if (document.getElementById("kpiTotalElectors") && kpi.totalElectors) {
+        document.getElementById("kpiTotalElectors").innerText = kpi.totalElectors.toLocaleString('hi-IN');
+    }
+    if (document.getElementById("kpiVotingElectorsSub") && kpi.votingElectors) {
+        document.getElementById("kpiVotingElectorsSub").innerText = `मतदान वाले: ${kpi.votingElectors.toLocaleString('hi-IN')}`;
+    }
     document.getElementById("kpiMock").innerText = `${kpi.mockDoneCount} / 35`;
     document.getElementById("kpiStarted").innerText = `${kpi.startedCount} / 35`;
     document.getElementById("kpiVotes").innerText = kpi.totalLatestVotes.toLocaleString('hi-IN');
@@ -1722,7 +1728,8 @@ function renderLiveDisplay() {
 
     setTxt("tvTurnout", `${kpi.overallPct}%`);
     setTxt("tvTotalVotes", kpi.totalLatestVotes.toLocaleString('hi-IN'));
-    setTxt("tvElectors", kpi.votingElectors.toLocaleString('hi-IN'));
+    setTxt("tvElectors", (kpi.votingElectors || 29757).toLocaleString('hi-IN'));
+    setTxt("tvTotalElectorsSub", `कुल पंजीकृत: ${(kpi.totalElectors || 30598).toLocaleString('hi-IN')}`);
     setTxt("tvMockCount", `${kpi.mockDoneCount}/35`);
     setTxt("tvStartedCount", `${kpi.startedCount}/35`);
 
