@@ -392,38 +392,80 @@ function updateUserInterface() {
     }
 }
 
-// Server-Sent Events (SSE) Live Stream Listener
+// Server-Sent Events (SSE) Live Stream Listener + Fallback Auto-Polling
+let liveEventSource = null;
+let livePollInterval = null;
+
 function initLiveStream() {
     const syncStatus = document.getElementById("syncStatusText");
-    const es = new EventSource('/api/live-stream');
 
-    es.addEventListener('connected', () => {
-        if (syncStatus) syncStatus.innerText = "लाइव सिंक सक्रिय";
-    });
-
-    es.addEventListener('booth_updated', (e) => {
-        const data = JSON.parse(e.data);
-        if (data.zone) {
-            showToast(`⚡ ज़ोन ${data.zone} के बूथों का डेटा अपडेट हुआ!`);
-        } else {
-            showToast(`⚡ बूथ संख्या ${data.boothId} का डेटा अपडेट हुआ!`);
+    function connectSSE() {
+        if (liveEventSource) {
+            try { liveEventSource.close(); } catch(e) {}
         }
-        fetchData(false); // background fetch without loader
+
+        liveEventSource = new EventSource('/api/live-stream');
+
+        liveEventSource.addEventListener('connected', () => {
+            if (syncStatus) syncStatus.innerText = "लाइव सिंक सक्रिय";
+        });
+
+        liveEventSource.addEventListener('booth_updated', (e) => {
+            try {
+                const data = JSON.parse(e.data);
+                if (data.zone) {
+                    showToast(`⚡ ज़ोन ${data.zone} के बूथों का डेटा अपडेट हुआ!`);
+                } else {
+                    showToast(`⚡ बूथ संख्या ${data.boothId} का डेटा अपडेट हुआ!`);
+                }
+            } catch(err) {}
+            fetchData(false); // instant fetch
+        });
+
+        liveEventSource.addEventListener('config_updated', () => {
+            showToast("⚙️ सिस्टम सेटिंग्स अपडेट हुई!");
+            fetchData(false);
+        });
+
+        liveEventSource.addEventListener('data_reset', () => {
+            showToast("⚠️ सभी बूथों का डेटा रिसेट हुआ!");
+            fetchData(false);
+        });
+
+        liveEventSource.onerror = () => {
+            if (syncStatus) syncStatus.innerText = "लाइव सिंक (ऑटो-पोलिंग सक्रिय)";
+            setTimeout(() => {
+                connectSSE();
+            }, 5000);
+        };
+    }
+
+    connectSSE();
+
+    // Secondary Auto-Polling every 6-8 seconds to guarantee 100% sync on all mobile devices & networks
+    if (!livePollInterval) {
+        livePollInterval = setInterval(() => {
+            fetchData(false);
+        }, 7000);
+    }
+
+    // Auto-refresh instantly when user unlocks mobile or switches back to tab
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+            fetchData(false);
+            connectSSE();
+        }
     });
 
-    es.addEventListener('config_updated', () => {
-        showToast("⚙️ सिस्टम टाइम-लॉक सेटिंग्स अपडेट हुई!");
+    window.addEventListener("focus", () => {
         fetchData(false);
     });
 
-    es.addEventListener('data_reset', () => {
-        showToast("⚠️ सभी बूथों का डेटा रिसेट हुआ!");
+    window.addEventListener("online", () => {
+        showToast("📶 नेटवर्क पुनः कनेक्ट हुआ!");
         fetchData(false);
+        connectSSE();
     });
-
-    es.onerror = () => {
-        if (syncStatus) syncStatus.innerText = "पुनः कनेक्ट हो रहा है...";
-    };
 }
 
 // Fetch Full Dataset from Server
