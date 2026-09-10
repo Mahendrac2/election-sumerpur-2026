@@ -521,6 +521,10 @@ function handleHashNavigation() {
         el.classList.toggle("active", el.id === `view_${hash}`);
     });
 
+    if (hash === 'entry') {
+        initEntryForm(true); // Explicit user navigation: load fresh entry form
+    }
+
     renderCurrentView();
 }
 
@@ -532,7 +536,11 @@ function renderCurrentView() {
     } else if (currentTab === 'booths') {
         renderBoothsTable();
     } else if (currentTab === 'entry') {
-        initEntryForm();
+        // Do not rebuild the table on background auto-polling to preserve user typing/selection
+        const tbody = document.getElementById("zoneBulkEntryTbody");
+        if (!tbody || tbody.children.length === 0) {
+            initEntryForm(true);
+        }
     } else if (currentTab === 'zones') {
         renderZonesDirectory();
     } else if (currentTab === 'reports') {
@@ -1103,8 +1111,11 @@ function renderBoothsTable() {
 // -------------------------------------------------------------
 // VIEW 3: OPERATOR DATA ENTRY PORTAL (ZONE-WISE ALL BOOTHS)
 // -------------------------------------------------------------
-function initEntryForm() {
+function initEntryForm(force = false) {
     if (!currentUser || !portalData) return;
+
+    const tbody = document.getElementById("zoneBulkEntryTbody");
+    if (!force && tbody && tbody.children.length > 0) return;
 
     // Show time simulator bar only to RO SDM, hide for regular operators
     const simBar = document.getElementById("timeSimulatorBar");
