@@ -245,8 +245,8 @@
         <div class="kpi-grid">
             <div class="kpi-card" style="border-top: 4px solid #3b82f6;">
                 <h5>कुल पंजीकृत मतदाता</h5>
-                <div class="number">30,529</div>
-                <small>मतदान वाले: 29,696</small>
+                <div class="number" id="kpiTotalElectors">30,598</div>
+                <small id="kpiVotingElectorsSub">मतदान वाले: 29,757</small>
             </div>
             <div class="kpi-card" style="border-top: 4px solid #06b6d4;">
                 <h5>मॉक पोल पूर्ण (7 AM)</h5>
@@ -749,7 +749,8 @@
                 </div>
                 <div class="tv-kpi-card" style="border-top:4px solid #facc15;">
                     <div class="tv-lbl">सक्रिय मतदाता</div>
-                    <div class="tv-val" id="tvElectors" style="color:#facc15;">29,696</div>
+                    <div class="tv-val" id="tvElectors" style="color:#facc15;">29,757</div>
+                    <div class="tv-lbl" style="font-size:11px; color:#94a3b8; margin-top:2px;" id="tvTotalElectorsSub">कुल पंजीकृत: 30,598</div>
                 </div>
                 <div class="tv-kpi-card" style="border-top:4px solid #c084fc;">
                     <div class="tv-lbl">मॉक पोल पूर्ण</div>
@@ -988,7 +989,7 @@
         <tr>
             <td><b>कुल वार्ड:</b> 35 (मतदान वाले: 34)</td>
             <td><b>कुल मतदान केंद्र:</b> 36 (मतदान वाले: 35)</td>
-            <td><b>कुल मतदाता:</b> 30,529 (मतदान वाले: 29,696)</td>
+            <td><b>कुल मतदाता:</b> <span id="pdfMetaElectors">30,598 (मतदान वाले: 29,757)</span></td>
             <td><b>रिपोर्ट समय:</b> <span id="pdfGenTime">-</span></td>
         </tr>
         <tr>
