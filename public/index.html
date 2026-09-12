@@ -1465,10 +1465,10 @@
                 <span>वर्तमान स्थिति: <b id="cModalStatus">-</b></span>
             </div>
 
-            <!-- Ward 1 Special 2-EVM Notice Banner -->
+            <!-- Ward 1 Special 2-Round Notice Banner -->
             <div id="cModalWard1Notice" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;">
-                <i class="fas fa-layer-group" style="color:#0284c7; margin-right:4px;"></i> 
-                <b>वार्ड 1 में 2 मतदान केंद्र (2 EVM) हैं:</b> बूथ 1 (भाग 1: रा.उ.प्रा.वि. संजय नगर - 663 मत) + बूथ 2 (भाग 2: रा.व.उ. संस्कृत विद्यालय - 692 मत) = कुल 1,355 मत
+                <i class="fas fa-rotate" style="color:#0284c7; margin-right:4px;"></i> 
+                <b>वार्ड 1 आधिकारिक चक्रवार मतगणना (2 राउंड):</b> राउंड 1 (भाग 1: रा.उ.प्रा.वि. संजय नगर - 663 मत) + राउंड 2 (भाग 2: रा.व.उ. संस्कृत विद्यालय - 692 मत) = कुल 1,355 मत
             </div>
 
             <!-- Candidates Vote Entry Table -->
@@ -1480,7 +1480,7 @@
                             <th>प्रत्याशी का नाम</th>
                             <th>सम्बद्ध दल</th>
                             <th>प्रतीक</th>
-                            <th style="width: 120px;">EVM मत</th>
+                            <th style="width: 120px;">राउंड 1 (EVM मत)</th>
                             <th style="width: 110px;">डाक मतपत्र</th>
                             <th style="width: 100px;">कुल मत</th>
                         </tr>
@@ -1509,14 +1509,14 @@
                     </div>
                 </div>
 
-                <!-- Ward 1 Special 2-EVM NOTA view -->
+                <!-- Ward 1 Special 2-Round NOTA view -->
                 <div id="countingNotaWard1Grid" style="display: none; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px;">
                     <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (EVM 1 - भाग 1):</label>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (राउंड 1 - भाग 1):</label>
                         <input type="number" id="countingNotaEvm1" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
                     </div>
                     <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (EVM 2 - भाग 2):</label>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (राउंड 2 - भाग 2):</label>
                         <input type="number" id="countingNotaEvm2" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
                     </div>
                     <div>

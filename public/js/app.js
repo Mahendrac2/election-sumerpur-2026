@@ -2862,7 +2862,7 @@ function renderResultsGrid() {
             if (!isNirvirodh && w.total_counted_votes > 0) {
                 if (isWard1) {
                     const postalText = c.votes_postal ? ` + ${c.votes_postal} डाक` : '';
-                    voteBreakdown = `<div style="font-size:10px; color:#64748b;">${votePct}% (${c.votes_evm || 0} E1 + ${c.votes_evm2 || 0} E2${postalText})</div>`;
+                    voteBreakdown = `<div style="font-size:10px; color:#64748b;">${votePct}% (रा. 1: ${c.votes_evm || 0} + रा. 2: ${c.votes_evm2 || 0}${postalText})</div>`;
                 } else {
                     voteBreakdown = `<div style="font-size:10.5px; color:#64748b;">${votePct}% (${c.votes_evm || 0} EVM + ${c.votes_postal || 0} डाक)</div>`;
                 }
@@ -2903,7 +2903,7 @@ function renderResultsGrid() {
         if (w.nota_votes > 0) {
             let notaBreakdown = '';
             if (isWard1 && (w.nota_votes_evm1 > 0 || w.nota_votes_evm2 > 0)) {
-                notaBreakdown = ` <span style="font-size:10px; font-weight:normal; color:#64748b;">(${w.nota_votes_evm1 || 0} E1 + ${w.nota_votes_evm2 || 0} E2)</span>`;
+                notaBreakdown = ` <span style="font-size:10px; font-weight:normal; color:#64748b;">(रा. 1: ${w.nota_votes_evm1 || 0} + रा. 2: ${w.nota_votes_evm2 || 0})</span>`;
             }
             candidateRowsHtml += `
                 <div class="candidate-row" style="opacity:0.85; background:#fafafa;">
@@ -2941,11 +2941,11 @@ function renderResultsGrid() {
                 <div class="ward-card-header">
                     <div class="ward-title">
                         वार्ड संख्या ${w.ward}
-                        ${isWard1 ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px; margin-left:6px; vertical-align:middle;"><i class="fas fa-layer-group"></i> 2 EVM (भाग 1 + 2)</span>` : ''}
+                        ${isWard1 ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px; margin-left:6px; vertical-align:middle;"><i class="fas fa-rotate"></i> 2 चक्र (राउंड 1 + 2)</span>` : ''}
                         <div class="ward-meta">
                             मतदाता: <b>${w.total_electors.toLocaleString('hi-IN')}</b> | 
                             11-09 पोल: <b>${w.total_polled_votes.toLocaleString('hi-IN')}</b> (${((w.total_polled_votes / w.total_electors) * 100).toFixed(1)}%)
-                            ${isWard1 ? `<br><span style="color:#0284c7; font-size:11px; font-weight:600;"><i class="fas fa-building"></i> बूथ 1 (भाग 1): <b>663 मत</b> | बूथ 2 (भाग 2): <b>692 मत</b></span>` : ''}
+                            ${isWard1 ? `<br><span style="color:#0284c7; font-size:11px; font-weight:600;"><i class="fas fa-table-list"></i> राउंड 1 (भाग 1): <b>663 मत</b> | राउंड 2 (भाग 2): <b>692 मत</b></span>` : ''}
                         </div>
                     </div>
                     <div>${statusBadge}</div>
@@ -3053,7 +3053,7 @@ function onCountingWardSelected(wardNo) {
         w1Notice.style.display = isWard1 ? "block" : "none";
     }
 
-    // Dynamic table header for 2 EVMs vs 1 EVM
+    // Dynamic table header for 2 Rounds vs 1 Round
     const thead = document.getElementById("countingCandidatesTableHead");
     if (thead) {
         if (isWard1) {
@@ -3063,8 +3063,8 @@ function onCountingWardSelected(wardNo) {
                     <th>प्रत्याशी का नाम</th>
                     <th>सम्बद्ध दल</th>
                     <th>प्रतीक</th>
-                    <th style="width: 110px; background: #e0f2fe; color:#0369a1;"><i class="fas fa-box"></i> EVM 1 (भाग 1)</th>
-                    <th style="width: 110px; background: #dbeafe; color:#1e40af;"><i class="fas fa-box"></i> EVM 2 (भाग 2)</th>
+                    <th style="width: 120px; background: #e0f2fe; color:#0369a1;"><i class="fas fa-rotate"></i> राउंड 1 (भाग 1)</th>
+                    <th style="width: 120px; background: #dbeafe; color:#1e40af;"><i class="fas fa-rotate"></i> राउंड 2 (भाग 2)</th>
                     <th style="width: 95px;">डाक मत</th>
                     <th style="width: 105px; background: #f8fafc;">कुल मत</th>
                 </tr>
@@ -3076,7 +3076,7 @@ function onCountingWardSelected(wardNo) {
                     <th>प्रत्याशी का नाम</th>
                     <th>सम्बद्ध दल</th>
                     <th>प्रतीक</th>
-                    <th style="width: 120px;">EVM मत</th>
+                    <th style="width: 120px;">राउंड 1 (EVM मत)</th>
                     <th style="width: 110px;">डाक मतपत्र</th>
                     <th style="width: 100px;">कुल मत</th>
                 </tr>
@@ -3103,10 +3103,10 @@ function onCountingWardSelected(wardNo) {
                 </td>
                 <td><b>${c.symbol}</b></td>
                 <td style="background: #f0f9ff;">
-                    <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" placeholder="भाग 1" style="text-align:center; font-weight:700; border-color:#7dd3fc;" oninput="recalcCountingTotals()">
+                    <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" placeholder="राउंड 1" style="text-align:center; font-weight:700; border-color:#7dd3fc;" oninput="recalcCountingTotals()">
                 </td>
                 <td style="background: #eff6ff;">
-                    <input type="number" id="c_evm2_${c.id}" class="form-control" value="${c.votes_evm2 || 0}" min="0" placeholder="भाग 2" style="text-align:center; font-weight:700; border-color:#93c5fd;" oninput="recalcCountingTotals()">
+                    <input type="number" id="c_evm2_${c.id}" class="form-control" value="${c.votes_evm2 || 0}" min="0" placeholder="राउंड 2" style="text-align:center; font-weight:700; border-color:#93c5fd;" oninput="recalcCountingTotals()">
                 </td>
                 <td>
                     <input type="number" id="c_postal_${c.id}" class="form-control" value="${c.votes_postal || 0}" min="0" style="text-align:center;" oninput="recalcCountingTotals()">
