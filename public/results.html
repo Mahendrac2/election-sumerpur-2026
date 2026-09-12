@@ -47,44 +47,83 @@
         }
 
         /* Dynamic Multi-Part / Multi-Round Table Styling */
-        .counting-table-container {
-            margin-bottom: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
+        /* Dynamic Part-by-Part Official Counting Styles */
+        .part-tabs-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
             overflow-x: auto;
-            position: relative;
-            max-height: 480px;
         }
-        .counting-table-container table {
-            border-collapse: separate;
-            border-spacing: 0;
+        .part-tab-btn {
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            text-align: left;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
-        .counting-sticky-cno {
-            position: sticky;
-            left: 0;
-            z-index: 3;
-            background: #ffffff;
-            width: 40px;
-            min-width: 40px;
+        .part-tab-btn:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .part-tab-btn.active {
+            background: #0284c7;
+            color: white;
+            border-color: #0284c7;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+        }
+        .part-tab-btn.active .part-subtext {
+            color: #e0f2fe !important;
+        }
+        .part-tab-btn.consolidated {
+            background: #faf5ff;
+            border-color: #d8b4fe;
+            color: #7e22ce;
+        }
+        .part-tab-btn.consolidated.active {
+            background: #7e22ce;
+            color: white;
+            border-color: #7e22ce;
+            box-shadow: 0 2px 6px rgba(126, 34, 206, 0.3);
+        }
+        .part-tab-btn.consolidated.active .part-subtext {
+            color: #f3e8ff !important;
+        }
+        .part-banner {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .cand-evm-input {
             text-align: center;
+            font-size: 15px;
+            font-weight: 800;
+            color: #0f172a;
+            border: 1.5px solid #94a3b8;
+            width: 130px;
+            padding: 6px 10px;
+            margin: 0 auto;
         }
-        .counting-sticky-name {
-            position: sticky;
-            left: 40px;
-            z-index: 3;
-            background: #ffffff;
-            min-width: 170px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.06);
-        }
-        thead .counting-sticky-cno,
-        thead .counting-sticky-name {
-            background: #f1f5f9 !important;
-            z-index: 4;
-        }
-        tfoot .counting-sticky-cno,
-        tfoot .counting-sticky-name {
-            background: #f8fafc !important;
-            z-index: 4;
+        .cand-evm-input:focus {
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.18);
         }
     </style>
 </head>
@@ -243,57 +282,27 @@
             <span>वर्तमान स्थिति: <b id="cModalStatus">-</b></span>
         </div>
 
-        <!-- Dynamic Parts/Rounds Notice Banner -->
-        <div id="cModalPartsNotice" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; line-height: 1.5;">
-            <!-- Populated dynamically -->
+        <!-- Dynamic Parts Selection Tabs Bar -->
+        <div id="countingPartTabsContainer" class="part-tabs-bar">
+            <!-- Populated dynamically: [ भाग 1 (राउंड 1) ] [ भाग 2 (राउंड 2) ] ... [ समेकित परिणाम एवं डाक मत ] -->
         </div>
 
-        <!-- Candidates Vote Entry Table -->
-        <div class="counting-table-container">
-            <table class="data-table" style="margin: 0; width: 100%;">
-                <thead id="countingCandidatesTableHead" style="background: #f1f5f9;">
-                    <!-- Populated dynamically based on parts count -->
-                </thead>
-                <tbody id="countingCandidatesTableBody">
-                    <!-- Populated dynamically by results.js -->
-                </tbody>
-                <tfoot id="countingCandidatesTableFoot" style="background: #f8fafc; font-weight: bold; border-top: 2px solid #cbd5e1;">
-                    <!-- Dynamic Subtotals per round -->
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- Live Round-by-Round Breakdown & Tally Status -->
-        <div id="countingRoundBreakdownStrip" style="display:none; margin-bottom: 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 11.5px; color: #334155;">
-            <!-- Populated dynamically during input -->
-        </div>
-
-        <!-- NOTA, Tendered, Rejected Container (Dynamic per Part) -->
-        <div id="countingNotaContainer" style="margin-bottom: 16px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7;">
-            <!-- Populated dynamically -->
-        </div>
-
-        <!-- Grand Total Counted & Status Bar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; flex-wrap: wrap; gap: 8px;">
-            <div style="font-size: 13px; color: #166534; font-weight: 700;">
-                कुल गिने गए मत: <span id="countingModalTotalCounted" style="font-size: 16px; color: #15803d;">0 मत</span>
-                <span id="countingModalMarginText" style="margin-left: 14px; font-size: 12px; color: #0369a1;"></span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <label style="font-size: 12px; font-weight: bold; color: #166534;">वार्ड स्थिति:</label>
-                <select id="countingStatusSelect" class="form-control" style="width: auto; padding: 5px 10px; font-weight: 700;">
-                    <option value="Counting">मतगणना जारी (Counting)</option>
-                    <option value="Declared">आधिकारिक परिणाम घोषित (Declared)</option>
-                </select>
-            </div>
+        <!-- Dynamic Active Tab Content Container (Single Part OR Consolidated) -->
+        <div id="countingActiveTabContainer" style="margin-bottom: 16px;">
+            <!-- Populated dynamically by results.js -->
         </div>
 
         <!-- Modal Footer Actions -->
-        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-            <button class="btn-secondary" onclick="closeCountingEntryModal()">बंद करें</button>
-            <button class="btn-primary" style="background:#15803d; border-color:#15803d;" onclick="saveCountingData()">
-                <i class="fas fa-save"></i> मतगणना डेटा सुरक्षित व प्रसारित करें
-            </button>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 14px; flex-wrap: wrap; gap: 10px;">
+            <div id="modalFooterSummaryBadge" style="font-size: 12.5px; color: #475569; font-weight: 600;">
+                <!-- Live quick status -->
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="closeCountingEntryModal()">बंद करें</button>
+                <button class="btn-primary" style="background:#15803d; border-color:#15803d;" onclick="saveCountingData()">
+                    <i class="fas fa-save"></i> मतगणना डेटा सुरक्षित व प्रसारित करें
+                </button>
+            </div>
         </div>
 
     </div>
