@@ -673,33 +673,64 @@ function getPartMatchHtml(partIdx) {
     const isMatched = (targetVotes > 0 && diff === 0);
     const hasVotes = totalCounted > 0;
 
-    return `
-        <div class="classic-reconcile-card ${isMatched ? 'matched' : (hasVotes ? 'mismatch' : '')}">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+    if (isMatched) {
+        return `
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas ${isMatched ? 'fa-check-circle' : (hasVotes ? 'fa-exclamation-triangle' : 'fa-clipboard-check')}" 
-                       style="font-size: 20px; color: ${isMatched ? '#16a34a' : (hasVotes ? '#ea580c' : '#0284c7')};"></i>
+                    <i class="fas fa-check-circle" style="color: #16a34a; font-size: 20px;"></i>
                     <div>
-                        <b style="color: ${isMatched ? '#166534' : (hasVotes ? '#9a3412' : '#1e3a8a')}; font-size: 13px;">
-                            प्ररूप 17ग (भाग-I) पोल लक्ष्य: ${targetVotes.toLocaleString('hi-IN')} मत &bull; कुल दर्ज मत: ${totalCounted.toLocaleString('hi-IN')} मत
-                        </b>
-                        <div style="font-size: 11.5px; color: #475569; margin-top: 1px;">
-                            (अभ्यर्थी मत योग: <b>${cSum}</b> + NOTA मत: <b>${notaVal}</b> = <b>${totalCounted} मत</b>)
+                        <div style="font-weight: 700; color: #166534; font-size: 13px;">
+                            100% सटीक मिलान पूर्ण — कुल दर्ज मत: ${totalCounted.toLocaleString('hi-IN')} मत
+                        </div>
+                        <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
+                            11-09 पोल लक्ष्य: <b>${targetVotes.toLocaleString('hi-IN')} मत</b> | (अभ्यर्थी मत योग: <b>${cSum}</b> + NOTA: <b>${notaVal}</b>)
                         </div>
                     </div>
                 </div>
-                <div>
-                    ${isMatched 
-                        ? `<span style="background:#dcfce7; color:#166534; padding: 4px 10px; border-radius: 4px; font-weight: 800; font-size: 12px; border: 1.5px solid #86efac;">✓ 100% सटीक मिलान पूर्ण</span>`
-                        : (hasVotes 
-                            ? `<span style="background:#fee2e2; color:#991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 800; font-size: 12px; border: 1.5px solid #fca5a5;">अंतर: ${diff > 0 ? '+' : ''}${diff} मत (प्ररूप 17ग से जांचें)</span>`
-                            : `<span style="background:#f1f5f9; color:#64748b; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 11.5px; border: 1px solid #cbd5e1;">प्रविष्टि प्रतीक्षारत</span>`
-                        )
-                    }
-                </div>
+                <span class="status-badge badge-active" style="padding: 5px 12px; font-size: 11.5px;">
+                    <i class="fas fa-check"></i> 100% सटीक मिलान पूर्ण
+                </span>
             </div>
-        </div>
-    `;
+        `;
+    } else if (hasVotes) {
+        return `
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; border-left: 5px solid #ef4444; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-triangle-exclamation" style="color: #ef4444; font-size: 20px;"></i>
+                    <div>
+                        <div style="font-weight: 700; color: #991b1b; font-size: 13px;">
+                            मत गणना में अंतर — पोल लक्ष्य: ${targetVotes.toLocaleString('hi-IN')} मत | कुल दर्ज मत: ${totalCounted.toLocaleString('hi-IN')} मत
+                        </div>
+                        <div style="font-size: 11.5px; color: #7f1d1d; margin-top: 2px;">
+                            अंतर: <b>${diff > 0 ? '+' : ''}${diff} मत</b> (अभ्यर्थी मत: <b>${cSum}</b> + NOTA: <b>${notaVal}</b>) &bull; प्ररूप 17ग रिकॉर्ड से जांचें
+                        </div>
+                    </div>
+                </div>
+                <span class="status-badge badge-locked" style="padding: 5px 12px; font-size: 11.5px;">
+                    <i class="fas fa-exclamation"></i> अंतर: ${diff > 0 ? '+' : ''}${diff} मत
+                </span>
+            </div>
+        `;
+    } else {
+        return `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #64748b; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="far fa-clock" style="color: #64748b; font-size: 20px;"></i>
+                    <div>
+                        <div style="font-weight: 700; color: #334155; font-size: 13px;">
+                            भाग ${pt.part} (राउंड ${partIdx + 1}) की ईवीएम मतगणना प्रविष्टि करें
+                        </div>
+                        <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
+                            11-09 मतदान दिवस पोल लक्ष्य: <b>${targetVotes.toLocaleString('hi-IN')} मत</b>
+                        </div>
+                    </div>
+                </div>
+                <span class="status-badge badge-waiting" style="padding: 5px 12px; font-size: 11.5px;">
+                    <i class="far fa-clock"></i> प्रविष्टि प्रतीक्षारत
+                </span>
+            </div>
+        `;
+    }
 }
 
 function renderSinglePartEntry(partIdx) {
@@ -724,23 +755,24 @@ function renderSinglePartEntry(partIdx) {
         const candPartVal = arr[partIdx] || 0;
         candRows += `
             <tr>
-                <td style="text-align: center; font-weight: 800; color: #475569; width: 45px;">${c.candidate_no}</td>
+                <td style="font-weight: 700; color: #64748b; width: 45px;">${c.candidate_no}</td>
                 <td style="text-align: left;">
-                    <div style="font-weight: 700; font-size: 13.5px; color: #0f172a;">${c.name}</div>
-                    <div style="font-size: 11px; color: #64748b;">${c.address || `वार्ड ${ward.ward}, सुमेरपुर`}</div>
+                    <div style="font-weight: 700; font-size: 13.5px; color: var(--primary);">${c.name}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${c.address || `वार्ड ${ward.ward}, सुमेरपुर`}</div>
                 </td>
-                <td style="text-align: left;">
+                <td style="text-align: left; width: 140px;">
                     <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
                 </td>
-                <td style="text-align: center; font-size: 12.5px; font-weight: 600;">
+                <td style="width: 100px; font-weight: 600; color: #475569;">
                     ${c.symbol || '-'}
                 </td>
-                <td class="classic-input-wrap" style="background: #f0fdf4;">
-                    <input type="number" class="classic-input-num" 
+                <td style="width: 160px;">
+                    <input type="number" class="form-control" 
                            id="cand_vote_${c.id}_${partIdx}" 
                            value="${candPartVal}" min="0" 
                            placeholder="0"
                            tabindex="${idx + 1}"
+                           style="text-align: center; font-size: 14px; font-weight: 700; max-width: 130px; margin: 0 auto; color: var(--primary);"
                            oninput="onPartVoteChanged(${c.id}, ${partIdx}, this.value)">
                 </td>
             </tr>
@@ -748,102 +780,104 @@ function renderSinglePartEntry(partIdx) {
     });
 
     container.innerHTML = `
-        <div class="classic-form-sheet">
-            <div class="classic-sheet-header">
-                <div class="classic-sheet-title">
-                    <i class="fas fa-file-alt" style="color: #1e3a8a; margin-right: 6px;"></i>
-                    प्ररूप 17-ग (भाग-II) &bull; मतों का लेखा / परिणाम अभिलिखित करें
-                </div>
-                <div class="classic-sheet-subtitle">
-                    FORM 17-C (PART-II) &mdash; RESULT OF COUNTING / RECORD OF VOTES
+        <div class="card" style="margin-bottom: 0; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+            
+            <!-- Card Header matching Matdan Control -->
+            <div class="card-header" style="background: #fafcff; padding: 12px 18px;">
+                <h3>
+                    <i class="fas fa-vote-yea" style="color: var(--accent);"></i>
+                    <span>भाग ${pt.part} (राउंड ${partIdx + 1}) — ${pt.name || `मतदान केंद्र संख्या ${pt.booth_no}`}</span>
+                </h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="pct-pill" style="font-size: 11.5px; padding: 4px 10px;">
+                        <i class="fas fa-bullseye"></i> लक्ष्य: ${targetVotes.toLocaleString('hi-IN')} मत
+                    </span>
+                    <span class="zone-pill" style="font-size: 11.5px; padding: 4px 10px;">
+                        चरण ${partIdx + 1} / ${partCount}
+                    </span>
                 </div>
             </div>
 
-            <!-- Official Metadata Strip -->
-            <table class="classic-meta-table">
-                <tr>
-                    <td style="width: 25%;"><b>वार्ड:</b> संख्या ${ward.ward}</td>
-                    <td style="width: 50%;"><b>भाग / मतदान केंद्र:</b> भाग ${pt.part} &mdash; ${pt.name || `बूथ ${pt.booth_no}`}</td>
-                    <td style="width: 25%;"><b>11-09 पोल लक्ष्य:</b> <b style="color: #0284c7;">${targetVotes.toLocaleString('hi-IN')} मत</b></td>
-                </tr>
-            </table>
+            <!-- Table Responsive matching data-table -->
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 45px;">क्र.सं.</th>
+                            <th style="text-align: left;">प्रत्याशी का नाम एवं विवरण</th>
+                            <th style="text-align: left; width: 140px;">दल (Party)</th>
+                            <th style="width: 100px;">चुनाव प्रतीक</th>
+                            <th style="width: 160px;">ईवीएम मत संख्या (Votes)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${candRows}
+                        <!-- Statutory NOTA Row -->
+                        <tr style="background: #fffbeb;">
+                            <td style="font-weight: 700; color: #92400e;">-</td>
+                            <td style="text-align: left;">
+                                <div style="font-weight: 700; font-size: 13px; color: #92400e;">
+                                    <i class="fas fa-ban" style="margin-right: 5px;"></i> NOTA (उपरोक्त में से कोई नहीं)
+                                </div>
+                                <div style="font-size: 11px; color: #b45309;">None of the Above</div>
+                            </td>
+                            <td style="text-align: left; color: #92400e; font-weight: 600;">-</td>
+                            <td style="font-weight: 700; color: #92400e;">NOTA</td>
+                            <td>
+                                <input type="number" class="form-control" id="partNotaInput"
+                                       value="${notaVal}" min="0" placeholder="0"
+                                       tabindex="${ward.candidates.length + 1}"
+                                       style="text-align: center; font-size: 14px; font-weight: 700; max-width: 130px; margin: 0 auto; border-color: #f59e0b; background: white; color: #78350f;"
+                                       oninput="onPartNotaChanged(${partIdx}, this.value)">
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f8fafc; color: var(--primary);">
+                            <td colspan="4" style="text-align: right; padding-right: 16px; font-size: 13px; font-weight: 700; border-top: 2px solid var(--border);">
+                                <i class="fas fa-calculator" style="color: var(--accent); margin-right: 4px;"></i> 
+                                भाग ${pt.part} कुल दर्ज मत (प्रत्याशी + NOTA):
+                            </td>
+                            <td id="partGrandSubtotal" style="text-align: center; font-size: 16px; font-weight: 900; color: var(--primary); background: #e2e8f0; border-top: 2px solid var(--border);">
+                                ${grandTotalPart.toLocaleString('hi-IN')}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
 
-            <!-- Candidate Table -->
-            <table class="classic-table">
-                <thead>
-                    <tr>
-                        <th style="width: 45px;">क्र.सं.</th>
-                        <th style="text-align: left;">अभ्यर्थी का नाम एवं विवरण</th>
-                        <th style="width: 140px; text-align: left;">सम्बद्ध दल</th>
-                        <th style="width: 90px;">चुनाव प्रतीक</th>
-                        <th style="width: 160px; background: #0c4a6e;">
-                            अभिलिखित मत (EVM Votes)
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${candRows}
-                    <!-- Statutory NOTA Row -->
-                    <tr style="background: #fffbeb; font-weight: 700;">
-                        <td style="text-align: center; color: #92400e;">-</td>
-                        <td style="color: #92400e;">
-                            <i class="fas fa-ban" style="margin-right: 4px;"></i> NOTA (उपरोक्त में से कोई नहीं / None of the Above)
-                        </td>
-                        <td style="color: #92400e;">-</td>
-                        <td style="text-align: center; color: #92400e;">NOTA</td>
-                        <td class="classic-input-wrap" style="background: #fef3c7;">
-                            <input type="number" id="partNotaInput" class="classic-input-num" 
-                                   style="border-color: #d97706; color: #78350f; background: #ffffff;"
-                                   value="${notaVal}" min="0" 
-                                   placeholder="0"
-                                   tabindex="${ward.candidates.length + 1}"
-                                   oninput="onPartNotaChanged(${partIdx}, this.value)">
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" style="text-align: right; padding-right: 14px; font-size: 12.5px; color: #1e3a8a;">
-                            <i class="fas fa-calculator"></i> भाग ${pt.part} कुल अभिलिखित मत (प्रत्याशी + NOTA योग):
-                        </td>
-                        <td id="partGrandSubtotal" style="text-align: center; font-size: 16px; font-weight: 900; color: #0369a1; background: #e0f2fe;">
-                            ${grandTotalPart.toLocaleString('hi-IN')}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-
-            <!-- Statutory Reconciliation Box -->
-            <div id="partReconcileBox" style="margin-top: 10px;">
+            <!-- Live Match & Reconciliation Strip -->
+            <div id="partReconcileBox" style="padding: 12px 18px; border-top: 1px solid var(--border);">
                 ${getPartMatchHtml(partIdx)}
             </div>
 
-            <!-- Navigation Bar Between Parts -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 10px; border-top: 1px dashed #cbd5e1; flex-wrap: wrap; gap: 8px;">
+            <!-- Clean Navigation Bar Between Parts -->
+            <div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div>
                     ${partIdx > 0 ? `
-                        <button type="button" class="btn-secondary" style="padding: 6px 14px; font-size: 12.5px; font-weight: 600;" onclick="switchCountingPart(${partIdx - 1})">
+                        <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="switchCountingPart(${partIdx - 1})">
                             <i class="fas fa-arrow-left"></i> पिछला भाग (भाग ${parts[partIdx - 1].part})
                         </button>
                     ` : `
-                        <span style="font-size: 12px; color: #64748b;"><i class="fas fa-info-circle"></i> प्रथम भाग की प्रविष्टि</span>
+                        <span style="font-size: 11.5px; color: var(--text-muted);"><i class="fas fa-flag"></i> प्रथम भाग की प्रविष्टि</span>
                     `}
                 </div>
-                <div style="font-size: 12px; color: #475569; font-weight: 600;">
-                    चरण ${partIdx + 1} / ${partCount} &bull; भाग ${pt.part} (राउंड ${partIdx + 1})
+                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
+                    प्रविष्टि चरण ${partIdx + 1} / ${partCount} (भाग ${pt.part})
                 </div>
                 <div>
                     ${partIdx < partCount - 1 ? `
-                        <button type="button" class="btn-primary" style="background: #0284c7; border-color: #0284c7; padding: 6px 16px; font-size: 12.5px; font-weight: 700;" onclick="switchCountingPart(${partIdx + 1})">
-                            अगले भाग (भाग ${parts[partIdx + 1].part}) पर जाएँ <i class="fas fa-arrow-right"></i>
+                        <button type="button" class="btn-primary" style="font-size: 12px; padding: 7px 14px;" onclick="switchCountingPart(${partIdx + 1})">
+                            अगला भाग (भाग ${parts[partIdx + 1].part}) <i class="fas fa-arrow-right"></i>
                         </button>
                     ` : `
-                        <button type="button" class="btn-primary" style="background: #7e22ce; border-color: #7e22ce; padding: 6px 16px; font-size: 12.5px; font-weight: 700;" onclick="switchCountingPart(-1)">
-                            समेकित परिणाम पत्रक पर जाएँ <i class="fas fa-chart-pie"></i>
+                        <button type="button" class="btn-primary" style="font-size: 12px; padding: 7px 14px; background: #7e22ce;" onclick="switchCountingPart(-1)">
+                            समेकित परिणाम पत्रक देखें <i class="fas fa-chart-pie"></i>
                         </button>
                     `}
                 </div>
             </div>
+
         </div>
     `;
 }
@@ -903,8 +937,8 @@ function renderConsolidatedResultView() {
     let thParts = '';
     for (let i = 0; i < partCount; i++) {
         thParts += `
-            <th style="text-align: center; background: #0c4a6e; font-size: 11.5px; width: 95px;">
-                भाग ${parts[i].part} (रा. ${i + 1})
+            <th style="width: 95px; text-align: center;">
+                भाग ${parts[i].part}
             </th>
         `;
     }
@@ -924,7 +958,7 @@ function renderConsolidatedResultView() {
             cRoundsSum += v;
             partTotals[i] += v;
             tdParts += `
-                <td style="text-align: center; font-weight: 700; color: #1e40af; background: #f0f9ff;">
+                <td style="font-weight: 700; color: #1e40af; background: #f0f9ff;">
                     ${v.toLocaleString('hi-IN')}
                 </td>
             `;
@@ -938,20 +972,20 @@ function renderConsolidatedResultView() {
 
         rowsHtml += `
             <tr>
-                <td style="text-align: center; font-weight: 800; color: #475569;">${c.candidate_no}</td>
-                <td style="text-align: left; font-weight: 700; color: #0f172a;">${c.name}</td>
+                <td style="font-weight: 700; color: #64748b;">${c.candidate_no}</td>
+                <td style="text-align: left; font-weight: 700; color: var(--primary);">${c.name}</td>
                 <td style="text-align: left;">
                     <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
                 </td>
-                <td style="text-align: center; font-weight: 600;">${c.symbol || '-'}</td>
+                <td style="font-weight: 600;">${c.symbol || '-'}</td>
                 ${tdParts}
-                <td style="text-align: center; background: #fffbeb;">
-                    <input type="number" class="classic-input-num cand-postal-input" 
+                <td style="background: #fffbeb;">
+                    <input type="number" class="form-control cand-postal-input" 
                            value="${postal}" min="0" 
-                           style="width: 75px; text-align: center; margin: 0 auto; font-weight: bold; border-color: #d97706;" 
+                           style="width: 75px; text-align: center; margin: 0 auto; font-weight: 700; border-color: #d97706; padding: 4px;" 
                            oninput="onPostalVoteChanged(${c.id}, this.value)">
                 </td>
-                <td id="cand_tot_${c.id}" style="text-align: center; font-size: 15px; font-weight: 900; background: #f1f5f9; color: #0f172a;">
+                <td id="cand_tot_${c.id}" style="font-size: 15px; font-weight: 900; background: #f1f5f9; color: var(--primary);">
                     ${tot.toLocaleString('hi-IN')}
                 </td>
             </tr>
@@ -961,7 +995,7 @@ function renderConsolidatedResultView() {
     let footParts = '';
     for (let i = 0; i < partCount; i++) {
         footParts += `
-            <td style="text-align: center; font-weight: 800; color: #0369a1; background: #e0f2fe;">
+            <td style="font-weight: 800; color: #0369a1; background: #e0f2fe;">
                 ${partTotals[i].toLocaleString('hi-IN')}
             </td>
         `;
@@ -988,29 +1022,25 @@ function renderConsolidatedResultView() {
     }
 
     container.innerHTML = `
-        <div class="classic-form-sheet">
-            <div class="classic-sheet-header">
-                <div class="classic-sheet-title" style="color: #7e22ce;">
-                    <i class="fas fa-balance-scale" style="color: #7e22ce; margin-right: 6px;"></i>
-                    प्ररूप 20 (नियम 56ग(2) देखिए) &bull; अंतिम परिणाम पत्रक
-                </div>
-                <div class="classic-sheet-subtitle">
-                    FORM 20 &mdash; FINAL RESULT SHEET (CONSOLIDATED WARD RESULT)
+        <div class="card" style="margin-bottom: 0; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+            <div class="card-header" style="background: #fafcff; padding: 12px 18px;">
+                <h3>
+                    <i class="fas fa-balance-scale" style="color: #7e22ce;"></i>
+                    <span>वार्ड ${ward.ward} — समेकित परिणाम पत्रक (समस्त ${partCount} भाग + डाक मतपत्र)</span>
+                </h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span class="pct-pill" style="font-size: 11.5px; padding: 4px 10px;">
+                        <i class="fas fa-bullseye"></i> 11-09 पोल: ${targetPolled.toLocaleString('hi-IN')} मत
+                    </span>
+                    <span class="zone-pill" style="font-size: 11.5px; padding: 4px 10px;">
+                        कुल भाग: ${partCount}
+                    </span>
                 </div>
             </div>
 
-            <!-- Official Metadata Strip -->
-            <table class="classic-meta-table">
-                <tr>
-                    <td style="width: 25%;"><b>वार्ड संख्या:</b> ${ward.ward}</td>
-                    <td style="width: 45%;"><b>समेकित भाग संख्या:</b> कुल ${partCount} भाग (राउंड)</td>
-                    <td style="width: 30%;"><b>मतदान दिवस पोल (लक्ष्य):</b> <b style="color: #7e22ce;">${targetPolled.toLocaleString('hi-IN')} मत</b></td>
-                </tr>
-            </table>
-
             <!-- Consolidated Table -->
-            <div style="overflow-x: auto; margin-bottom: 12px;">
-                <table class="classic-table">
+            <div class="table-responsive">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th style="width: 40px;">क्र.</th>
@@ -1018,23 +1048,23 @@ function renderConsolidatedResultView() {
                             <th style="width: 120px; text-align: left;">दल</th>
                             <th style="width: 75px;">प्रतीक</th>
                             ${thParts}
-                            <th style="width: 90px; background: #854d0e;">डाक मत</th>
-                            <th style="width: 110px; background: #1e3a8a;">कुल मत</th>
+                            <th style="width: 90px;">डाक मत</th>
+                            <th style="width: 110px;">कुल मत</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${rowsHtml}
                     </tbody>
                     <tfoot>
-                        <tr>
-                            <td colspan="4" style="text-align: right; padding-right: 14px; font-size: 12.5px;">
-                                <i class="fas fa-calculator" style="color: #0284c7;"></i> चक्रवार प्रत्याशी उप-योग:
+                        <tr style="background: #f8fafc; color: var(--primary);">
+                            <td colspan="4" style="text-align: right; padding-right: 14px; font-size: 12.5px; font-weight: 700; border-top: 2px solid var(--border);">
+                                <i class="fas fa-calculator" style="color: var(--accent);"></i> भागवार प्रत्याशी उप-योग:
                             </td>
                             ${footParts}
-                            <td id="foot_postal_total" style="text-align: center; font-weight: 800; color: #92400e; background: #fef3c7;">
+                            <td id="foot_postal_total" style="font-weight: 800; color: #92400e; background: #fef3c7; border-top: 2px solid var(--border);">
                                 ${totalPostalSum.toLocaleString('hi-IN')}
                             </td>
-                            <td id="foot_cand_grand_total" style="text-align: center; font-size: 15px; font-weight: 900; background: #e2e8f0; color: #0f172a;">
+                            <td id="foot_cand_grand_total" style="font-size: 15px; font-weight: 900; background: #e2e8f0; color: var(--primary); border-top: 2px solid var(--border);">
                                 ${grandCandidateTotal.toLocaleString('hi-IN')}
                             </td>
                         </tr>
@@ -1043,7 +1073,7 @@ function renderConsolidatedResultView() {
             </div>
 
             <!-- NOTA & Tendered / Rejected Strip -->
-            <div style="background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="padding: 12px 18px; background: #fffbeb; border-top: 1px solid #fde68a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <span style="font-weight: 700; color: #92400e;"><i class="fas fa-ban"></i> कुल NOTA मत:</span>
                     <b style="font-size: 15px; color: #78350f; margin-left: 6px;">${totalNota} मत</b>
@@ -1051,21 +1081,21 @@ function renderConsolidatedResultView() {
                 </div>
                 <div style="display: flex; gap: 14px; align-items: center;">
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 11.5px; font-weight: bold; color: #78350f;">निविदत्त (Tendered):</label>
-                        <input type="number" id="countingTenderedVotes" class="classic-input-num" style="width: 65px; padding: 3px;" value="${countingState.tendered_votes}" min="0" onchange="countingState.tendered_votes = parseInt(this.value) || 0">
+                        <label style="font-size: 12px; font-weight: 700; color: #78350f;">निविदत्त (Tendered):</label>
+                        <input type="number" id="countingTenderedVotes" class="form-control" style="width: 70px; padding: 4px; text-align: center; font-weight: 700;" value="${countingState.tendered_votes}" min="0" onchange="countingState.tendered_votes = parseInt(this.value) || 0">
                     </div>
                     <div style="display: flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 11.5px; font-weight: bold; color: #78350f;">अस्वीकृत (Rejected):</label>
-                        <input type="number" id="countingRejectedVotes" class="classic-input-num" style="width: 65px; padding: 3px;" value="${countingState.rejected_votes}" min="0" onchange="countingState.rejected_votes = parseInt(this.value) || 0">
+                        <label style="font-size: 12px; font-weight: 700; color: #78350f;">अस्वीकृत (Rejected):</label>
+                        <input type="number" id="countingRejectedVotes" class="form-control" style="width: 70px; padding: 4px; text-align: center; font-weight: 700;" value="${countingState.rejected_votes}" min="0" onchange="countingState.rejected_votes = parseInt(this.value) || 0">
                     </div>
                 </div>
             </div>
 
             <!-- Grand Total & Reconciliation Status Box -->
-            <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 4px; padding: 12px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="padding: 12px 18px; background: #f0fdf4; border-top: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <div style="font-size: 13.5px; color: #166534; font-weight: 800;">
-                        सम्पूर्ण वार्ड कुल गिने गए मत: <span id="grand_counted_text" style="font-size: 17px; color: #15803d;">${grandCounted.toLocaleString('hi-IN')} मत</span>
+                        सम्पूर्ण वार्ड कुल गिने गए मत: <span id="grand_counted_text" style="font-size: 16px; color: #15803d;">${grandCounted.toLocaleString('hi-IN')} मत</span>
                         <span id="grand_match_badge">
                             ${targetPolled > 0 ? (diff === 0 ? `<span style="font-size: 12px; color: #16a34a; margin-left: 8px;"><i class="fas fa-check-circle"></i> 100% सटीक पोल मिलान (${targetPolled} मत)</span>` : `<span style="font-size: 12px; color: #dc2626; margin-left: 8px;">(पोल: ${targetPolled} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`) : ''}
                         </span>
@@ -1075,18 +1105,24 @@ function renderConsolidatedResultView() {
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 12px; font-weight: bold; color: #166534;">वार्ड परिणाम स्थिति:</label>
-                    <select id="countingStatusSelect" class="classic-select" style="width: auto; padding: 6px 10px;" onchange="countingState.status = this.value">
+                    <label style="font-size: 12px; font-weight: 700; color: #166534;">वार्ड परिणाम स्थिति:</label>
+                    <select id="countingStatusSelect" class="form-control" style="width: auto; padding: 6px 12px; font-weight: 700;" onchange="countingState.status = this.value">
                         <option value="Counting" ${countingState.status === 'Counting' ? 'selected' : ''}>मतगणना जारी (Counting)</option>
                         <option value="Declared" ${countingState.status === 'Declared' ? 'selected' : ''}>आधिकारिक परिणाम घोषित (Declared)</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Statutory Returning Officer Note -->
-            <div style="font-size: 11px; color: #64748b; text-align: right; font-style: italic; border-top: 1px dashed #cbd5e1; padding-top: 6px;">
-                * रिटर्निंग ऑफिसर (एसडीएम) सुमेरपुर द्वारा प्ररूप 20 के अनुसार विधिवत प्रमाणित एवं अंतिम रूप से घोषित परिणाम पत्रक।
+            <!-- Card Bottom Navigation to parts -->
+            <div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="switchCountingPart(0)">
+                    <i class="fas fa-arrow-left"></i> भाग 1 प्रविष्टि पर जाएँ
+                </button>
+                <div style="font-size: 11.5px; color: var(--text-muted); font-style: italic;">
+                    * रिटर्निंग ऑफिसर (SDM) सुमेरपुर — समेकित परिणाम पत्रक
+                </div>
             </div>
+
         </div>
     `;
 }
