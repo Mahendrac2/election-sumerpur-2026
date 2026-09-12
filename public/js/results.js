@@ -6,75 +6,86 @@ let currentUser = null;
 let resultsData = null;
 let currentResultsFilter = 'all';
 let currentCountingWard = 1;
+let currentTab = 'dashboard';
 let sseConnection = null;
 let isProjectorModeActive = false;
 
 // 1. Initialize on DOM Load
 document.addEventListener("DOMContentLoaded", () => {
-    initAuth();
+    checkSavedSession();
+    initClock();
     fetchResultsData();
     initSSE();
+    handleHashNavigation();
+    window.addEventListener("hashchange", handleHashNavigation);
 
-    // Auto-refresh results every 15 seconds as a fallback
+    // Auto-refresh results every 15 seconds as fallback
     setInterval(() => {
         fetchResultsData(true);
     }, 15000);
 });
 
-// 2. Authentication & Role Handling (Shared with Main Portal)
-function initAuth() {
-    try {
-        const stored = sessionStorage.getItem("sumerpur_user") || localStorage.getItem("sumerpur_user") || localStorage.getItem("currentUser");
-        if (stored) {
-            currentUser = JSON.parse(stored);
-        }
-    } catch(e) {
-        currentUser = null;
-    }
-    updateAuthUI();
+// Real-Time Portal Clock
+function initClock() {
+    setInterval(() => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const clockEl = document.getElementById("portalClock");
+        if (clockEl) clockEl.innerText = timeStr;
+
+        const tvClockEl = document.getElementById("tvLiveClock");
+        if (tvClockEl) tvClockEl.innerText = timeStr;
+    }, 1000);
 }
 
-function updateAuthUI() {
-    const authBtn = document.getElementById("headerAuthBtn");
-    const adminActions = document.querySelectorAll(".auth-restricted");
-    
-    if (currentUser) {
-        if (authBtn) {
-            const roleLabel = currentUser.role === 'RO' ? 'RO (SDM)' : (currentUser.role.startsWith('OP') ? 'मतगणना ऑपरेटर' : 'पर्यवेक्षक');
-            authBtn.innerHTML = `<i class="fas fa-user-shield"></i> ${currentUser.name || currentUser.username} (${roleLabel}) <span style="margin-left:6px; opacity:0.75; font-size:11px;">[लॉगआउट]</span>`;
-            authBtn.className = "btn-secondary";
-            authBtn.onclick = logoutUser;
+// 2. Authentication & Session Handling (Shared with Matdan Control)
+function checkSavedSession() {
+    const saved = sessionStorage.getItem("sumerpur_user") || localStorage.getItem("sumerpur_user") || localStorage.getItem("currentUser");
+    if (saved) {
+        try {
+            currentUser = JSON.parse(saved);
+            updateAuthUI();
+        } catch(e) {
+            currentUser = null;
         }
-        adminActions.forEach(el => el.style.display = "");
     } else {
-        if (authBtn) {
-            authBtn.innerHTML = `<i class="fas fa-lock"></i> ऑपरेटर / RO लॉगिन`;
-            authBtn.className = "btn-primary";
-            authBtn.onclick = openAuthModal;
+        const hash = window.location.hash.replace('#', '');
+        if (hash === 'livedisplay' || hash === 'reports' || hash === 'dashboard' || hash === 'wards' || !hash) {
+            enterPublicGuestMode();
+            return;
         }
-        adminActions.forEach(el => el.style.display = "none");
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.display = "flex";
     }
 }
 
-function openAuthModal() {
-    const m = document.getElementById("authModal");
-    if (m) m.style.display = "flex";
+function switchAuthTab(tab) {
+    const opLoginBtn = document.getElementById("authTabOpLoginBtn");
+    const opRegBtn = document.getElementById("authTabOpRegBtn");
+    const roLoginBtn = document.getElementById("authTabRoLoginBtn");
+
+    const opForm = document.getElementById("opLoginFormContainer");
+    const opRegForm = document.getElementById("opRegisterFormContainer");
+    const roForm = document.getElementById("roLoginFormContainer");
+    const forgotForm = document.getElementById("forgotPasswordFormContainer");
+
+    if (opForm) opForm.style.display = (tab === 'op_login') ? "block" : "none";
+    if (opRegForm) opRegForm.style.display = (tab === 'op_register') ? "block" : "none";
+    if (roForm) roForm.style.display = (tab === 'ro_login') ? "block" : "none";
+    if (forgotForm) forgotForm.style.display = (tab === 'forgot_password') ? "block" : "none";
+
+    if (opLoginBtn) opLoginBtn.className = (tab === 'op_login') ? "btn-primary" : "btn-secondary";
+    if (opRegBtn) opRegBtn.className = (tab === 'op_register') ? "btn-primary" : "btn-secondary";
+    if (roLoginBtn) roLoginBtn.className = (tab === 'ro_login') ? "btn-primary" : "btn-secondary";
 }
 
-function closeAuthModal() {
-    const m = document.getElementById("authModal");
-    if (m) m.style.display = "none";
-}
-
-async function loginUser(e) {
-    if (e) e.preventDefault();
-    const u = document.getElementById("authUsername")?.value?.trim();
-    const p = document.getElementById("authPassword")?.value?.trim();
+async function attemptOpLogin() {
+    const u = document.getElementById("opUsername")?.value?.trim();
+    const p = document.getElementById("opPassword")?.value?.trim();
     if (!u || !p) {
-        alert("कृपया उपयोगकर्ता नाम और पासवर्ड दर्ज करें।");
+        alert("कृपया ऑपरेटर यूज़रनेम एवं पासवर्ड दर्ज करें।");
         return;
     }
-
     try {
         const res = await fetch('/api/login', {
             method: 'POST',
@@ -84,11 +95,14 @@ async function loginUser(e) {
         const data = await res.json();
         if (data.success && data.user) {
             currentUser = data.user;
+            sessionStorage.setItem("sumerpur_user", JSON.stringify(currentUser));
             localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            const overlay = document.getElementById("loginOverlay");
+            if (overlay) overlay.style.display = "none";
             updateAuthUI();
-            closeAuthModal();
-            showToast(`✅ स्वागत है, ${currentUser.name || currentUser.username}! अधिकृत सत्र प्रारंभ।`);
+            showToast(`✅ स्वागत है, ${currentUser.name || currentUser.username}! मतगणना सत्र सक्रिय।`);
             renderResultsGrid();
+            renderDashboardSummaryTable();
         } else {
             alert(`❌ लॉगिन विफल: ${data.message || 'अमान्य क्रेडेंशियल'}`);
         }
@@ -97,17 +111,219 @@ async function loginUser(e) {
     }
 }
 
-function logoutUser() {
-    if (confirm("क्या आप वाकई लॉगआउट करना चाहते हैं?")) {
-        currentUser = null;
-        localStorage.removeItem("currentUser");
-        updateAuthUI();
-        showToast("ℹ️ आप सफलतापूर्वक लॉगआउट हो गए हैं।");
-        renderResultsGrid();
+async function attemptRegister() {
+    const name = document.getElementById("regName")?.value?.trim();
+    const mobile = document.getElementById("regMobile")?.value?.trim();
+    const designation = document.getElementById("regDesignation")?.value?.trim();
+    const role = document.getElementById("regRole")?.value;
+    const username = document.getElementById("regUsername")?.value?.trim();
+    const password = document.getElementById("regPassword")?.value?.trim();
+
+    if (!name || !username || !password || !role) {
+        alert("कृपया सभी अनिवार्य फ़ील्ड (*) भरें।");
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/operator/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, mobile, designation, role, username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("✅ ऑपरेटर पंजीयन सफल! अब आप अपने यूज़रनेम व पासवर्ड से लॉगिन कर सकते हैं।");
+            switchAuthTab('op_login');
+            const uInput = document.getElementById("opUsername");
+            if (uInput) uInput.value = username;
+        } else {
+            alert(`❌ पंजीयन विफल: ${data.message || 'त्रुटि'}`);
+        }
+    } catch(err) {
+        alert("सर्वर से संपर्क करने में त्रुटि: " + err.message);
     }
 }
 
-// 3. Real-Time Server-Sent Events (SSE)
+async function attemptRoLogin() {
+    const u = document.getElementById("roUsername")?.value?.trim();
+    const p = document.getElementById("roPassword")?.value?.trim();
+    if (!u || !p) {
+        alert("कृपया RO यूज़रनेम एवं पासवर्ड दर्ज करें।");
+        return;
+    }
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+            currentUser = data.user;
+            sessionStorage.setItem("sumerpur_user", JSON.stringify(currentUser));
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            const overlay = document.getElementById("loginOverlay");
+            if (overlay) overlay.style.display = "none";
+            updateAuthUI();
+            showToast(`✅ रिटर्निंग ऑफिसर (SDM) सुमेरपुर — स्वागत है!`);
+            renderResultsGrid();
+            renderDashboardSummaryTable();
+        } else {
+            alert(`❌ लॉगिन विफल: ${data.message || 'अमान्य क्रेडेंशियल'}`);
+        }
+    } catch(err) {
+        alert("सर्वर से संपर्क करने में त्रुटि: " + err.message);
+    }
+}
+
+async function attemptSelfResetPassword() {
+    const username = document.getElementById("resetUsername")?.value?.trim();
+    const mobile = document.getElementById("resetMobile")?.value?.trim();
+    const newPassword = document.getElementById("resetNewPassword")?.value?.trim();
+    const confirmPassword = document.getElementById("resetConfirmPassword")?.value?.trim();
+
+    if (!username || !newPassword || !confirmPassword) {
+        alert("कृपया सभी अनिवार्य फ़ील्ड (*) भरें।");
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        alert("❌ नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते!");
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, mobile, newPassword })
+        });
+        const data = await res.json();
+        if (data.success) {
+            alert("✅ पासवर्ड सफलतापूर्वक रीसेट हो गया! अब नए पासवर्ड से लॉगिन करें।");
+            switchAuthTab('op_login');
+            const uInput = document.getElementById("opUsername");
+            if (uInput) uInput.value = username;
+        } else {
+            alert(`❌ रीसेट विफल: ${data.message || 'त्रुटि'}`);
+        }
+    } catch(err) {
+        alert("सर्वर से संपर्क करने में त्रुटि: " + err.message);
+    }
+}
+
+function enterPublicGuestMode() {
+    currentUser = {
+        role: 'GUEST',
+        name: 'नागरिक दर्शक',
+        username: 'guest',
+        isGuest: true
+    };
+    sessionStorage.setItem("sumerpur_user", JSON.stringify(currentUser));
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "none";
+    updateAuthUI();
+    showToast("🌐 नागरिक डिस्प्ले मोड सक्रिय। मतगणना परिणाम पोर्टल में आपका स्वागत है!");
+}
+
+function handleHeaderAuthAction() {
+    if (currentUser && currentUser.isGuest) {
+        const overlay = document.getElementById("loginOverlay");
+        if (overlay) overlay.style.display = "flex";
+        switchAuthTab('op_login');
+    } else {
+        logoutUser();
+    }
+}
+
+function logoutUser() {
+    if (confirm("क्या आप वाकई लॉगआउट करना चाहते हैं?")) {
+        sessionStorage.removeItem("sumerpur_user");
+        localStorage.removeItem("currentUser");
+        currentUser = null;
+        updateAuthUI();
+        showToast("ℹ️ आप सफलतापूर्वक लॉगआउट हो गए हैं।");
+        enterPublicGuestMode();
+    }
+}
+
+function updateAuthUI() {
+    const authBtn = document.getElementById("headerAuthBtn");
+    const userNameEl = document.getElementById("currentUserName");
+    const entryLink = document.getElementById("navEntryLink");
+
+    if (currentUser && !currentUser.isGuest) {
+        const roleLabel = currentUser.role === 'RO' ? 'RO (SDM)' : (currentUser.role.startsWith('OP') ? `टेबल ${currentUser.role.replace('OP','')}` : currentUser.role);
+        if (userNameEl) {
+            userNameEl.innerHTML = `<span style="color:#0284c7; font-weight:700;"><i class="fas fa-user-check"></i> ${currentUser.name || currentUser.username} (${roleLabel})</span>`;
+        }
+        if (authBtn) {
+            authBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> बाहर निकलें`;
+            authBtn.className = "btn-logout";
+            authBtn.style.background = "";
+            authBtn.style.borderColor = "";
+            authBtn.onclick = logoutUser;
+        }
+        if (entryLink) entryLink.style.display = "";
+    } else {
+        if (userNameEl) {
+            userNameEl.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fas fa-eye"></i> नागरिक / पब्लिक मोड</span>`;
+        }
+        if (authBtn) {
+            authBtn.innerHTML = `<i class="fas fa-right-to-bracket"></i> ऑपरेटर / RO लॉगिन`;
+            authBtn.className = "btn-primary";
+            authBtn.style.background = "#0284c7";
+            authBtn.style.borderColor = "#0284c7";
+            authBtn.onclick = () => {
+                const overlay = document.getElementById("loginOverlay");
+                if (overlay) overlay.style.display = "flex";
+                switchAuthTab('op_login');
+            };
+        }
+    }
+}
+
+// 3. Multi-Page Navigation & Tab Routing
+function navigateTo(tabName) {
+    window.location.hash = tabName;
+}
+
+function handleHashNavigation() {
+    const hash = window.location.hash.replace('#', '') || 'dashboard';
+
+    if (hash === 'entry') {
+        if (!currentUser || currentUser.isGuest) {
+            showToast("🔒 मतगणना प्रविष्टि केवल अधिकृत चुनाव कार्मिकों हेतु है। कृपया ऑपरेटर लॉगिन करें।");
+            const overlay = document.getElementById("loginOverlay");
+            if (overlay) overlay.style.display = "flex";
+            switchAuthTab('op_login');
+            window.location.hash = 'dashboard';
+            return;
+        }
+    }
+
+    currentTab = hash;
+
+    document.querySelectorAll(".nav-link").forEach(el => {
+        el.classList.toggle("active", el.dataset.tab === hash);
+    });
+
+    document.querySelectorAll(".page-view").forEach(el => {
+        el.classList.toggle("active", el.id === `view_${hash}`);
+    });
+
+    if (hash === 'dashboard') {
+        renderDashboardSummaryTable();
+        if (resultsData) renderHighlights(resultsData.summary, resultsData.wards);
+    } else if (hash === 'wards') {
+        renderResultsGrid();
+    } else if (hash === 'entry') {
+        initOnPageCountingEntry(currentCountingWard);
+    } else if (hash === 'livedisplay') {
+        renderLiveDisplay();
+    }
+}
+
+// 4. Real-Time Server-Sent Events (SSE)
 function initSSE() {
     try {
         if (sseConnection) {
@@ -132,24 +348,20 @@ function initSSE() {
         });
 
         sseConnection.addEventListener('connected', () => {
-            const syncStatus = document.getElementById("liveSyncBadge");
-            if (syncStatus) {
-                syncStatus.innerHTML = `<span class="badge" style="background:#15803d; color:white;"><i class="fas fa-bolt"></i> लाइव सिंक सक्रिय</span>`;
-            }
+            const syncStatus = document.getElementById("syncStatusText");
+            if (syncStatus) syncStatus.innerText = "लाइव सिंक सक्रिय";
         });
 
         sseConnection.onerror = () => {
-            const syncStatus = document.getElementById("liveSyncBadge");
-            if (syncStatus) {
-                syncStatus.innerHTML = `<span class="badge" style="background:#d97706; color:white;"><i class="fas fa-rotate"></i> ऑटो-पोलिंग सक्रिय</span>`;
-            }
+            const syncStatus = document.getElementById("syncStatusText");
+            if (syncStatus) syncStatus.innerText = "ऑटो-पोलिंग सक्रिय";
         };
     } catch(err) {
         console.error("SSE Error:", err);
     }
 }
 
-// 4. Fetch Results & Tally Data
+// 5. Fetch Results & Tally Data
 async function fetchResultsData(isBackground = false) {
     try {
         if (!isBackground) {
@@ -169,76 +381,369 @@ async function fetchResultsData(isBackground = false) {
 
         if (data.success) {
             resultsData = data;
-            renderPartyTally(data.summary?.partyTally || data.tally);
+            const tally = data.summary?.partyTally || data.tally;
+            renderPartyTally(tally);
             renderSummaryCards(data.summary);
+            renderHighlights(data.summary, data.wards);
+            renderDashboardSummaryTable();
             renderResultsGrid();
+
+            if (currentTab === 'entry') {
+                initOnPageCountingEntry(currentCountingWard);
+            } else if (currentTab === 'livedisplay') {
+                renderLiveDisplay();
+            }
         }
     } catch(err) {
         console.error("Results fetch error:", err);
     }
 }
 
-// 5. Render Party Tally and Majority Status
+// 6. Render Party Tally Board & Majority Gauge
 function renderPartyTally(tally) {
-    const container = document.getElementById("partyTallyContainer");
-    if (!container || !tally) return;
+    if (!tally) return;
 
-    let html = '';
-    const parties = ['BJP', 'INC', 'IND', 'AAP', 'OTH'];
+    const bjp = tally.BJP || { won: 0, leading: 0, total: 0 };
+    const inc = tally.INC || { won: 0, leading: 0, total: 0 };
+    const ind = tally.IND || { won: 0, leading: 0, total: 0 };
+    const aap = tally.AAP || { won: 0, leading: 0, total: 0 };
+    const oth = tally.OTH || { won: 0, leading: 0, total: 0 };
 
-    parties.forEach(code => {
-        const item = tally[code] || { name: code, won: 0, leading: 0, total: 0, color: '#64748b' };
-        html += `
-            <div class="party-tally-card" style="border-top: 3.5px solid ${item.color};">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <div class="party-tally-name">${item.name}</div>
-                        <div class="party-tally-code" style="color:${item.color};">${item.code || code}</div>
-                    </div>
-                    <div class="party-tally-seats">${item.won || 0}</div>
-                </div>
-                <div class="party-tally-meta">
-                    <span>विजयी (Won): <b>${item.won || 0}</b></span>
-                    <span>बढ़त (Lead): <b style="color:#0284c7;">${item.leading || 0}</b></span>
-                </div>
-            </div>
+    // Update Dashboard Party Cards
+    const bjpTot = document.getElementById("tallyBjpTotal");
+    const bjpWon = document.getElementById("tallyBjpWon");
+    const bjpLead = document.getElementById("tallyBjpLead");
+    if (bjpTot) bjpTot.innerText = bjp.total || bjp.won || 0;
+    if (bjpWon) bjpWon.innerText = bjp.won || 0;
+    if (bjpLead) bjpLead.innerText = bjp.leading || 0;
+
+    const incTot = document.getElementById("tallyIncTotal");
+    const incWon = document.getElementById("tallyIncWon");
+    const incLead = document.getElementById("tallyIncLead");
+    if (incTot) incTot.innerText = inc.total || inc.won || 0;
+    if (incWon) incWon.innerText = inc.won || 0;
+    if (incLead) incLead.innerText = inc.leading || 0;
+
+    const indTot = document.getElementById("tallyIndTotal");
+    const indWon = document.getElementById("tallyIndWon");
+    const indLead = document.getElementById("tallyIndLead");
+    if (indTot) indTot.innerText = ind.total || ind.won || 0;
+    if (indWon) indWon.innerText = ind.won || 0;
+    if (indLead) indLead.innerText = ind.leading || 0;
+
+    const aapTot = document.getElementById("tallyAapTotal");
+    const aapWon = document.getElementById("tallyAapWon");
+    const aapLead = document.getElementById("tallyAapLead");
+    if (aapTot) aapTot.innerText = aap.total || aap.won || 0;
+    if (aapWon) aapWon.innerText = aap.won || 0;
+    if (aapLead) aapLead.innerText = aap.leading || 0;
+
+    const othTot = document.getElementById("tallyOthTotal");
+    const othWon = document.getElementById("tallyOthWon");
+    const othLead = document.getElementById("tallyOthLead");
+    if (othTot) othTot.innerText = oth.total || oth.won || 0;
+    if (othWon) othWon.innerText = oth.won || 0;
+    if (othLead) othLead.innerText = oth.leading || 0;
+
+    // Majority Meter Progress Bars (18 / 35 seats = 51.4%)
+    const bPct = Math.min(100, ((bjp.total || bjp.won || 0) / 35) * 100);
+    const iPct = Math.min(100, ((inc.total || inc.won || 0) / 35) * 100);
+    const inPct = Math.min(100, ((ind.total || ind.won || 0) / 35) * 100);
+    const aPct = Math.min(100, ((aap.total || aap.won || 0) / 35) * 100);
+    const oPct = Math.min(100, ((oth.total || oth.won || 0) / 35) * 100);
+
+    const setBar = (id, pct) => {
+        const el = document.getElementById(id);
+        if (el) el.style.width = pct + '%';
+    };
+
+    setBar("majBarBjp", bPct);
+    setBar("majBarInc", iPct);
+    setBar("majBarInd", inPct);
+    setBar("majBarAap", aPct);
+    setBar("majBarOth", oPct);
+
+    setBar("tvMajBarBjp", bPct);
+    setBar("tvMajBarInc", iPct);
+    setBar("tvMajBarInd", inPct);
+    setBar("tvMajBarAap", aPct);
+    setBar("tvMajBarOth", oPct);
+
+    // Majority Status Text
+    let statusMsg = `बहुमत के लिए 18 सीटें शेष`;
+    if (bjp.won >= 18) {
+        statusMsg = `🎉 भाजपा (BJP) ने ${bjp.won} सीटें जीतकर पूर्ण बहुमत प्राप्त किया!`;
+    } else if (inc.won >= 18) {
+        statusMsg = `🎉 कांग्रेस (INC) ने ${inc.won} सीटें जीतकर पूर्ण बहुमत प्राप्त किया!`;
+    } else {
+        const leadParty = (bjp.total >= inc.total && bjp.total > 0) ? `BJP (${bjp.total})` : (inc.total > 0 ? `INC (${inc.total})` : '');
+        const needed = 18 - (bjp.won || 0);
+        statusMsg = leadParty ? `अग्रणी: ${leadParty} | बहुमत हेतु ${needed} सीटें शेष` : `बहुमत हेतु 18 सीटें आवश्यक (जादुई आंकड़ा)`;
+    }
+
+    const majTextEl = document.getElementById("majorityStatusText");
+    if (majTextEl) majTextEl.innerText = statusMsg;
+
+    const tvMajTextEl = document.getElementById("tvMajorityText");
+    if (tvMajTextEl) tvMajTextEl.innerText = statusMsg;
+
+    // TV Pills
+    const tvPills = document.getElementById("tvPartyPillsContainer");
+    if (tvPills) {
+        tvPills.innerHTML = `
+            <span class="badge" style="background:#f97316; color:white; font-size:13px; padding:6px 14px;">BJP: <b>${bjp.total || 0}</b> (जीते: ${bjp.won || 0}, बढ़त: ${bjp.leading || 0})</span>
+            <span class="badge" style="background:#0ea5e9; color:white; font-size:13px; padding:6px 14px;">INC: <b>${inc.total || 0}</b> (जीते: ${inc.won || 0}, बढ़त: ${inc.leading || 0})</span>
+            <span class="badge" style="background:#a855f7; color:white; font-size:13px; padding:6px 14px;">IND: <b>${ind.total || 0}</b> (जीते: ${ind.won || 0}, बढ़त: ${ind.leading || 0})</span>
+            <span class="badge" style="background:#eab308; color:black; font-size:13px; padding:6px 14px;">AAP: <b>${aap.total || 0}</b> (जीते: ${aap.won || 0}, बढ़त: ${aap.leading || 0})</span>
         `;
-    });
-
-    container.innerHTML = html;
-
-    // Majority mark indicator (18 out of 35)
-    const majorityEl = document.getElementById("majorityIndicatorText");
-    if (majorityEl && resultsData && resultsData.summary) {
-        const bjpWon = tally.BJP?.won || 0;
-        const incWon = tally.INC?.won || 0;
-        const indWon = tally.IND?.won || 0;
-        
-        let leadText = "बहुमत हेतु 18 सीटें आवश्यक (जादुई आंकड़ा)";
-        if (bjpWon >= 18) {
-            leadText = `🎉 भारतीय जनता पार्टी (BJP) ने ${bjpWon} सीटें जीतकर पूर्ण बहुमत हासिल किया!`;
-        } else if (incWon >= 18) {
-            leadText = `🎉 इण्डियन नेशनल कांग्रेस (INC) ने ${incWon} सीटें जीतकर पूर्ण बहुमत हासिल किया!`;
-        } else if (indWon >= 18) {
-            leadText = `🎉 निर्दलीय (IND) प्रत्याशियों ने ${indWon} सीटें जीतीं!`;
-        }
-        majorityEl.innerHTML = leadText;
     }
 }
 
+// 7. Render Highlights Strip
+function renderHighlights(summary, wards) {
+    if (!wards || wards.length === 0) return;
+
+    let maxMarginWard = null;
+    wards.forEach(w => {
+        if (w.status === 'Declared' || w.status === 'Counting') {
+            if (!maxMarginWard || (w.margin || 0) > (maxMarginWard.margin || 0)) {
+                maxMarginWard = w;
+            }
+        }
+    });
+
+    const hlWard = document.getElementById("hlHighestMarginWard");
+    const hlSub = document.getElementById("hlHighestMarginSub");
+    if (maxMarginWard && (maxMarginWard.margin > 0 || maxMarginWard.ward === 26)) {
+        if (hlWard) hlWard.innerText = `वार्ड ${maxMarginWard.ward} (${maxMarginWard.winner_name || maxMarginWard.leader?.name || '-'})`;
+        if (hlSub) {
+            if (maxMarginWard.ward === 26) {
+                hlSub.innerText = `निर्विरोध निर्वाचित (BJP) — कोई मतदान नहीं`;
+            } else {
+                hlSub.innerText = `${maxMarginWard.margin} मतों का अंतर | स्थिति: ${maxMarginWard.status}`;
+            }
+        }
+    } else {
+        if (hlWard) hlWard.innerText = `वार्ड 26 (श्रीमती वीणा देवड़ा)`;
+        if (hlSub) hlSub.innerText = `निर्विरोध निर्वाचित (BJP) — 1 सीट घोषित`;
+    }
+
+    const hlTitle = document.getElementById("hlDeclaredCountTitle");
+    const hlDecSub = document.getElementById("hlDeclaredCountSub");
+    if (hlTitle && summary) {
+        hlTitle.innerText = `${summary.declaredWards || 0} / 35 वार्ड घोषित`;
+    }
+    if (hlDecSub && summary) {
+        hlDecSub.innerText = `मतगणना प्रगति: ${summary.countedPercentage || 0}% (${(summary.totalCountedVotes || 0).toLocaleString('hi-IN')} मत गिने गए)`;
+    }
+}
+
+// 8. Render Summary KPI Cards
 function renderSummaryCards(summary) {
     if (!summary) return;
     const decEl = document.getElementById("kpiDeclaredWards");
     const countEl = document.getElementById("kpiCountingWards");
-    const pendEl = document.getElementById("kpiPendingWards");
     const totalCountedEl = document.getElementById("kpiTotalCountedVotes");
-    const countedPctEl = document.getElementById("kpiCountedPercentage");
+    const countedPctEl = document.getElementById("kpiCountedPercentageSub");
+
+    const resDec = document.getElementById("resDeclaredCount");
+    const resCount = document.getElementById("resCountingCount");
+    const resPend = document.getElementById("resPendingCount");
+    const resVotes = document.getElementById("resCountedVotes");
+    const resPct = document.getElementById("resCountedPct");
 
     if (decEl) decEl.innerText = summary.declaredWards || 0;
     if (countEl) countEl.innerText = summary.countingWards || 0;
-    if (pendEl) pendEl.innerText = summary.pendingWards || 0;
     if (totalCountedEl) totalCountedEl.innerText = (summary.totalCountedVotes || 0).toLocaleString('hi-IN');
-    if (countedPctEl) countedPctEl.innerText = (summary.countedPercentage || 0) + '%';
+    if (countedPctEl) countedPctEl.innerText = `${summary.countedPercentage || 0}% गिने गए मत`;
+
+    if (resDec) resDec.innerText = summary.declaredWards || 0;
+    if (resCount) resCount.innerText = summary.countingWards || 0;
+    if (resPend) resPend.innerText = summary.pendingWards || 35;
+    if (resVotes) resVotes.innerText = (summary.totalCountedVotes || 0).toLocaleString('hi-IN');
+    if (resPct) resPct.innerText = `${summary.countedPercentage || 0}%`;
+}
+
+// 9. Render 35-Ward Dashboard Summary Table
+function renderDashboardSummaryTable() {
+    const tbody = document.getElementById("dashSummaryTbody");
+    if (!tbody || !resultsData || !resultsData.wards) return;
+
+    const searchTerm = document.getElementById("dashSearchInput")?.value?.trim().toLowerCase() || '';
+
+    let wards = resultsData.wards;
+    if (searchTerm) {
+        wards = wards.filter(w => {
+            const wNum = String(w.ward);
+            const wLead = (w.leader ? w.leader.name : '').toLowerCase();
+            const wWin = (w.winner_name || '').toLowerCase();
+            const candMatch = w.candidates.some(c => c.name.toLowerCase().includes(searchTerm) || c.party.toLowerCase().includes(searchTerm));
+            return wNum.includes(searchTerm) || wLead.includes(searchTerm) || wWin.includes(searchTerm) || candMatch;
+        });
+    }
+
+    let html = '';
+    wards.forEach(w => {
+        const isDeclared = (w.status === 'Declared');
+        const isCounting = (w.status === 'Counting');
+        const isNirvirodh = (w.ward === 26);
+        const partsCount = (w.parts && w.parts.length > 0) ? w.parts.length : 1;
+
+        let statusBadge = '';
+        if (isDeclared) {
+            statusBadge = `<span class="badge" style="background:#15803d; color:white;"><i class="fas fa-check-circle"></i> ${isNirvirodh ? 'निर्विरोध' : 'घोषित'}</span>`;
+        } else if (isCounting) {
+            statusBadge = `<span class="badge" style="background:#d97706; color:white; animation:pulse 1.5s infinite;"><i class="fas fa-bolt"></i> गणना जारी</span>`;
+        } else {
+            statusBadge = `<span class="badge" style="background:#64748b; color:white;"><i class="far fa-clock"></i> प्रतीक्षारत</span>`;
+        }
+
+        let leaderName = '-';
+        let partyTag = '-';
+        let votes = 0;
+        let marginStr = '-';
+
+        if (isDeclared) {
+            leaderName = `<span style="font-weight:700; color:#15803d;"><i class="fas fa-award"></i> ${w.winner_name || '-'}</span>`;
+            const pClass = getPartyClass(w.winner_party || '');
+            const pLabel = getPartyShortLabel(w.winner_party || '');
+            partyTag = `<span class="party-tag ${pClass.replace('party-','')}">${pLabel}</span>`;
+            votes = (w.winner_votes || 0).toLocaleString('hi-IN');
+            marginStr = isNirvirodh ? 'निर्विरोध' : `+${(w.margin || 0).toLocaleString('hi-IN')}`;
+        } else if (isCounting && w.leader) {
+            leaderName = `<span style="font-weight:700; color:#b45309;"><i class="fas fa-bolt"></i> ${w.leader.name}</span>`;
+            const pClass = getPartyClass(w.leader.party || '');
+            const pLabel = getPartyShortLabel(w.leader.party || '');
+            partyTag = `<span class="party-tag ${pClass.replace('party-','')}">${pLabel}</span>`;
+            votes = (w.leader.votes || 0).toLocaleString('hi-IN');
+            marginStr = `+${(w.margin || 0).toLocaleString('hi-IN')}`;
+        }
+
+        const canEdit = currentUser && (currentUser.role === 'RO' || currentUser.role.startsWith('OP'));
+        const actionButtons = `
+            <div style="display:flex; gap:4px; justify-content:center;">
+                ${isDeclared ? `
+                    <button class="btn-primary" style="padding:3px 8px; font-size:11px; background:#0f172a; border-color:#0f172a;" onclick="openForm21Certificate(${w.ward})" title="प्ररूप 21 देखें">
+                        <i class="fas fa-award"></i> प्ररूप 21
+                    </button>
+                ` : ''}
+                ${canEdit ? `
+                    <button class="btn-secondary" style="padding:3px 8px; font-size:11px; font-weight:600; background:#fff7ed; border-color:#fdba74; color:#c2410c;" onclick="openCountingEntryModal(${w.ward})" title="गणना प्रविष्टि">
+                        <i class="fas fa-pen-to-square"></i> प्रविष्टि
+                    </button>
+                ` : ''}
+            </div>
+        `;
+
+        html += `
+            <tr class="${isNirvirodh ? 'nirvirodh-row' : ''}">
+                <td><b>वार्ड ${w.ward}</b></td>
+                <td>${(w.total_electors || 0).toLocaleString('hi-IN')}</td>
+                <td>${(w.total_polled_votes || 0).toLocaleString('hi-IN')}</td>
+                <td>
+                    ${partsCount > 1 
+                        ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px;">${partsCount} भाग (EVM)</span>` 
+                        : `<span style="color:#64748b; font-size:11.5px;">1 भाग</span>`}
+                </td>
+                <td style="text-align:left;">${leaderName}</td>
+                <td>${partyTag}</td>
+                <td><b>${votes}</b></td>
+                <td><b style="color:#0284c7;">${marginStr}</b></td>
+                <td>${statusBadge}</td>
+                <td>${actionButtons}</td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+// 10. Dedicated On-Page Counting Entry Initializer
+function initOnPageCountingEntry(targetWard = 1) {
+    if (!resultsData || !resultsData.wards) {
+        fetchResultsData(false).then(() => initOnPageCountingEntry(targetWard));
+        return;
+    }
+
+    const selectEl = document.getElementById("onPageWardSelect");
+    if (selectEl) {
+        selectEl.innerHTML = '';
+        resultsData.wards.forEach(w => {
+            const opt = document.createElement("option");
+            opt.value = w.ward;
+            const statusIcon = w.status === 'Declared' ? '🏆 ' : (w.status === 'Counting' ? '⚡ ' : '⏳ ');
+            opt.innerText = `${statusIcon}वार्ड संख्या ${w.ward} (${w.status})`;
+            selectEl.appendChild(opt);
+        });
+        selectEl.value = targetWard;
+    }
+
+    onCountingWardSelected(targetWard);
+}
+
+function onOnPageWardSelected(wardNo) {
+    onCountingWardSelected(wardNo);
+}
+
+// 11. Big Screen TV / Control Room Display
+function renderLiveDisplay() {
+    if (!resultsData || !resultsData.summary) return;
+    const summary = resultsData.summary;
+
+    const tvDec = document.getElementById("tvDeclaredWards");
+    const tvCount = document.getElementById("tvCountingWards");
+    const tvVotes = document.getElementById("tvCountedVotes");
+    const tvPct = document.getElementById("tvCountedPct");
+    const tvLead = document.getElementById("tvLeadingParty");
+
+    if (tvDec) tvDec.innerText = `${summary.declaredWards || 0} / 35`;
+    if (tvCount) tvCount.innerText = summary.countingWards || 0;
+    if (tvVotes) tvVotes.innerText = (summary.totalCountedVotes || 0).toLocaleString('hi-IN');
+    if (tvPct) tvPct.innerText = `${summary.countedPercentage || 0}%`;
+
+    const tally = summary.partyTally || resultsData.tally;
+    if (tally && tvLead) {
+        let topParty = 'BJP';
+        let topCount = -1;
+        Object.entries(tally).forEach(([code, p]) => {
+            if ((p.total || p.won || 0) > topCount) {
+                topCount = (p.total || p.won || 0);
+                topParty = `${code} (${topCount})`;
+            }
+        });
+        tvLead.innerText = topParty;
+    }
+
+    const marqueeEl = document.getElementById("tvMarqueeText");
+    if (marqueeEl && resultsData.wards) {
+        const declared = resultsData.wards.filter(w => w.status === 'Declared');
+        const counting = resultsData.wards.filter(w => w.status === 'Counting');
+
+        let tickerItems = [];
+        tickerItems.push(`⚡ कुल 35 वार्डों में से ${summary.declaredWards || 0} घोषित | गिने गए कुल मत: ${(summary.totalCountedVotes || 0).toLocaleString('hi-IN')}`);
+
+        declared.forEach(w => {
+            tickerItems.push(`🏆 वार्ड ${w.ward}: ${w.winner_name} (${w.winner_party}) विजयी ${w.ward === 26 ? '[निर्विरोध]' : `[अंतर: ${w.margin} मत]`}`);
+        });
+
+        counting.forEach(w => {
+            if (w.leader) {
+                tickerItems.push(`⚡ वार्ड ${w.ward}: ${w.leader.name} (${w.leader.party}) ${w.margin} मतों से आगे`);
+            }
+        });
+
+        marqueeEl.innerText = tickerItems.join('   ✦✦✦   ');
+    }
+}
+
+function openFirstDeclaredForm21() {
+    if (!resultsData || !resultsData.wards) return;
+    const declared = resultsData.wards.find(w => w.status === 'Declared');
+    if (declared) {
+        openForm21Certificate(declared.ward);
+    } else {
+        openForm21Certificate(26);
+    }
 }
 
 // 6. Render Ward Cards Grid
@@ -545,8 +1050,22 @@ function onCountingWardSelected(wardNo) {
     if (polledEl) polledEl.innerText = (ward.total_polled_votes || 0).toLocaleString('hi-IN');
     if (statusEl) statusEl.innerText = ward.status;
 
+    const opElectors = document.getElementById("onPageElectors");
+    const opPolled = document.getElementById("onPagePolled");
+    const opStatus = document.getElementById("onPageStatus");
+    if (opElectors) opElectors.innerText = (ward.total_electors || 0).toLocaleString('hi-IN');
+    if (opPolled) opPolled.innerText = (ward.total_polled_votes || 0).toLocaleString('hi-IN');
+    if (opStatus) opStatus.innerText = ward.status;
+
     const tableInput = document.getElementById("countingTableNo");
     if (tableInput) tableInput.value = ward.counting_table_no || 1;
+    const opTableInput = document.getElementById("onPageTableNo");
+    if (opTableInput) opTableInput.value = ward.counting_table_no || 1;
+
+    const wardSelect = document.getElementById("countingWardSelect");
+    if (wardSelect) wardSelect.value = currentCountingWard;
+    const opWardSelect = document.getElementById("onPageWardSelect");
+    if (opWardSelect) opWardSelect.value = currentCountingWard;
 
     // Initialize State
     countingState.ward = ward;
@@ -590,7 +1109,8 @@ function onCountingWardSelected(wardNo) {
 
 function renderCountingPartDropdown() {
     const selectEl = document.getElementById("countingPartSelect");
-    if (!selectEl || !countingState.ward) return;
+    const opSelect = document.getElementById("onPagePartSelect");
+    if ((!selectEl && !opSelect) || !countingState.ward) return;
 
     const { ward, parts, partCount, currentTab } = countingState;
 
@@ -635,14 +1155,22 @@ function renderCountingPartDropdown() {
         </option>
     `;
 
-    selectEl.innerHTML = optionsHtml;
-    selectEl.value = currentTab;
+    if (selectEl) {
+        selectEl.innerHTML = optionsHtml;
+        selectEl.value = currentTab;
+    }
+    if (opSelect) {
+        opSelect.innerHTML = optionsHtml;
+        opSelect.value = currentTab;
+    }
 }
 
 function switchCountingPart(tabIndex) {
     countingState.currentTab = parseInt(tabIndex);
     const selectEl = document.getElementById("countingPartSelect");
     if (selectEl) selectEl.value = countingState.currentTab;
+    const opSelect = document.getElementById("onPagePartSelect");
+    if (opSelect) opSelect.value = countingState.currentTab;
 
     renderCountingPartDropdown();
     renderCountingActiveTab();
@@ -734,8 +1262,11 @@ function getPartMatchHtml(partIdx) {
 }
 
 function renderSinglePartEntry(partIdx) {
-    const container = document.getElementById("countingActiveTabContainer");
-    if (!container) return;
+    const containers = [
+        document.getElementById("countingActiveTabContainer"),
+        document.getElementById("onPageActiveContainer")
+    ].filter(Boolean);
+    if (containers.length === 0) return;
 
     const { ward, parts, partCount } = countingState;
     const pt = parts[partIdx];
@@ -767,7 +1298,7 @@ function renderSinglePartEntry(partIdx) {
                     ${c.symbol || '-'}
                 </td>
                 <td style="width: 160px;">
-                    <input type="number" class="form-control" 
+                    <input type="number" class="form-control cand-part-input" 
                            id="cand_vote_${c.id}_${partIdx}" 
                            value="${candPartVal}" min="0" 
                            placeholder="0"
@@ -779,7 +1310,7 @@ function renderSinglePartEntry(partIdx) {
         `;
     });
 
-    container.innerHTML = `
+    const formHtml = `
         <div class="card" style="margin-bottom: 0; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
             
             <!-- Card Header matching Matdan Control -->
@@ -838,7 +1369,7 @@ function renderSinglePartEntry(partIdx) {
                                 <i class="fas fa-calculator" style="color: var(--accent); margin-right: 4px;"></i> 
                                 भाग ${pt.part} कुल दर्ज मत (प्रत्याशी + NOTA):
                             </td>
-                            <td id="partGrandSubtotal" style="text-align: center; font-size: 16px; font-weight: 900; color: var(--primary); background: #e2e8f0; border-top: 2px solid var(--border);">
+                            <td class="part-grand-subtotal" id="partGrandSubtotal" style="text-align: center; font-size: 16px; font-weight: 900; color: var(--primary); background: #e2e8f0; border-top: 2px solid var(--border);">
                                 ${grandTotalPart.toLocaleString('hi-IN')}
                             </td>
                         </tr>
@@ -847,7 +1378,7 @@ function renderSinglePartEntry(partIdx) {
             </div>
 
             <!-- Live Match & Reconciliation Strip -->
-            <div id="partReconcileBox" style="padding: 12px 18px; border-top: 1px solid var(--border);">
+            <div class="part-reconcile-box" id="partReconcileBox" style="padding: 12px 18px; border-top: 1px solid var(--border);">
                 ${getPartMatchHtml(partIdx)}
             </div>
 
@@ -880,6 +1411,8 @@ function renderSinglePartEntry(partIdx) {
 
         </div>
     `;
+
+    containers.forEach(c => c.innerHTML = formHtml);
 }
 
 function onPartVoteChanged(candId, partIdx, val) {
@@ -896,11 +1429,12 @@ function onPartVoteChanged(candId, partIdx, val) {
     const notaVal = countingState.notaVotes[partIdx] || 0;
     const totalCounted = cSum + notaVal;
 
-    const subtotalEl = document.getElementById("partGrandSubtotal");
-    if (subtotalEl) subtotalEl.innerText = totalCounted.toLocaleString('hi-IN');
+    const subtotalEls = document.querySelectorAll(".part-grand-subtotal, #partGrandSubtotal");
+    subtotalEls.forEach(el => el.innerText = totalCounted.toLocaleString('hi-IN'));
 
-    const recBox = document.getElementById("partReconcileBox");
-    if (recBox) recBox.innerHTML = getPartMatchHtml(partIdx);
+    const recBoxes = document.querySelectorAll(".part-reconcile-box, #partReconcileBox");
+    const recHtml = getPartMatchHtml(partIdx);
+    recBoxes.forEach(el => el.innerHTML = recHtml);
 
     renderCountingPartDropdown();
     updateModalFooterSummary();
@@ -917,19 +1451,23 @@ function onPartNotaChanged(partIdx, val) {
     });
     const totalCounted = cSum + num;
 
-    const subtotalEl = document.getElementById("partGrandSubtotal");
-    if (subtotalEl) subtotalEl.innerText = totalCounted.toLocaleString('hi-IN');
+    const subtotalEls = document.querySelectorAll(".part-grand-subtotal, #partGrandSubtotal");
+    subtotalEls.forEach(el => el.innerText = totalCounted.toLocaleString('hi-IN'));
 
-    const recBox = document.getElementById("partReconcileBox");
-    if (recBox) recBox.innerHTML = getPartMatchHtml(partIdx);
+    const recBoxes = document.querySelectorAll(".part-reconcile-box, #partReconcileBox");
+    const recHtml = getPartMatchHtml(partIdx);
+    recBoxes.forEach(el => el.innerHTML = recHtml);
 
     renderCountingPartDropdown();
     updateModalFooterSummary();
 }
 
 function renderConsolidatedResultView() {
-    const container = document.getElementById("countingActiveTabContainer");
-    if (!container) return;
+    const containers = [
+        document.getElementById("countingActiveTabContainer"),
+        document.getElementById("onPageActiveContainer")
+    ].filter(Boolean);
+    if (containers.length === 0) return;
 
     const { ward, parts, partCount } = countingState;
 
@@ -985,7 +1523,7 @@ function renderConsolidatedResultView() {
                            style="width: 75px; text-align: center; margin: 0 auto; font-weight: 700; border-color: #d97706; padding: 4px;" 
                            oninput="onPostalVoteChanged(${c.id}, this.value)">
                 </td>
-                <td id="cand_tot_${c.id}" style="font-size: 15px; font-weight: 900; background: #f1f5f9; color: var(--primary);">
+                <td id="cand_tot_${c.id}" class="cand-tot-${c.id}" style="font-size: 15px; font-weight: 900; background: #f1f5f9; color: var(--primary);">
                     ${tot.toLocaleString('hi-IN')}
                 </td>
             </tr>
@@ -1021,7 +1559,7 @@ function renderConsolidatedResultView() {
         leadText = `एकमात्र प्रत्याशी (निर्विरोध)`;
     }
 
-    container.innerHTML = `
+    const consolidatedHtml = `
         <div class="card" style="margin-bottom: 0; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
             <div class="card-header" style="background: #fafcff; padding: 12px 18px;">
                 <h3>
@@ -1061,10 +1599,10 @@ function renderConsolidatedResultView() {
                                 <i class="fas fa-calculator" style="color: var(--accent);"></i> भागवार प्रत्याशी उप-योग:
                             </td>
                             ${footParts}
-                            <td id="foot_postal_total" style="font-weight: 800; color: #92400e; background: #fef3c7; border-top: 2px solid var(--border);">
+                            <td class="foot-postal-total" id="foot_postal_total" style="font-weight: 800; color: #92400e; background: #fef3c7; border-top: 2px solid var(--border);">
                                 ${totalPostalSum.toLocaleString('hi-IN')}
                             </td>
-                            <td id="foot_cand_grand_total" style="font-size: 15px; font-weight: 900; background: #e2e8f0; color: var(--primary); border-top: 2px solid var(--border);">
+                            <td class="foot-cand-grand-total" id="foot_cand_grand_total" style="font-size: 15px; font-weight: 900; background: #e2e8f0; color: var(--primary); border-top: 2px solid var(--border);">
                                 ${grandCandidateTotal.toLocaleString('hi-IN')}
                             </td>
                         </tr>
@@ -1095,12 +1633,12 @@ function renderConsolidatedResultView() {
             <div style="padding: 12px 18px; background: #f0fdf4; border-top: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <div style="font-size: 13.5px; color: #166534; font-weight: 800;">
-                        सम्पूर्ण वार्ड कुल गिने गए मत: <span id="grand_counted_text" style="font-size: 16px; color: #15803d;">${grandCounted.toLocaleString('hi-IN')} मत</span>
-                        <span id="grand_match_badge">
+                        सम्पूर्ण वार्ड कुल गिने गए मत: <span class="grand-counted-text" id="grand_counted_text" style="font-size: 16px; color: #15803d;">${grandCounted.toLocaleString('hi-IN')} मत</span>
+                        <span class="grand-match-badge" id="grand_match_badge">
                             ${targetPolled > 0 ? (diff === 0 ? `<span style="font-size: 12px; color: #16a34a; margin-left: 8px;"><i class="fas fa-check-circle"></i> 100% सटीक पोल मिलान (${targetPolled} मत)</span>` : `<span style="font-size: 12px; color: #dc2626; margin-left: 8px;">(पोल: ${targetPolled} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`) : ''}
                         </span>
                     </div>
-                    <div id="grand_lead_text" style="font-size: 12.5px; margin-top: 4px; color: #15803d;">
+                    <div class="grand-lead-text" id="grand_lead_text" style="font-size: 12.5px; margin-top: 4px; color: #15803d;">
                         ${leadText}
                     </div>
                 </div>
@@ -1125,6 +1663,8 @@ function renderConsolidatedResultView() {
 
         </div>
     `;
+
+    containers.forEach(c => c.innerHTML = consolidatedHtml);
 }
 
 function onPostalVoteChanged(candId, val) {
@@ -1149,87 +1689,90 @@ function onPostalVoteChanged(candId, val) {
         grandCandTotal += tot;
         candSums.push({ id: c.id, name: c.name, party: c.party, total: tot });
 
-        const candTotEl = document.getElementById(`cand_tot_${c.id}`);
-        if (candTotEl) candTotEl.innerText = tot.toLocaleString('hi-IN');
+        const candTotEls = document.querySelectorAll(`.cand-tot-${c.id}, #cand_tot_${c.id}`);
+        candTotEls.forEach(el => el.innerText = tot.toLocaleString('hi-IN'));
     });
 
-    const footPostalEl = document.getElementById("foot_postal_total");
-    if (footPostalEl) footPostalEl.innerText = totalPostal.toLocaleString('hi-IN');
+    const footPostalEls = document.querySelectorAll(".foot-postal-total, #foot_postal_total");
+    footPostalEls.forEach(el => el.innerText = totalPostal.toLocaleString('hi-IN'));
 
-    const footGrandEl = document.getElementById("foot_cand_grand_total");
-    if (footGrandEl) footGrandEl.innerText = grandCandTotal.toLocaleString('hi-IN');
+    const footGrandEls = document.querySelectorAll(".foot-cand-grand-total, #foot_cand_grand_total");
+    footGrandEls.forEach(el => el.innerText = grandCandTotal.toLocaleString('hi-IN'));
 
     const totalNota = countingState.notaVotes.reduce((a, b) => a + b, 0);
     const grandCounted = grandCandTotal + totalNota;
     const targetPolled = ward.total_polled_votes || 0;
     const diff = grandCounted - targetPolled;
 
-    const grandCountedEl = document.getElementById("grand_counted_text");
-    if (grandCountedEl) grandCountedEl.innerText = `${grandCounted.toLocaleString('hi-IN')} मत`;
+    const grandCountedEls = document.querySelectorAll(".grand-counted-text, #grand_counted_text");
+    grandCountedEls.forEach(el => el.innerText = `${grandCounted.toLocaleString('hi-IN')} मत`);
 
-    const grandBadgeEl = document.getElementById("grand_match_badge");
-    if (grandBadgeEl) {
-        if (targetPolled > 0) {
-            grandBadgeEl.innerHTML = (diff === 0) 
-                ? `<span style="font-size: 12px; color: #16a34a; margin-left: 8px;"><i class="fas fa-check-circle"></i> 100% सटीक पोल मिलान (${targetPolled} मत)</span>`
-                : `<span style="font-size: 12px; color: #dc2626; margin-left: 8px;">(पोल: ${targetPolled} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`;
-        }
-    }
+    const grandBadgeEls = document.querySelectorAll(".grand-match-badge, #grand_match_badge");
+    const badgeContent = (targetPolled > 0)
+        ? (diff === 0 
+            ? `<span style="font-size: 12px; color: #16a34a; margin-left: 8px;"><i class="fas fa-check-circle"></i> 100% सटीक पोल मिलान (${targetPolled} मत)</span>` 
+            : `<span style="font-size: 12px; color: #dc2626; margin-left: 8px;">(पोल: ${targetPolled} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`)
+        : '';
+    grandBadgeEls.forEach(el => el.innerHTML = badgeContent);
 
     candSums.sort((a, b) => b.total - a.total);
-    const leadEl = document.getElementById("grand_lead_text");
-    if (leadEl) {
-        if (candSums.length > 1 && candSums[0].total > 0) {
-            const margin = candSums[0].total - candSums[1].total;
-            leadEl.innerHTML = `अग्रणी: <b style="color:#15803d;">${candSums[0].name} (${getPartyShortLabel(candSums[0].party)})</b> &mdash; <b>+${margin} मतों से आगे</b>`;
-        } else if (candSums.length === 1) {
-            leadEl.innerText = `एकमात्र प्रत्याशी (निर्विरोध)`;
-        }
+    const leadEls = document.querySelectorAll(".grand-lead-text, #grand_lead_text");
+    let leadHtml = '';
+    if (candSums.length > 1 && candSums[0].total > 0) {
+        const margin = candSums[0].total - candSums[1].total;
+        leadHtml = `अग्रणी: <b style="color:#15803d;">${candSums[0].name} (${getPartyShortLabel(candSums[0].party)})</b> &mdash; <b>+${margin} मतों से आगे</b>`;
+    } else if (candSums.length === 1) {
+        leadHtml = `एकमात्र प्रत्याशी (निर्विरोध)`;
     }
+    leadEls.forEach(el => el.innerHTML = leadHtml);
 
     updateModalFooterSummary();
 }
 
 function updateModalFooterSummary() {
-    const badge = document.getElementById("modalFooterSummaryBadge");
-    if (!badge || !countingState.ward) return;
+    if (!countingState.ward) return;
     const ward = countingState.ward;
     const tabName = countingState.currentTab === -1 
         ? `📊 समेकित परिणाम पत्रक (Form 20)` 
         : `🗳️ भाग ${countingState.parts[countingState.currentTab]?.part || (countingState.currentTab + 1)} EVM प्रविष्टि (Form 17C-II)`;
-    badge.innerHTML = `
+    
+    const summaryHtml = `
         <i class="fas fa-landmark" style="color: #0284c7;"></i> <b>वार्ड संख्या ${ward.ward}</b> (${countingState.partCount} भाग) &bull; 
         सक्रिय चरण: <b style="color: #0369a1;">${tabName}</b> &bull; 
         11-09 पोल: <b>${(ward.total_polled_votes || 0).toLocaleString('hi-IN')} मत</b>
     `;
 
-    const quickBadge = document.getElementById("cModalQuickBadge");
-    if (quickBadge) {
-        if (countingState.currentTab === -1) {
-            quickBadge.innerHTML = `<span style="color: #7e22ce; background: #faf5ff; border: 1px solid #d8b4fe; padding: 2px 8px; border-radius: 4px;">📊 समेकित परिणाम पत्रक</span>`;
+    const badgeEls = [document.getElementById("modalFooterSummaryBadge"), document.getElementById("onPageSummaryBadge")].filter(Boolean);
+    badgeEls.forEach(b => b.innerHTML = summaryHtml);
+
+    let quickBadgeHtml = '';
+    if (countingState.currentTab === -1) {
+        quickBadgeHtml = `<span style="color: #7e22ce; background: #faf5ff; border: 1px solid #d8b4fe; padding: 2px 8px; border-radius: 4px;">📊 समेकित परिणाम पत्रक</span>`;
+    } else {
+        const pt = countingState.parts[countingState.currentTab];
+        let cSum = 0;
+        ward.candidates.forEach(c => {
+            const arr = countingState.candVotes[c.id] || [];
+            cSum += (arr[countingState.currentTab] || 0);
+        });
+        const nVal = countingState.notaVotes[countingState.currentTab] || 0;
+        const counted = cSum + nVal;
+        const target = pt?.polled_votes || 0;
+        if (target > 0 && counted === target) {
+            quickBadgeHtml = `<span style="color: #166534; background: #dcfce7; border: 1px solid #86efac; padding: 2px 8px; border-radius: 4px;">✓ भाग ${pt?.part} 100% मिलान (${target} मत)</span>`;
+        } else if (counted > 0) {
+            const diff = counted - target;
+            quickBadgeHtml = `<span style="color: #991b1b; background: #fee2e2; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 4px;">⚠️ भाग ${pt?.part} अंतर: ${diff > 0 ? '+' : ''}${diff} मत</span>`;
         } else {
-            const pt = countingState.parts[countingState.currentTab];
-            let cSum = 0;
-            ward.candidates.forEach(c => {
-                const arr = countingState.candVotes[c.id] || [];
-                cSum += (arr[countingState.currentTab] || 0);
-            });
-            const nVal = countingState.notaVotes[countingState.currentTab] || 0;
-            const counted = cSum + nVal;
-            const target = pt?.polled_votes || 0;
-            if (target > 0 && counted === target) {
-                quickBadge.innerHTML = `<span style="color: #166534; background: #dcfce7; border: 1px solid #86efac; padding: 2px 8px; border-radius: 4px;">✓ भाग ${pt?.part} 100% मिलान (${target} मत)</span>`;
-            } else if (counted > 0) {
-                const diff = counted - target;
-                quickBadge.innerHTML = `<span style="color: #991b1b; background: #fee2e2; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 4px;">⚠️ भाग ${pt?.part} अंतर: ${diff > 0 ? '+' : ''}${diff} मत</span>`;
-            } else {
-                quickBadge.innerHTML = `<span style="color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px;">⏳ भाग ${pt?.part} प्रविष्टि लंबित</span>`;
-            }
+            quickBadgeHtml = `<span style="color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px;">⏳ भाग ${pt?.part} प्रविष्टि लंबित</span>`;
         }
     }
+
+    const quickBadges = [document.getElementById("cModalQuickBadge"), document.getElementById("onPageQuickBadge")].filter(Boolean);
+    quickBadges.forEach(qb => qb.innerHTML = quickBadgeHtml);
 }
 
-async function saveCountingData() {
+async function saveCountingData(isOnPage = false) {
     if (!resultsData || !resultsData.wards || !countingState.ward) return;
     const ward = countingState.ward;
     const { partCount } = countingState;
@@ -1253,9 +1796,11 @@ async function saveCountingData() {
     const tendered_votes = tenderedEl ? (parseInt(tenderedEl.value) || 0) : (countingState.tendered_votes || 0);
     const rejectedEl = document.getElementById("countingRejectedVotes");
     const rejected_votes = rejectedEl ? (parseInt(rejectedEl.value) || 0) : (countingState.rejected_votes || 0);
+    
     const statusSelect = document.getElementById("countingStatusSelect");
     const status = statusSelect ? statusSelect.value : (countingState.status || 'Counting');
-    const tableEl = document.getElementById("countingTableNo");
+    
+    const tableEl = isOnPage ? document.getElementById("onPageTableNo") : document.getElementById("countingTableNo");
     const counting_table_no = tableEl ? (parseInt(tableEl.value) || 1) : (countingState.table_no || 1);
 
     if (status === 'Declared') {
@@ -1285,9 +1830,15 @@ async function saveCountingData() {
 
         const data = await res.json();
         if (data.success) {
-            closeCountingEntryModal();
+            const modal = document.getElementById("countingEntryModal");
+            if (modal && modal.style.display !== "none") {
+                closeCountingEntryModal();
+            }
             showToast(`✅ वार्ड ${ward.ward} का भागवार मतगणना डेटा सुरक्षित व प्रसारित हुआ!`);
             await fetchResultsData(false);
+            if (isOnPage) {
+                initOnPageCountingEntry(ward.ward);
+            }
         } else {
             alert(`❌ त्रुटि: ${data.message}`);
         }
