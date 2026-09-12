@@ -280,6 +280,7 @@ function initDatabase() {
             )`, () => {
                 // Safe column additions for candidates
                 db.run(`ALTER TABLE candidates ADD COLUMN votes_evm2 INTEGER DEFAULT 0`, () => {});
+                db.run(`ALTER TABLE candidates ADD COLUMN votes_rounds TEXT`, () => {});
 
                 // Create ward_results table
                 db.run(`CREATE TABLE IF NOT EXISTS ward_results (
@@ -290,6 +291,7 @@ function initDatabase() {
                     nota_votes INTEGER DEFAULT 0,
                     nota_votes_evm1 INTEGER DEFAULT 0,
                     nota_votes_evm2 INTEGER DEFAULT 0,
+                    nota_rounds TEXT,
                     tendered_votes INTEGER DEFAULT 0,
                     rejected_votes INTEGER DEFAULT 0,
                     total_counted_votes INTEGER DEFAULT 0,
@@ -305,6 +307,7 @@ function initDatabase() {
                     db.run(`ALTER TABLE ward_results ADD COLUMN evm_count INTEGER DEFAULT 1`, () => {});
                     db.run(`ALTER TABLE ward_results ADD COLUMN nota_votes_evm1 INTEGER DEFAULT 0`, () => {});
                     db.run(`ALTER TABLE ward_results ADD COLUMN nota_votes_evm2 INTEGER DEFAULT 0`, () => {});
+                    db.run(`ALTER TABLE ward_results ADD COLUMN nota_rounds TEXT`, () => {});
                     db.run(`UPDATE ward_results SET evm_count = 2 WHERE ward = 1`, () => {});
 
                     // Seed Candidates from Form 6 Master

@@ -1150,154 +1150,211 @@ app.get('/api/results/data', (req, res) => {
         db.all('SELECT * FROM candidates ORDER BY ward ASC, candidate_no ASC', [], (err2, candidateRows) => {
             if (err2) return res.status(500).json({ success: false, error: err2.message });
 
-            // Group candidates by ward
-            const candidatesByWard = {};
-            (candidateRows || []).forEach(c => {
-                if (!candidatesByWard[c.ward]) candidatesByWard[c.ward] = [];
-                candidatesByWard[c.ward].push(c);
-            });
+            db.all(`
+                SELECT b.id AS booth_no, b.ward, b.ward_part, b.name, b.electors, p.v_final AS polled_votes
+                FROM booths b
+                LEFT JOIN polling_stats p ON b.id = p.booth_id
+                ORDER BY b.ward ASC, b.ward_part ASC
+            `, [], (err3, boothRows) => {
+                const boothsByWard = {};
+                (boothRows || []).forEach(b => {
+                    if (!boothsByWard[b.ward]) boothsByWard[b.ward] = [];
+                    boothsByWard[b.ward].push({
+                        part: b.ward_part || (boothsByWard[b.ward].length + 1),
+                        booth_no: b.booth_no,
+                        name: b.name,
+                        electors: b.electors,
+                        polled_votes: parseInt(b.polled_votes) || 0
+                    });
+                });
 
-            // Calculate party tally and summary
-            const partyTally = {
-                'BJP': { code: 'BJP', name: 'भारतीय जनता पार्टी', won: 0, leading: 0, total: 0, color: '#f97316' },
-                'INC': { code: 'INC', name: 'इण्डियन नेशनल कांग्रेस', won: 0, leading: 0, total: 0, color: '#0ea5e9' },
-                'IND': { code: 'IND', name: 'निर्दलीय', won: 0, leading: 0, total: 0, color: '#8b5cf6' },
-                'AAP': { code: 'AAP', name: 'आम आदमी पार्टी', won: 0, leading: 0, total: 0, color: '#eab308' },
-                'OTH': { code: 'OTH', name: 'अन्य', won: 0, leading: 0, total: 0, color: '#64748b' }
-            };
+                const safeParseArray = (val, fallback) => {
+                    if (!val) return fallback;
+                    try {
+                        const p = JSON.parse(val);
+                        return Array.isArray(p) ? p : fallback;
+                    } catch(e) {
+                        return fallback;
+                    }
+                };
 
-            const getPartyKey = (partyName) => {
-                if (!partyName) return 'OTH';
-                if (partyName.includes('भारतीय जनता') || partyName.includes('BJP')) return 'BJP';
-                if (partyName.includes('कांग्रेस') || partyName.includes('INC')) return 'INC';
-                if (partyName.includes('निर्दलीय') || partyName.includes('IND')) return 'IND';
-                if (partyName.includes('आम आदमी') || partyName.includes('AAP')) return 'AAP';
-                return 'OTH';
-            };
+                const getRoundsArray = (roundsJson, count, evm1, evm2) => {
+                    let arr = safeParseArray(roundsJson, null);
+                    if (!arr) {
+                        arr = [];
+                        for (let i = 0; i < count; i++) {
+                            if (i === 0) arr.push(evm1 || 0);
+                            else if (i === 1) arr.push(evm2 || 0);
+                            else arr.push(0);
+                        }
+                    }
+                    while (arr.length < count) arr.push(0);
+                    return arr;
+                };
 
-            let declaredWards = 0;
-            let countingWards = 0;
-            let pendingWards = 0;
-            let totalCountedVotes = 0;
-            let totalElectors = 30598;
-            let totalPolledVotes = 21325;
+                // Group candidates by ward
+                const candidatesByWard = {};
+                (candidateRows || []).forEach(c => {
+                    if (!candidatesByWard[c.ward]) candidatesByWard[c.ward] = [];
+                    candidatesByWard[c.ward].push(c);
+                });
 
-            const wards = (wardRows || []).map(w => {
-                const cList = candidatesByWard[w.ward] || [];
-                const counted = (w.total_counted_votes || 0);
-                totalCountedVotes += counted;
+                // Calculate party tally and summary
+                const partyTally = {
+                    'BJP': { code: 'BJP', name: 'भारतीय जनता पार्टी', won: 0, leading: 0, total: 0, color: '#f97316' },
+                    'INC': { code: 'INC', name: 'इण्डियन नेशनल कांग्रेस', won: 0, leading: 0, total: 0, color: '#0ea5e9' },
+                    'IND': { code: 'IND', name: 'निर्दलीय', won: 0, leading: 0, total: 0, color: '#8b5cf6' },
+                    'AAP': { code: 'AAP', name: 'आम आदमी पार्टी', won: 0, leading: 0, total: 0, color: '#eab308' },
+                    'OTH': { code: 'OTH', name: 'अन्य', won: 0, leading: 0, total: 0, color: '#64748b' }
+                };
 
-                // Sort candidates by total_votes desc
-                const sortedCands = [...cList].sort((a, b) => (b.total_votes || 0) - (a.total_votes || 0));
+                const getPartyKey = (partyName) => {
+                    if (!partyName) return 'OTH';
+                    if (partyName.includes('भारतीय जनता') || partyName.includes('BJP')) return 'BJP';
+                    if (partyName.includes('कांग्रेस') || partyName.includes('INC')) return 'INC';
+                    if (partyName.includes('निर्दलीय') || partyName.includes('IND')) return 'IND';
+                    if (partyName.includes('आम आदमी') || partyName.includes('AAP')) return 'AAP';
+                    return 'OTH';
+                };
 
-                let leader = null;
-                let runnerUp = null;
-                let margin = w.margin || 0;
+                let declaredWards = 0;
+                let countingWards = 0;
+                let pendingWards = 0;
+                let totalCountedVotes = 0;
+                let totalElectors = 30598;
+                let totalPolledVotes = 21325;
 
-                if (sortedCands.length > 0) {
-                    leader = sortedCands[0];
-                    if (sortedCands.length > 1) {
-                        runnerUp = sortedCands[1];
-                        if (w.status !== 'Declared' || margin === 0) {
-                            margin = Math.max(0, (leader.total_votes || 0) - (runnerUp.total_votes || 0));
+                const wards = (wardRows || []).map(w => {
+                    const cList = candidatesByWard[w.ward] || [];
+                    const counted = (w.total_counted_votes || 0);
+                    totalCountedVotes += counted;
+
+                    const wardParts = boothsByWard[w.ward] || [{
+                        part: 1,
+                        booth_no: w.ward,
+                        name: `वार्ड ${w.ward} मतदान केंद्र`,
+                        electors: w.total_electors,
+                        polled_votes: w.total_polled_votes
+                    }];
+                    const partCount = wardParts.length;
+
+                    // Sort candidates by total_votes desc
+                    const sortedCands = [...cList].sort((a, b) => (b.total_votes || 0) - (a.total_votes || 0));
+
+                    let leader = null;
+                    let runnerUp = null;
+                    let margin = w.margin || 0;
+
+                    if (sortedCands.length > 0) {
+                        leader = sortedCands[0];
+                        if (sortedCands.length > 1) {
+                            runnerUp = sortedCands[1];
+                            if (w.status !== 'Declared' || margin === 0) {
+                                margin = Math.max(0, (leader.total_votes || 0) - (runnerUp.total_votes || 0));
+                            }
+                        } else {
+                            margin = leader.total_votes || 0;
+                        }
+                    }
+
+                    if (w.status === 'Declared') {
+                        declaredWards++;
+                        const pKey = getPartyKey(w.winner_party || (leader ? leader.party : ''));
+                        partyTally[pKey].won++;
+                        partyTally[pKey].total++;
+                    } else if (w.status === 'Counting') {
+                        countingWards++;
+                        if (leader && leader.total_votes > 0) {
+                            const pKey = getPartyKey(leader.party);
+                            partyTally[pKey].leading++;
+                            partyTally[pKey].total++;
                         }
                     } else {
-                        margin = leader.total_votes || 0;
+                        pendingWards++;
                     }
-                }
 
-                if (w.status === 'Declared') {
-                    declaredWards++;
-                    const pKey = getPartyKey(w.winner_party || (leader ? leader.party : ''));
-                    partyTally[pKey].won++;
-                    partyTally[pKey].total++;
-                } else if (w.status === 'Counting') {
-                    countingWards++;
-                    if (leader && leader.total_votes > 0) {
-                        const pKey = getPartyKey(leader.party);
-                        partyTally[pKey].leading++;
-                        partyTally[pKey].total++;
-                    }
-                } else {
-                    pendingWards++;
-                }
-
-                return {
-                    ward: w.ward,
-                    totalElectors: w.total_electors,
-                    total_electors: w.total_electors,
-                    totalPolledVotes: w.total_polled_votes,
-                    total_polled_votes: w.total_polled_votes,
-                    totalCountedVotes: w.total_counted_votes,
-                    total_counted_votes: w.total_counted_votes,
-                    notaVotes: w.nota_votes,
-                    nota_votes: w.nota_votes,
-                    nota_votes_evm1: w.nota_votes_evm1 || 0,
-                    nota_votes_evm2: w.nota_votes_evm2 || 0,
-                    evm_count: w.evm_count || (w.ward === 1 ? 2 : 1),
-                    tenderedVotes: w.tendered_votes,
-                    tendered_votes: w.tendered_votes,
-                    rejectedVotes: w.rejected_votes,
-                    rejected_votes: w.rejected_votes,
-                    status: w.status,
-                    winnerName: w.winner_name,
-                    winner_name: w.winner_name,
-                    winnerParty: w.winner_party,
-                    winner_party: w.winner_party,
-                    winnerId: w.winner_id,
-                    winner_id: w.winner_id,
-                    margin: margin,
-                    tableNo: w.counting_table_no,
-                    counting_table_no: w.counting_table_no,
-                    updatedAt: w.updated_at,
-                    updated_at: w.updated_at,
-                    leader: leader ? {
-                        id: leader.id,
-                        name: leader.name,
-                        party: leader.party,
-                        symbol: leader.symbol,
-                        totalVotes: leader.total_votes,
-                        total_votes: leader.total_votes,
-                        votesEvm: leader.votes_evm,
-                        votes_evm: leader.votes_evm,
-                        votesEvm2: leader.votes_evm2 || 0,
-                        votes_evm2: leader.votes_evm2 || 0,
-                        votesPostal: leader.votes_postal,
-                        votes_postal: leader.votes_postal
-                    } : null,
-                    runnerUp: runnerUp ? {
-                        id: runnerUp.id,
-                        name: runnerUp.name,
-                        party: runnerUp.party,
-                        symbol: runnerUp.symbol,
-                        totalVotes: runnerUp.total_votes,
-                        total_votes: runnerUp.total_votes
-                    } : null,
-                    candidates: cList.map(c => ({
-                        id: c.id,
-                        cNo: c.candidate_no,
-                        candidate_no: c.candidate_no,
-                        candidateNo: c.candidate_no,
-                        name: c.name,
-                        address: c.address,
-                        party: c.party,
-                        symbol: c.symbol,
-                        votesEvm: c.votes_evm || 0,
-                        votes_evm: c.votes_evm || 0,
-                        votesEvm2: c.votes_evm2 || 0,
-                        votes_evm2: c.votes_evm2 || 0,
-                        votesPostal: c.votes_postal || 0,
-                        votes_postal: c.votes_postal || 0,
-                        totalVotes: c.total_votes || 0,
-                        total_votes: c.total_votes || 0,
-                        isWinner: Boolean(c.is_winner),
-                        is_winner: Boolean(c.is_winner),
-                        isDeclared: Boolean(c.is_declared),
-                        is_declared: Boolean(c.is_declared),
-                        pct: counted > 0 ? Number((((c.total_votes || 0) / counted) * 100).toFixed(1)) : 0
-                    }))
-                };
-            });
+                    return {
+                        ward: w.ward,
+                        totalElectors: w.total_electors,
+                        total_electors: w.total_electors,
+                        totalPolledVotes: w.total_polled_votes,
+                        total_polled_votes: w.total_polled_votes,
+                        totalCountedVotes: w.total_counted_votes,
+                        total_counted_votes: w.total_counted_votes,
+                        notaVotes: w.nota_votes,
+                        nota_votes: w.nota_votes,
+                        nota_votes_evm1: w.nota_votes_evm1 || 0,
+                        nota_votes_evm2: w.nota_votes_evm2 || 0,
+                        nota_rounds: getRoundsArray(w.nota_rounds, partCount, w.nota_votes_evm1 || w.nota_votes, w.nota_votes_evm2),
+                        parts: wardParts,
+                        part_count: partCount,
+                        round_count: partCount,
+                        evm_count: partCount,
+                        tenderedVotes: w.tendered_votes,
+                        tendered_votes: w.tendered_votes,
+                        rejectedVotes: w.rejected_votes,
+                        rejected_votes: w.rejected_votes,
+                        status: w.status,
+                        winnerName: w.winner_name,
+                        winner_name: w.winner_name,
+                        winnerParty: w.winner_party,
+                        winner_party: w.winner_party,
+                        winnerId: w.winner_id,
+                        winner_id: w.winner_id,
+                        margin: margin,
+                        tableNo: w.counting_table_no,
+                        counting_table_no: w.counting_table_no,
+                        updatedAt: w.updated_at,
+                        updated_at: w.updated_at,
+                        leader: leader ? {
+                            id: leader.id,
+                            name: leader.name,
+                            party: leader.party,
+                            symbol: leader.symbol,
+                            totalVotes: leader.total_votes,
+                            total_votes: leader.total_votes,
+                            votesEvm: leader.votes_evm,
+                            votes_evm: leader.votes_evm,
+                            votesEvm2: leader.votes_evm2 || 0,
+                            votes_evm2: leader.votes_evm2 || 0,
+                            votes_rounds: getRoundsArray(leader.votes_rounds, partCount, leader.votes_evm, leader.votes_evm2),
+                            votesPostal: leader.votes_postal,
+                            votes_postal: leader.votes_postal
+                        } : null,
+                        runnerUp: runnerUp ? {
+                            id: runnerUp.id,
+                            name: runnerUp.name,
+                            party: runnerUp.party,
+                            symbol: runnerUp.symbol,
+                            totalVotes: runnerUp.total_votes,
+                            total_votes: runnerUp.total_votes
+                        } : null,
+                        candidates: cList.map(c => ({
+                            id: c.id,
+                            cNo: c.candidate_no,
+                            candidate_no: c.candidate_no,
+                            candidateNo: c.candidate_no,
+                            name: c.name,
+                            address: c.address,
+                            party: c.party,
+                            symbol: c.symbol,
+                            votesEvm: c.votes_evm || 0,
+                            votes_evm: c.votes_evm || 0,
+                            votesEvm2: c.votes_evm2 || 0,
+                            votes_evm2: c.votes_evm2 || 0,
+                            votes_rounds: getRoundsArray(c.votes_rounds, partCount, c.votes_evm, c.votes_evm2),
+                            votesPostal: c.votes_postal || 0,
+                            votes_postal: c.votes_postal || 0,
+                            totalVotes: c.total_votes || 0,
+                            total_votes: c.total_votes || 0,
+                            isWinner: Boolean(c.is_winner),
+                            is_winner: Boolean(c.is_winner),
+                            isDeclared: Boolean(c.is_declared),
+                            is_declared: Boolean(c.is_declared),
+                            pct: counted > 0 ? Number((((c.total_votes || 0) / counted) * 100).toFixed(1)) : 0
+                        }))
+                    };
+                });
 
             // Check majority (18 out of 35)
             let majorityAchievedBy = null;
@@ -1336,6 +1393,7 @@ app.get('/api/results/data', (req, res) => {
         });
     });
 });
+});
 
 // 2. Update Ward Counting Data (EVM + Postal + NOTA)
 app.post('/api/counting/update-ward', (req, res) => {
@@ -1360,24 +1418,55 @@ app.post('/api/counting/update-ward', (req, res) => {
     db.serialize(() => {
         const updateCandStmt = db.prepare(`
             UPDATE candidates 
-            SET votes_evm = ?, votes_evm2 = ?, votes_postal = ?, total_votes = ?
+            SET votes_evm = ?, votes_evm2 = ?, votes_rounds = ?, votes_postal = ?, total_votes = ?
             WHERE id = ? AND ward = ?
         `);
 
         let sumCandVotes = 0;
         votesArray.forEach(cv => {
-            const evm = parseInt(cv.votes_evm) || 0;
-            const evm2 = parseInt(cv.votes_evm2) || 0;
+            let rounds = [];
+            if (Array.isArray(cv.votes_rounds)) {
+                rounds = cv.votes_rounds.map(v => parseInt(v) || 0);
+            } else {
+                const evm = parseInt(cv.votes_evm) || 0;
+                const evm2 = parseInt(cv.votes_evm2) || 0;
+                rounds = [evm];
+                if (evm2 > 0 || wardNum === 1) rounds.push(evm2);
+            }
+            const sumRounds = rounds.reduce((a, b) => a + b, 0);
             const postal = parseInt(cv.votes_postal) || 0;
-            const tot = evm + evm2 + postal;
+            const tot = sumRounds + postal;
             sumCandVotes += tot;
-            updateCandStmt.run(evm, evm2, postal, tot, cv.id, wardNum);
+            const r1 = rounds[0] || 0;
+            const r2 = rounds[1] || 0;
+            updateCandStmt.run(r1, r2, JSON.stringify(rounds), postal, tot, cv.id, wardNum);
         });
         updateCandStmt.finalize();
 
-        const nNota1 = parseInt(nota_votes_evm1) || 0;
-        const nNota2 = parseInt(nota_votes_evm2) || 0;
-        const nNota = (wardNum === 1 && (nNota1 > 0 || nNota2 > 0)) ? (nNota1 + nNota2) : (parseInt(nota_votes) || 0);
+        let notaRounds = [];
+        if (Array.isArray(req.body.nota_rounds)) {
+            notaRounds = req.body.nota_rounds.map(v => parseInt(v) || 0);
+        } else if (typeof req.body.nota_rounds === 'string') {
+            try {
+                const p = JSON.parse(req.body.nota_rounds);
+                if (Array.isArray(p)) notaRounds = p.map(v => parseInt(v) || 0);
+            } catch(e) {}
+        }
+
+        let nNota = 0;
+        let nNota1 = parseInt(nota_votes_evm1) || 0;
+        let nNota2 = parseInt(nota_votes_evm2) || 0;
+
+        if (notaRounds.length > 0) {
+            nNota = notaRounds.reduce((a, b) => a + b, 0);
+            nNota1 = notaRounds[0] || 0;
+            nNota2 = notaRounds[1] || 0;
+        } else {
+            nNota = (wardNum === 1 && (nNota1 > 0 || nNota2 > 0)) ? (nNota1 + nNota2) : (parseInt(nota_votes) || 0);
+            notaRounds = [nNota1];
+            if (nNota2 > 0 || wardNum === 1) notaRounds.push(nNota2);
+        }
+
         const nTendered = parseInt(tendered_votes) || 0;
         const nRejected = parseInt(rejected_votes) || 0;
         const totalCounted = sumCandVotes + nNota;
@@ -1410,6 +1499,7 @@ app.post('/api/counting/update-ward', (req, res) => {
                 SET nota_votes = ?,
                     nota_votes_evm1 = ?,
                     nota_votes_evm2 = ?,
+                    nota_rounds = ?,
                     tendered_votes = ?,
                     rejected_votes = ?,
                     total_counted_votes = ?,
@@ -1424,7 +1514,7 @@ app.post('/api/counting/update-ward', (req, res) => {
             `;
 
             db.run(updateWardSql, [
-                nNota, nNota1, nNota2, nTendered, nRejected, totalCounted, newStatus, winnerId, winnerName, winnerParty, margin, tableNum, wardNum
+                nNota, nNota1, nNota2, JSON.stringify(notaRounds), nTendered, nRejected, totalCounted, newStatus, winnerId, winnerName, winnerParty, margin, tableNum, wardNum
             ], function(wErr) {
                 if (wErr) return res.status(500).json({ success: false, message: wErr.message });
 

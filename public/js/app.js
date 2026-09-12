@@ -2808,7 +2808,9 @@ function renderResultsGrid() {
         const isDeclared = w.status === 'Declared';
         const isCounting = w.status === 'Counting';
         const isNirvirodh = (w.ward === 26);
-        const isWard1 = (w.ward === 1 || w.evm_count === 2);
+        const parts = (w.parts && w.parts.length > 0) ? w.parts : [{ part: 1, polled_votes: w.total_polled_votes, name: `वार्ड ${w.ward} मतदान केंद्र` }];
+        const partCount = parts.length;
+        const isMultiRound = (partCount > 1);
 
         let statusBadge = '';
         if (isDeclared) {
@@ -2860,9 +2862,11 @@ function renderResultsGrid() {
 
             let voteBreakdown = '';
             if (!isNirvirodh && w.total_counted_votes > 0) {
-                if (isWard1) {
-                    const postalText = c.votes_postal ? ` + ${c.votes_postal} डाक` : '';
-                    voteBreakdown = `<div style="font-size:10px; color:#64748b;">${votePct}% (रा. 1: ${c.votes_evm || 0} + रा. 2: ${c.votes_evm2 || 0}${postalText})</div>`;
+                const postalText = c.votes_postal ? ` + ${c.votes_postal} डाक` : '';
+                if (isMultiRound) {
+                    const rVotes = (c.votes_rounds && c.votes_rounds.length) ? c.votes_rounds : [c.votes_evm || 0, c.votes_evm2 || 0];
+                    const rStr = rVotes.slice(0, partCount).map((v, idx) => `रा. ${idx + 1}: ${v || 0}`).join(' + ');
+                    voteBreakdown = `<div style="font-size:10px; color:#64748b;">${votePct}% (${rStr}${postalText})</div>`;
                 } else {
                     voteBreakdown = `<div style="font-size:10.5px; color:#64748b;">${votePct}% (${c.votes_evm || 0} EVM + ${c.votes_postal || 0} डाक)</div>`;
                 }
@@ -2902,8 +2906,9 @@ function renderResultsGrid() {
 
         if (w.nota_votes > 0) {
             let notaBreakdown = '';
-            if (isWard1 && (w.nota_votes_evm1 > 0 || w.nota_votes_evm2 > 0)) {
-                notaBreakdown = ` <span style="font-size:10px; font-weight:normal; color:#64748b;">(रा. 1: ${w.nota_votes_evm1 || 0} + रा. 2: ${w.nota_votes_evm2 || 0})</span>`;
+            if (isMultiRound) {
+                const nRounds = (w.nota_rounds && w.nota_rounds.length) ? w.nota_rounds : [w.nota_votes_evm1 || 0, w.nota_votes_evm2 || 0];
+                notaBreakdown = ` <span style="font-size:10px; font-weight:normal; color:#64748b;">(${nRounds.slice(0, partCount).map((v, idx) => `रा. ${idx + 1}: ${v || 0}`).join(' + ')})</span>`;
             }
             candidateRowsHtml += `
                 <div class="candidate-row" style="opacity:0.85; background:#fafafa;">
@@ -2936,16 +2941,20 @@ function renderResultsGrid() {
             </div>
         `;
 
+        const partsMetaStr = isMultiRound 
+            ? `<br><span style="color:#0284c7; font-size:11px; font-weight:600;"><i class="fas fa-table-list"></i> ${parts.map((p, idx) => `राउंड ${idx + 1} (भाग ${p.part}): <b>${(p.polled_votes || 0).toLocaleString('hi-IN')} मत</b>`).join(' | ')}</span>`
+            : '';
+
         html += `
             <div class="ward-card" id="wardCard_${w.ward}">
                 <div class="ward-card-header">
                     <div class="ward-title">
                         वार्ड संख्या ${w.ward}
-                        ${isWard1 ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px; margin-left:6px; vertical-align:middle;"><i class="fas fa-rotate"></i> 2 चक्र (राउंड 1 + 2)</span>` : ''}
+                        ${isMultiRound ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px; margin-left:6px; vertical-align:middle;"><i class="fas fa-rotate"></i> ${partCount} चक्र (राउंड 1 से ${partCount})</span>` : ''}
                         <div class="ward-meta">
                             मतदाता: <b>${w.total_electors.toLocaleString('hi-IN')}</b> | 
                             11-09 पोल: <b>${w.total_polled_votes.toLocaleString('hi-IN')}</b> (${((w.total_polled_votes / w.total_electors) * 100).toFixed(1)}%)
-                            ${isWard1 ? `<br><span style="color:#0284c7; font-size:11px; font-weight:600;"><i class="fas fa-table-list"></i> राउंड 1 (भाग 1): <b>663 मत</b> | राउंड 2 (भाग 2): <b>692 मत</b></span>` : ''}
+                            ${partsMetaStr}
                         </div>
                     </div>
                     <div>${statusBadge}</div>
@@ -3038,7 +3047,9 @@ function onCountingWardSelected(wardNo) {
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
 
-    const isWard1 = (currentCountingWard === 1 || ward.evm_count === 2);
+    const parts = (ward.parts && ward.parts.length > 0) ? ward.parts : [{ part: 1, polled_votes: ward.total_polled_votes, name: `वार्ड ${ward.ward} मतदान केंद्र` }];
+    const partCount = parts.length;
+    const isMultiRound = (partCount > 1);
 
     const electorsEl = document.getElementById("cModalElectors");
     const polledEl = document.getElementById("cModalPolled");
@@ -3047,51 +3058,88 @@ function onCountingWardSelected(wardNo) {
     if (polledEl) polledEl.innerText = ward.total_polled_votes.toLocaleString('hi-IN');
     if (statusEl) statusEl.innerText = ward.status;
 
-    // Ward 1 Special 2-EVM Notice Banner
-    const w1Notice = document.getElementById("cModalWard1Notice");
-    if (w1Notice) {
-        w1Notice.style.display = isWard1 ? "block" : "none";
+    // Dynamic Parts Notice Banner
+    const partsNotice = document.getElementById("cModalPartsNotice");
+    if (partsNotice) {
+        partsNotice.style.display = "block";
+        if (isMultiRound) {
+            const partsSummary = parts.map((p, idx) => `<b>राउंड ${idx + 1} (भाग ${p.part}):</b> ${p.name || `बूथ ${p.booth_no}`} &mdash; <b>${(p.polled_votes || 0).toLocaleString('hi-IN')} मत</b>`).join('<br>');
+            partsNotice.innerHTML = `
+                <div style="font-weight: 700; margin-bottom: 4px; color: #1e3a8a; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-layer-group" style="color:#0284c7;"></i>
+                    वार्ड ${ward.ward} आधिकारिक चक्रवार मतगणना (${partCount} राउंड / भाग):
+                </div>
+                <div style="font-size: 11.5px; line-height: 1.6; color: #1e40af;">
+                    ${partsSummary}
+                    <div style="margin-top: 3px; font-weight: bold; border-top: 1px dashed #bfdbfe; padding-top: 3px;">
+                        कुल मतदान दिवस मत: ${(ward.total_polled_votes || 0).toLocaleString('hi-IN')} मत
+                    </div>
+                </div>
+            `;
+        } else {
+            const p = parts[0];
+            partsNotice.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+                    <span><i class="fas fa-vote-yea" style="color:#0284c7; margin-right:4px;"></i> <b>वार्ड ${ward.ward} (1 चक्र / 1 राउंड):</b> भाग ${p.part}: ${p.name || ''}</span>
+                    <span>मतदान दिवस मत लक्ष्य: <b>${(p.polled_votes || 0).toLocaleString('hi-IN')} मत</b></span>
+                </div>
+            `;
+        }
     }
 
-    // Dynamic table header for 2 Rounds vs 1 Round
+    // Dynamic table header based on parts count
     const thead = document.getElementById("countingCandidatesTableHead");
     if (thead) {
-        if (isWard1) {
-            thead.innerHTML = `
-                <tr>
-                    <th style="width: 35px;">क्र.</th>
-                    <th>प्रत्याशी का नाम</th>
-                    <th>सम्बद्ध दल</th>
-                    <th>प्रतीक</th>
-                    <th style="width: 120px; background: #e0f2fe; color:#0369a1;"><i class="fas fa-rotate"></i> राउंड 1 (भाग 1)</th>
-                    <th style="width: 120px; background: #dbeafe; color:#1e40af;"><i class="fas fa-rotate"></i> राउंड 2 (भाग 2)</th>
-                    <th style="width: 95px;">डाक मत</th>
-                    <th style="width: 105px; background: #f8fafc;">कुल मत</th>
-                </tr>
-            `;
-        } else {
-            thead.innerHTML = `
-                <tr>
-                    <th style="width: 40px;">क्र.</th>
-                    <th>प्रत्याशी का नाम</th>
-                    <th>सम्बद्ध दल</th>
-                    <th>प्रतीक</th>
-                    <th style="width: 120px;">राउंड 1 (EVM मत)</th>
-                    <th style="width: 110px;">डाक मतपत्र</th>
-                    <th style="width: 100px;">कुल मत</th>
-                </tr>
+        let thRounds = '';
+        for (let i = 1; i <= partCount; i++) {
+            const pt = parts[i - 1];
+            const pVotes = pt ? (pt.polled_votes || 0) : 0;
+            const bg = (i % 2 === 1) ? '#e0f2fe' : '#dbeafe';
+            const color = (i % 2 === 1) ? '#0369a1' : '#1e40af';
+            thRounds += `
+                <th style="min-width: 115px; background: ${bg}; color: ${color}; text-align: center;">
+                    <i class="fas fa-rotate"></i> राउंड ${i} (भाग ${pt ? pt.part : i})
+                    <div style="font-size: 10px; font-weight: normal; opacity: 0.9;">${pVotes.toLocaleString('hi-IN')} मत लक्ष्य</div>
+                </th>
             `;
         }
+        thead.innerHTML = `
+            <tr>
+                <th style="width: 35px;">क्र.</th>
+                <th>प्रत्याशी का नाम</th>
+                <th>सम्बद्ध दल</th>
+                <th>प्रतीक</th>
+                ${thRounds}
+                <th style="width: 95px; text-align: center;">डाक मत</th>
+                <th style="width: 105px; background: #f8fafc; text-align: center;">कुल मत</th>
+            </tr>
+        `;
     }
 
+    // Dynamic table body
     const tbody = document.getElementById("countingCandidatesTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = '';
+    if (tbody) {
+        tbody.innerHTML = '';
+        ward.candidates.forEach(c => {
+            const tr = document.createElement("tr");
+            tr.id = `c_row_${c.id}`;
+            const rVotes = (c.votes_rounds && c.votes_rounds.length) ? c.votes_rounds : [c.votes_evm || 0, c.votes_evm2 || 0];
+            
+            let tdRounds = '';
+            for (let i = 1; i <= partCount; i++) {
+                const rVal = (rVotes[i - 1] !== undefined) ? rVotes[i - 1] : (i === 1 ? (c.votes_evm || 0) : (i === 2 ? (c.votes_evm2 || 0) : 0));
+                const bg = (i % 2 === 1) ? '#f0f9ff' : '#eff6ff';
+                const border = (i % 2 === 1) ? '#7dd3fc' : '#93c5fd';
+                tdRounds += `
+                    <td style="background: ${bg}; text-align: center;">
+                        <input type="number" id="c_round_${c.id}_${i}" class="form-control cand-round-input" 
+                               data-cand-id="${c.id}" data-round="${i}" value="${rVal}" min="0" 
+                               placeholder="राउंड ${i}" style="text-align:center; font-weight:700; border-color:${border};" 
+                               oninput="recalcCountingTotals()">
+                    </td>
+                `;
+            }
 
-    ward.candidates.forEach(c => {
-        const tr = document.createElement("tr");
-        tr.id = `c_row_${c.id}`;
-        if (isWard1) {
             tr.innerHTML = `
                 <td><b>${c.candidate_no}</b></td>
                 <td style="text-align:left;">
@@ -3102,69 +3150,69 @@ function onCountingWardSelected(wardNo) {
                     <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
                 </td>
                 <td><b>${c.symbol}</b></td>
-                <td style="background: #f0f9ff;">
-                    <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" placeholder="राउंड 1" style="text-align:center; font-weight:700; border-color:#7dd3fc;" oninput="recalcCountingTotals()">
+                ${tdRounds}
+                <td style="text-align: center;">
+                    <input type="number" id="c_postal_${c.id}" class="form-control cand-postal-input" 
+                           data-cand-id="${c.id}" value="${c.votes_postal || 0}" min="0" 
+                           style="text-align:center;" oninput="recalcCountingTotals()">
                 </td>
-                <td style="background: #eff6ff;">
-                    <input type="number" id="c_evm2_${c.id}" class="form-control" value="${c.votes_evm2 || 0}" min="0" placeholder="राउंड 2" style="text-align:center; font-weight:700; border-color:#93c5fd;" oninput="recalcCountingTotals()">
-                </td>
-                <td>
-                    <input type="number" id="c_postal_${c.id}" class="form-control" value="${c.votes_postal || 0}" min="0" style="text-align:center;" oninput="recalcCountingTotals()">
-                </td>
-                <td style="background: #f8fafc;">
+                <td style="background: #f8fafc; text-align: center;">
                     <span id="c_tot_${c.id}" style="font-weight:800; font-size:14px; color:#0f172a;">${c.total_votes || 0}</span>
                 </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Handle Dynamic NOTA and extra inputs
+    const notaContainer = document.getElementById("countingNotaContainer");
+    if (notaContainer) {
+        const notaRounds = (ward.nota_rounds && ward.nota_rounds.length) ? ward.nota_rounds : [ward.nota_votes_evm1 || ward.nota_votes || 0, ward.nota_votes_evm2 || 0];
+        let notaInputsHtml = '';
+        if (isMultiRound) {
+            for (let i = 1; i <= partCount; i++) {
+                const pt = parts[i - 1];
+                const nVal = (notaRounds[i - 1] !== undefined) ? notaRounds[i - 1] : 0;
+                notaInputsHtml += `
+                    <div>
+                        <label style="font-size: 11px; font-weight: bold; color: #92400e;">NOTA (राउंड ${i} - भाग ${pt ? pt.part : i}):</label>
+                        <input type="number" id="c_nota_round_${i}" class="form-control nota-round-input" 
+                               data-round="${i}" value="${nVal}" min="0" oninput="recalcCountingTotals()">
+                    </div>
+                `;
+            }
+            notaInputsHtml += `
+                <div>
+                    <label style="font-size: 11px; font-weight: bold; color: #92400e;">कुल NOTA मत:</label>
+                    <input type="number" id="countingNotaTotal" class="form-control" value="${ward.nota_votes || 0}" readonly style="background:#f1f5f9; font-weight:bold;">
+                </div>
             `;
         } else {
-            tr.innerHTML = `
-                <td><b>${c.candidate_no}</b></td>
-                <td style="text-align:left;">
-                    <b>${c.name}</b>
-                    ${c.is_winner ? ' <i class="fas fa-crown" style="color:#eab308;"></i>' : ''}
-                </td>
-                <td style="text-align:left;">
-                    <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
-                </td>
-                <td><b>${c.symbol}</b></td>
-                <td>
-                    <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" style="text-align:center; font-weight:700;" oninput="recalcCountingTotals()">
-                </td>
-                <td>
-                    <input type="number" id="c_postal_${c.id}" class="form-control" value="${c.votes_postal || 0}" min="0" style="text-align:center;" oninput="recalcCountingTotals()">
-                </td>
-                <td>
-                    <span id="c_tot_${c.id}" style="font-weight:800; font-size:14px; color:#0f172a;">${c.total_votes || 0}</span>
-                </td>
+            notaInputsHtml += `
+                <div>
+                    <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA मत:</label>
+                    <input type="number" id="c_nota_round_1" class="form-control nota-round-input" 
+                           data-round="1" value="${ward.nota_votes || 0}" min="0" oninput="recalcCountingTotals()">
+                </div>
             `;
         }
-        tbody.appendChild(tr);
-    });
 
-    // Handle NOTA and extra inputs
-    const stdGrid = document.getElementById("countingNotaStandardGrid");
-    const w1Grid = document.getElementById("countingNotaWard1Grid");
-    if (isWard1) {
-        if (stdGrid) stdGrid.style.display = "none";
-        if (w1Grid) w1Grid.style.display = "grid";
-        const n1 = document.getElementById("countingNotaEvm1");
-        const n2 = document.getElementById("countingNotaEvm2");
-        const nTot = document.getElementById("countingNotaTotalWard1");
-        const tw1 = document.getElementById("countingTenderedVotesW1");
-        const rw1 = document.getElementById("countingRejectedVotesW1");
-        if (n1) n1.value = ward.nota_votes_evm1 || 0;
-        if (n2) n2.value = ward.nota_votes_evm2 || 0;
-        if (nTot) nTot.value = ward.nota_votes || 0;
-        if (tw1) tw1.value = ward.tendered_votes || 0;
-        if (rw1) rw1.value = ward.rejected_votes || 0;
-    } else {
-        if (stdGrid) stdGrid.style.display = "grid";
-        if (w1Grid) w1Grid.style.display = "none";
-        const nEl = document.getElementById("countingNotaVotes");
-        const tEl = document.getElementById("countingTenderedVotes");
-        const rEl = document.getElementById("countingRejectedVotes");
-        if (nEl) nEl.value = ward.nota_votes || 0;
-        if (tEl) tEl.value = ward.tendered_votes || 0;
-        if (rEl) rEl.value = ward.rejected_votes || 0;
+        notaInputsHtml += `
+            <div>
+                <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">निविदत्त मत (Tendered):</label>
+                <input type="number" id="countingTenderedVotes" class="form-control" value="${ward.tendered_votes || 0}" min="0">
+            </div>
+            <div>
+                <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">अस्वीकृत मत (Rejected):</label>
+                <input type="number" id="countingRejectedVotes" class="form-control" value="${ward.rejected_votes || 0}" min="0">
+            </div>
+        `;
+
+        notaContainer.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 10px;">
+                ${notaInputsHtml}
+            </div>
+        `;
     }
 
     document.getElementById("countingTableNo").value = ward.counting_table_no || 1;
@@ -3178,41 +3226,84 @@ function recalcCountingTotals() {
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
 
-    const isWard1 = (currentCountingWard === 1 || ward.evm_count === 2);
+    const parts = (ward.parts && ward.parts.length > 0) ? ward.parts : [{ part: 1, polled_votes: ward.total_polled_votes }];
+    const partCount = parts.length;
+    const isMultiRound = (partCount > 1);
+
     let candidateSums = [];
     let grandCandidateTotal = 0;
+    const roundTotals = new Array(partCount).fill(0);
 
     ward.candidates.forEach(c => {
-        const evmEl = document.getElementById(`c_evm_${c.id}`);
-        const evm2El = document.getElementById(`c_evm2_${c.id}`);
+        let candRoundSum = 0;
+        for (let i = 1; i <= partCount; i++) {
+            const rEl = document.getElementById(`c_round_${c.id}_${i}`);
+            const rVal = parseInt(rEl ? rEl.value : 0) || 0;
+            candRoundSum += rVal;
+            roundTotals[i - 1] += rVal;
+        }
+
         const postalEl = document.getElementById(`c_postal_${c.id}`);
-        const totEl = document.getElementById(`c_tot_${c.id}`);
-
-        const evm = parseInt(evmEl ? evmEl.value : 0) || 0;
-        const evm2 = (isWard1 && evm2El) ? (parseInt(evm2El.value) || 0) : 0;
         const postal = parseInt(postalEl ? postalEl.value : 0) || 0;
-        const tot = evm + evm2 + postal;
+        const tot = candRoundSum + postal;
 
+        const totEl = document.getElementById(`c_tot_${c.id}`);
         if (totEl) totEl.innerText = tot.toLocaleString('hi-IN');
         grandCandidateTotal += tot;
         candidateSums.push({ id: c.id, name: c.name, party: c.party, total: tot });
     });
 
-    let nota = 0;
-    if (isWard1) {
-        const notaEvm1El = document.getElementById("countingNotaEvm1");
-        const notaEvm2El = document.getElementById("countingNotaEvm2");
-        const notaTotalW1El = document.getElementById("countingNotaTotalWard1");
-        const n1 = parseInt(notaEvm1El ? notaEvm1El.value : 0) || 0;
-        const n2 = parseInt(notaEvm2El ? notaEvm2El.value : 0) || 0;
-        nota = n1 + n2;
-        if (notaTotalW1El) notaTotalW1El.value = nota;
-    } else {
-        const notaEl = document.getElementById("countingNotaVotes");
-        nota = parseInt(notaEl ? notaEl.value : 0) || 0;
+    let totalNota = 0;
+    for (let i = 1; i <= partCount; i++) {
+        const nEl = document.getElementById(`c_nota_round_${i}`);
+        const nVal = parseInt(nEl ? nEl.value : 0) || 0;
+        totalNota += nVal;
+        roundTotals[i - 1] += nVal;
     }
 
-    const grandCounted = grandCandidateTotal + nota;
+    const nTotEl = document.getElementById("countingNotaTotal");
+    if (nTotEl) nTotEl.value = totalNota;
+
+    const grandCounted = grandCandidateTotal + totalNota;
+
+    // Live Round-by-Round Breakdown Status Strip
+    const breakdownStrip = document.getElementById("countingRoundBreakdownStrip");
+    if (breakdownStrip) {
+        if (isMultiRound) {
+            breakdownStrip.style.display = "block";
+            const roundPills = parts.map((p, idx) => {
+                const rCounted = roundTotals[idx];
+                const rTarget = p.polled_votes || 0;
+                const rDiff = rCounted - rTarget;
+                let statusColor = '#16a34a';
+                let icon = '<i class="fas fa-check"></i>';
+                let tag = `100% मिलान`;
+                if (rDiff !== 0) {
+                    statusColor = rDiff > 0 ? '#dc2626' : '#d97706';
+                    icon = '<i class="fas fa-info-circle"></i>';
+                    tag = `अंतर: ${rDiff > 0 ? '+' : ''}${rDiff}`;
+                }
+                return `
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; flex: 1; min-width: 140px;">
+                        <span style="font-weight: 700; color: #1e40af;">राउंड ${idx + 1} (भाग ${p.part}):</span>
+                        <span style="font-weight: 800; margin-left: 4px;">${rCounted}</span> / ${rTarget} मत
+                        <span style="color: ${statusColor}; font-weight: 600; font-size: 11px; margin-left: 4px;">${icon} ${tag}</span>
+                    </div>
+                `;
+            }).join('');
+
+            breakdownStrip.innerHTML = `
+                <div style="font-weight: 700; color: #475569; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                    <i class="fas fa-calculator" style="color: #0284c7;"></i> चक्रवार मतगणना प्रगति एवं पोल मिलान:
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    ${roundPills}
+                </div>
+            `;
+        } else {
+            breakdownStrip.style.display = "none";
+        }
+    }
 
     const totalCountedEl = document.getElementById("countingModalTotalCounted");
     if (totalCountedEl) {
@@ -3247,38 +3338,36 @@ async function saveCountingData() {
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
 
-    const isWard1 = (currentCountingWard === 1 || ward.evm_count === 2);
+    const parts = (ward.parts && ward.parts.length > 0) ? ward.parts : [{ part: 1, polled_votes: ward.total_polled_votes }];
+    const partCount = parts.length;
 
     const candidateVotes = ward.candidates.map(c => {
-        const evmEl = document.getElementById(`c_evm_${c.id}`);
-        const evm2El = document.getElementById(`c_evm2_${c.id}`);
+        const rounds = [];
+        for (let i = 1; i <= partCount; i++) {
+            const rEl = document.getElementById(`c_round_${c.id}_${i}`);
+            rounds.push(parseInt(rEl ? rEl.value : 0) || 0);
+        }
         const postalEl = document.getElementById(`c_postal_${c.id}`);
         return {
             id: c.id,
-            votes_evm: parseInt(evmEl ? evmEl.value : 0) || 0,
-            votes_evm2: (isWard1 && evm2El) ? (parseInt(evm2El.value) || 0) : 0,
+            votes_rounds: rounds,
+            votes_evm: rounds[0] || 0,
+            votes_evm2: rounds[1] || 0,
             votes_postal: parseInt(postalEl ? postalEl.value : 0) || 0
         };
     });
 
-    let nota_votes = 0;
-    let nota_votes_evm1 = 0;
-    let nota_votes_evm2 = 0;
-    let tendered_votes = 0;
-    let rejected_votes = 0;
-
-    if (isWard1) {
-        nota_votes_evm1 = parseInt(document.getElementById("countingNotaEvm1")?.value) || 0;
-        nota_votes_evm2 = parseInt(document.getElementById("countingNotaEvm2")?.value) || 0;
-        nota_votes = nota_votes_evm1 + nota_votes_evm2;
-        tendered_votes = parseInt(document.getElementById("countingTenderedVotesW1")?.value) || 0;
-        rejected_votes = parseInt(document.getElementById("countingRejectedVotesW1")?.value) || 0;
-    } else {
-        nota_votes = parseInt(document.getElementById("countingNotaVotes")?.value) || 0;
-        tendered_votes = parseInt(document.getElementById("countingTenderedVotes")?.value) || 0;
-        rejected_votes = parseInt(document.getElementById("countingRejectedVotes")?.value) || 0;
+    const nota_rounds = [];
+    let total_nota = 0;
+    for (let i = 1; i <= partCount; i++) {
+        const nEl = document.getElementById(`c_nota_round_${i}`);
+        const nVal = parseInt(nEl ? nEl.value : 0) || 0;
+        nota_rounds.push(nVal);
+        total_nota += nVal;
     }
 
+    const tendered_votes = parseInt(document.getElementById("countingTenderedVotes")?.value) || 0;
+    const rejected_votes = parseInt(document.getElementById("countingRejectedVotes")?.value) || 0;
     const status = document.getElementById("countingStatusSelect").value;
     const counting_table_no = parseInt(document.getElementById("countingTableNo")?.value) || 1;
 
@@ -3295,9 +3384,10 @@ async function saveCountingData() {
             body: JSON.stringify({
                 ward: currentCountingWard,
                 candidateVotes,
-                nota_votes,
-                nota_votes_evm1,
-                nota_votes_evm2,
+                nota_votes: total_nota,
+                nota_votes_evm1: nota_rounds[0] || 0,
+                nota_votes_evm2: nota_rounds[1] || 0,
+                nota_rounds,
                 tendered_votes,
                 rejected_votes,
                 status,

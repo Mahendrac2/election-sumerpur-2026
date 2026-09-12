@@ -1465,25 +1465,16 @@
                 <span>वर्तमान स्थिति: <b id="cModalStatus">-</b></span>
             </div>
 
-            <!-- Ward 1 Special 2-Round Notice Banner -->
-            <div id="cModalWard1Notice" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;">
-                <i class="fas fa-rotate" style="color:#0284c7; margin-right:4px;"></i> 
-                <b>वार्ड 1 आधिकारिक चक्रवार मतगणना (2 राउंड):</b> राउंड 1 (भाग 1: रा.उ.प्रा.वि. संजय नगर - 663 मत) + राउंड 2 (भाग 2: रा.व.उ. संस्कृत विद्यालय - 692 मत) = कुल 1,355 मत
+            <!-- Dynamic Parts/Rounds Notice Banner -->
+            <div id="cModalPartsNotice" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; line-height: 1.5;">
+                <!-- Populated dynamically by JavaScript -->
             </div>
 
             <!-- Candidates Vote Entry Table -->
-            <div style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 6px; overflow-x: auto;">
+            <div style="margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 6px; overflow-x: auto;">
                 <table class="data-table" style="margin: 0; width: 100%;">
                     <thead id="countingCandidatesTableHead" style="background: #f1f5f9;">
-                        <tr>
-                            <th style="width: 40px;">क्र.</th>
-                            <th>प्रत्याशी का नाम</th>
-                            <th>सम्बद्ध दल</th>
-                            <th>प्रतीक</th>
-                            <th style="width: 120px;">राउंड 1 (EVM मत)</th>
-                            <th style="width: 110px;">डाक मतपत्र</th>
-                            <th style="width: 100px;">कुल मत</th>
-                        </tr>
+                        <!-- Dynamic Columns based on ward parts/rounds -->
                     </thead>
                     <tbody id="countingCandidatesTableBody">
                         <!-- Populated by JavaScript -->
@@ -1491,47 +1482,14 @@
                 </table>
             </div>
 
-            <!-- NOTA, Tendered, Status Container -->
-            <div id="countingNotaContainer" style="margin-bottom: 16px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7;">
-                <!-- Standard Single EVM NOTA view (Wards 2 to 35) -->
-                <div id="countingNotaStandardGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA मत:</label>
-                        <input type="number" id="countingNotaVotes" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
-                    </div>
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">निविदत्त मत (Tendered):</label>
-                        <input type="number" id="countingTenderedVotes" class="form-control" value="0" min="0">
-                    </div>
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">अस्वीकृत मत (Rejected):</label>
-                        <input type="number" id="countingRejectedVotes" class="form-control" value="0" min="0">
-                    </div>
-                </div>
+            <!-- Live Round-by-Round Breakdown & Tally Status -->
+            <div id="countingRoundBreakdownStrip" style="display:none; margin-bottom: 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 11.5px; color: #334155;">
+                <!-- Populated dynamically by JavaScript during input -->
+            </div>
 
-                <!-- Ward 1 Special 2-Round NOTA view -->
-                <div id="countingNotaWard1Grid" style="display: none; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px;">
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (राउंड 1 - भाग 1):</label>
-                        <input type="number" id="countingNotaEvm1" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
-                    </div>
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (राउंड 2 - भाग 2):</label>
-                        <input type="number" id="countingNotaEvm2" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
-                    </div>
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">कुल NOTA मत:</label>
-                        <input type="number" id="countingNotaTotalWard1" class="form-control" value="0" readonly style="background:#f1f5f9; font-weight:bold;">
-                    </div>
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">निविदत्त मत (Tendered):</label>
-                        <input type="number" id="countingTenderedVotesW1" class="form-control" value="0" min="0">
-                    </div>
-                    <div>
-                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">अस्वीकृत मत (Rejected):</label>
-                        <input type="number" id="countingRejectedVotesW1" class="form-control" value="0" min="0">
-                    </div>
-                </div>
+            <!-- NOTA, Tendered, Rejected Container (Dynamic per Part) -->
+            <div id="countingNotaContainer" style="margin-bottom: 16px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7;">
+                <!-- Populated dynamically by JavaScript -->
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; flex-wrap: wrap; gap: 8px;">
