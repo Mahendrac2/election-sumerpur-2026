@@ -1248,21 +1248,32 @@ body.projector-mode-active {
     color: #f8fafc !important;
     font-size: 15px;
 }
-body.projector-mode-active .portal-switch-bar {
+body.projector-mode-active header,
+body.projector-mode-active .nav-bar,
+:fullscreen header,
+:fullscreen .nav-bar,
+:-webkit-full-screen header,
+:-webkit-full-screen .nav-bar {
     display: none !important;
 }
-body.projector-mode-active header {
-    background: #0f172a !important;
-    border-bottom: 2px solid #334155 !important;
-    padding: 14px 24px !important;
+body.projector-mode-active .main-container,
+:fullscreen .main-container,
+:-webkit-full-screen .main-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
 }
-body.projector-mode-active header h1 {
-    font-size: 22px !important;
-    color: #f8fafc !important;
-}
-body.projector-mode-active header p {
-    color: #94a3b8 !important;
-    font-size: 14px !important;
+body.projector-mode-active .live-tv-container,
+.live-tv-container.is-fullscreen,
+.live-tv-container:fullscreen,
+.live-tv-container:-webkit-full-screen {
+    border-radius: 0 !important;
+    min-height: 100vh !important;
+    padding: 24px 32px !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    background: #090e1a !important;
 }
 body.projector-mode-active .party-tally-card {
     background: #1e293b !important;

@@ -970,19 +970,45 @@ function applyResultsFilter() {
 
 // 8. Projector / TV Fullscreen Mode
 function toggleProjectorMode() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().then(() => {
-            isProjectorModeActive = true;
-            document.body.classList.add("projector-mode-active");
-            showToast("📺 फुलस्क्रीन टीवी / प्रोजेक्टर डिस्प्ले सक्रिय!");
-        }).catch(err => {
-            alert("फुलस्क्रीन आरंभ करने में त्रुटि: " + err.message);
-        });
+    const tvEl = document.getElementById("liveTvContainer");
+    if (!tvEl) return;
+
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (tvEl.requestFullscreen) {
+            tvEl.requestFullscreen().catch(() => {
+                document.documentElement.requestFullscreen();
+            });
+        } else if (tvEl.webkitRequestFullscreen) {
+            tvEl.webkitRequestFullscreen();
+        } else if (tvEl.msRequestFullscreen) {
+            tvEl.msRequestFullscreen();
+        }
+        document.body.classList.add("projector-mode-active");
     } else {
-        document.exitFullscreen().then(() => {
-            isProjectorModeActive = false;
-            document.body.classList.remove("projector-mode-active");
-        });
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+        document.body.classList.remove("projector-mode-active");
+    }
+}
+
+document.addEventListener("fullscreenchange", updateResultsTvFullscreenBtn);
+document.addEventListener("webkitfullscreenchange", updateResultsTvFullscreenBtn);
+
+function updateResultsTvFullscreenBtn() {
+    const btn = document.getElementById("btnTvFullscreen");
+    const container = document.getElementById("liveTvContainer");
+    if (!btn || !container) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        btn.innerHTML = `<i class="fas fa-compress"></i> ✖ सामान्य स्क्रीन (Exit)`;
+        container.classList.add("is-fullscreen");
+        document.body.classList.add("projector-mode-active");
+    } else {
+        btn.innerHTML = `<i class="fas fa-expand"></i> ⛶ फुल स्क्रीन (Full Screen)`;
+        container.classList.remove("is-fullscreen");
+        document.body.classList.remove("projector-mode-active");
     }
 }
 
