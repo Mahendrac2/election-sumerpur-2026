@@ -639,12 +639,21 @@ app.post('/api/booth/:id', (req, res) => {
             return res.status(400).json({ success: false, message: "वार्ड 26 (बूथ 27) निर्विरोध है। इस पर मतदान प्रविष्टि आवश्यक नहीं है।" });
         }
 
-        // Validate operator permission
-        if (userRole !== 'RO' && booth.operator_role !== userRole) {
-            return res.status(403).json({ success: false, message: "अनधिकृत: आप केवल अपने आवंटित बूथों का डेटा अपडेट कर सकते हैं।" });
-        }
+        // Check if voting is locked for 11-09-2026 Archive
+        db.get("SELECT value FROM system_config WHERE key = 'voting_locked'", [], (cfgErr, cfg) => {
+            if (cfg && cfg.value === 'true' && userRole !== 'RO') {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: "⛔ 11-09-2026 मतदान संपन्न हो चुका है! डेटा आधिकारिक अभिलेख के रूप में सुरक्षित एवं लॉक (Frozen) है।" 
+                });
+            }
 
-        const electors = booth.electors;
+            // Validate operator permission
+            if (userRole !== 'RO' && booth.operator_role !== userRole) {
+                return res.status(403).json({ success: false, message: "अनधिकृत: आप केवल अपने आवंटित बूथों का डेटा अपडेट कर सकते हैं।" });
+            }
+
+            const electors = booth.electors;
         const nV10 = v10 !== undefined && v10 !== '' ? String(v10) : '';
         const nV13 = v13 !== undefined && v13 !== '' ? String(v13) : '';
         const nV15 = v15 !== undefined && v15 !== '' ? String(v15) : '';
@@ -720,6 +729,7 @@ app.post('/api/booth/:id', (req, res) => {
                 message: `बूथ संख्या ${boothId} का डेटा सफलतापूर्वक सुरक्षित हो गया!`
             });
         });
+        });
     });
 });
 
@@ -732,10 +742,20 @@ app.post('/api/booths/bulk', (req, res) => {
 
     const zoneNum = parseInt(zone);
     const roleStr = userRole ? String(userRole) : '';
-    if (roleStr !== 'RO' && roleStr !== `OP${zoneNum}`) {
-        const allowedZone = roleStr.startsWith('OP') ? roleStr.replace('OP', '') : 'निर्धारित';
-        return res.status(403).json({ success: false, message: `अनधिकृत: आप केवल ज़ोन ${allowedZone} के बूथों का डेटा अपडेट कर सकते हैं।` });
-    }
+
+    // Check if voting is locked for 11-09-2026 Archive
+    db.get("SELECT value FROM system_config WHERE key = 'voting_locked'", [], (cfgErr, cfg) => {
+        if (cfg && cfg.value === 'true' && roleStr !== 'RO') {
+            return res.status(403).json({ 
+                success: false, 
+                message: "⛔ 11-09-2026 मतदान संपन्न हो चुका है! डेटा आधिकारिक अभिलेख के रूप में सुरक्षित एवं लॉक (Frozen) है।" 
+            });
+        }
+
+        if (roleStr !== 'RO' && roleStr !== `OP${zoneNum}`) {
+            const allowedZone = roleStr.startsWith('OP') ? roleStr.replace('OP', '') : 'निर्धारित';
+            return res.status(403).json({ success: false, message: `अनधिकृत: आप केवल ज़ोन ${allowedZone} के बूथों का डेटा अपडेट कर सकते हैं।` });
+        }
 
     db.all('SELECT id, electors, is_nirvirodh, operator_role FROM booths WHERE zone = ?', [zoneNum], (err, zoneBooths) => {
         if (err || !zoneBooths) return res.status(500).json({ success: false, message: "डेटाबेस त्रुटि" });
@@ -823,6 +843,7 @@ app.post('/api/booths/bulk', (req, res) => {
                     message: `जोन ${zoneNum} के समस्त ${updatedCount} बूथों का डेटा सफलतापूर्वक सुरक्षित हो गया!`
                 });
             });
+        });
         });
     });
 });
@@ -998,21 +1019,27 @@ app.get('/api/admin/backup-snapshot', (req, res) => {
         db.all('SELECT username, role, name, mobile, designation, status, last_login FROM users', [], (err2, users) => {
             db.all('SELECT * FROM system_config', [], (err3, config) => {
                 db.all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 500', [], (err4, logs) => {
-                    const snapshot = {
-                        version: "1.0",
-                        timestamp: new Date().toISOString(),
-                        system: "Sumerpur Municipal Election 2026 Control Room",
-                        polling_stats: stats || [],
-                        users: users || [],
-                        system_config: config || [],
-                        activity_logs: logs || []
-                    };
-                    if (isDownload) {
-                        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-                        res.setHeader('Content-Disposition', `attachment; filename=Sumerpur_Backup_${Date.now()}.json`);
-                        return res.send(JSON.stringify(snapshot, null, 2));
-                    }
-                    res.json({ success: true, snapshot });
+                    db.all('SELECT * FROM candidates ORDER BY id ASC', [], (err5, cands) => {
+                        db.all('SELECT * FROM ward_results ORDER BY ward ASC', [], (err6, wardRes) => {
+                            const snapshot = {
+                                version: "2.0",
+                                timestamp: new Date().toISOString(),
+                                system: "Sumerpur Municipal Election 2026 Control Room",
+                                polling_stats: stats || [],
+                                candidates: cands || [],
+                                ward_results: wardRes || [],
+                                users: users || [],
+                                system_config: config || [],
+                                activity_logs: logs || []
+                            };
+                            if (isDownload) {
+                                res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                                res.setHeader('Content-Disposition', `attachment; filename=Sumerpur_Backup_${Date.now()}.json`);
+                                return res.send(JSON.stringify(snapshot, null, 2));
+                            }
+                            res.json({ success: true, snapshot });
+                        });
+                    });
                 });
             });
         });
@@ -1088,6 +1115,456 @@ app.post('/api/admin/restore-snapshot', (req, res) => {
             return res.status(401).json({ success: false, message: errMsg || "अनधिकृत: रीस्टोर के लिए RO क्रेडेंशियल आवश्यक हैं।" });
         }
         executeRestore(roUser.name || 'RO SDM');
+    });
+});
+
+// =========================================================================
+// 14-09-2026 COUNTING & ELECTION RESULTS MODULE
+// =========================================================================
+
+// Admin: Toggle Voting Lock
+app.post('/api/admin/toggle-voting-lock', (req, res) => {
+    const { roUsername, roPassword, locked } = req.body;
+    verifyRoCredentials(roUsername, roPassword, (isAuth, errMsg) => {
+        if (!isAuth) {
+            return res.status(401).json({ success: false, message: errMsg || "अनधिकृत: केवल RO एडमिन ही लॉक टॉगल कर सकते हैं।" });
+        }
+        const val = (locked === true || locked === 'true') ? 'true' : 'false';
+        db.run("INSERT OR REPLACE INTO system_config (key, value) VALUES ('voting_locked', ?)", [val], (err) => {
+            if (err) return res.status(500).json({ success: false, message: err.message });
+            broadcastUpdate('system_config_updated', { key: 'voting_locked', value: val });
+            res.json({
+                success: true,
+                message: val === 'true' ? "🔒 मतदान इनपुट सफलतापूर्वक लॉक (Frozen) कर दिए गए हैं।" : "🔓 मतदान इनपुट अनलॉक कर दिए गए हैं।",
+                voting_locked: val === 'true'
+            });
+        });
+    });
+});
+
+// 1. Get Complete Results & Tally Data
+app.get('/api/results/data', (req, res) => {
+    db.all('SELECT * FROM ward_results ORDER BY ward ASC', [], (err1, wardRows) => {
+        if (err1) return res.status(500).json({ success: false, error: err1.message });
+
+        db.all('SELECT * FROM candidates ORDER BY ward ASC, candidate_no ASC', [], (err2, candidateRows) => {
+            if (err2) return res.status(500).json({ success: false, error: err2.message });
+
+            // Group candidates by ward
+            const candidatesByWard = {};
+            (candidateRows || []).forEach(c => {
+                if (!candidatesByWard[c.ward]) candidatesByWard[c.ward] = [];
+                candidatesByWard[c.ward].push(c);
+            });
+
+            // Calculate party tally and summary
+            const partyTally = {
+                'BJP': { code: 'BJP', name: 'भारतीय जनता पार्टी', won: 0, leading: 0, total: 0, color: '#f97316' },
+                'INC': { code: 'INC', name: 'इण्डियन नेशनल कांग्रेस', won: 0, leading: 0, total: 0, color: '#0ea5e9' },
+                'IND': { code: 'IND', name: 'निर्दलीय', won: 0, leading: 0, total: 0, color: '#8b5cf6' },
+                'AAP': { code: 'AAP', name: 'आम आदमी पार्टी', won: 0, leading: 0, total: 0, color: '#eab308' },
+                'OTH': { code: 'OTH', name: 'अन्य', won: 0, leading: 0, total: 0, color: '#64748b' }
+            };
+
+            const getPartyKey = (partyName) => {
+                if (!partyName) return 'OTH';
+                if (partyName.includes('भारतीय जनता') || partyName.includes('BJP')) return 'BJP';
+                if (partyName.includes('कांग्रेस') || partyName.includes('INC')) return 'INC';
+                if (partyName.includes('निर्दलीय') || partyName.includes('IND')) return 'IND';
+                if (partyName.includes('आम आदमी') || partyName.includes('AAP')) return 'AAP';
+                return 'OTH';
+            };
+
+            let declaredWards = 0;
+            let countingWards = 0;
+            let pendingWards = 0;
+            let totalCountedVotes = 0;
+            let totalElectors = 30598;
+            let totalPolledVotes = 21325;
+
+            const wards = (wardRows || []).map(w => {
+                const cList = candidatesByWard[w.ward] || [];
+                const counted = (w.total_counted_votes || 0);
+                totalCountedVotes += counted;
+
+                // Sort candidates by total_votes desc
+                const sortedCands = [...cList].sort((a, b) => (b.total_votes || 0) - (a.total_votes || 0));
+
+                let leader = null;
+                let runnerUp = null;
+                let margin = w.margin || 0;
+
+                if (sortedCands.length > 0) {
+                    leader = sortedCands[0];
+                    if (sortedCands.length > 1) {
+                        runnerUp = sortedCands[1];
+                        if (w.status !== 'Declared' || margin === 0) {
+                            margin = Math.max(0, (leader.total_votes || 0) - (runnerUp.total_votes || 0));
+                        }
+                    } else {
+                        margin = leader.total_votes || 0;
+                    }
+                }
+
+                if (w.status === 'Declared') {
+                    declaredWards++;
+                    const pKey = getPartyKey(w.winner_party || (leader ? leader.party : ''));
+                    partyTally[pKey].won++;
+                    partyTally[pKey].total++;
+                } else if (w.status === 'Counting') {
+                    countingWards++;
+                    if (leader && leader.total_votes > 0) {
+                        const pKey = getPartyKey(leader.party);
+                        partyTally[pKey].leading++;
+                        partyTally[pKey].total++;
+                    }
+                } else {
+                    pendingWards++;
+                }
+
+                return {
+                    ward: w.ward,
+                    totalElectors: w.total_electors,
+                    total_electors: w.total_electors,
+                    totalPolledVotes: w.total_polled_votes,
+                    total_polled_votes: w.total_polled_votes,
+                    totalCountedVotes: w.total_counted_votes,
+                    total_counted_votes: w.total_counted_votes,
+                    notaVotes: w.nota_votes,
+                    nota_votes: w.nota_votes,
+                    tenderedVotes: w.tendered_votes,
+                    tendered_votes: w.tendered_votes,
+                    rejectedVotes: w.rejected_votes,
+                    rejected_votes: w.rejected_votes,
+                    status: w.status,
+                    winnerName: w.winner_name,
+                    winner_name: w.winner_name,
+                    winnerParty: w.winner_party,
+                    winner_party: w.winner_party,
+                    winnerId: w.winner_id,
+                    winner_id: w.winner_id,
+                    margin: margin,
+                    tableNo: w.counting_table_no,
+                    counting_table_no: w.counting_table_no,
+                    updatedAt: w.updated_at,
+                    updated_at: w.updated_at,
+                    leader: leader ? {
+                        id: leader.id,
+                        name: leader.name,
+                        party: leader.party,
+                        symbol: leader.symbol,
+                        totalVotes: leader.total_votes,
+                        total_votes: leader.total_votes,
+                        votesEvm: leader.votes_evm,
+                        votes_evm: leader.votes_evm,
+                        votesPostal: leader.votes_postal,
+                        votes_postal: leader.votes_postal
+                    } : null,
+                    runnerUp: runnerUp ? {
+                        id: runnerUp.id,
+                        name: runnerUp.name,
+                        party: runnerUp.party,
+                        symbol: runnerUp.symbol,
+                        totalVotes: runnerUp.total_votes,
+                        total_votes: runnerUp.total_votes
+                    } : null,
+                    candidates: cList.map(c => ({
+                        id: c.id,
+                        cNo: c.candidate_no,
+                        candidate_no: c.candidate_no,
+                        candidateNo: c.candidate_no,
+                        name: c.name,
+                        address: c.address,
+                        party: c.party,
+                        symbol: c.symbol,
+                        votesEvm: c.votes_evm || 0,
+                        votes_evm: c.votes_evm || 0,
+                        votesPostal: c.votes_postal || 0,
+                        votes_postal: c.votes_postal || 0,
+                        totalVotes: c.total_votes || 0,
+                        total_votes: c.total_votes || 0,
+                        isWinner: Boolean(c.is_winner),
+                        is_winner: Boolean(c.is_winner),
+                        isDeclared: Boolean(c.is_declared),
+                        is_declared: Boolean(c.is_declared),
+                        pct: counted > 0 ? Number((((c.total_votes || 0) / counted) * 100).toFixed(1)) : 0
+                    }))
+                };
+            });
+
+            // Check majority (18 out of 35)
+            let majorityAchievedBy = null;
+            Object.keys(partyTally).forEach(k => {
+                if (partyTally[k].won >= 18) {
+                    majorityAchievedBy = k;
+                }
+            });
+
+            res.json({
+                success: true,
+                timestamp: new Date().toISOString(),
+                tally: partyTally,
+                majority_mark: 18,
+                total_wards: 35,
+                declared_count: declaredWards,
+                counting_count: countingWards,
+                pending_count: pendingWards,
+                total_counted_votes: totalCountedVotes,
+                total_polled_votes: totalPolledVotes,
+                summary: {
+                    totalWards: 35,
+                    declaredWards,
+                    countingWards,
+                    pendingWards,
+                    totalElectors,
+                    totalPolledVotes,
+                    totalCountedVotes,
+                    countedPercentage: totalPolledVotes > 0 ? Number(((totalCountedVotes / totalPolledVotes) * 100).toFixed(2)) : 0,
+                    majorityMark: 18,
+                    majorityAchievedBy,
+                    partyTally
+                },
+                wards
+            });
+        });
+    });
+});
+
+// 2. Update Ward Counting Data (EVM + Postal + NOTA)
+app.post('/api/counting/update-ward', (req, res) => {
+    const { ward, candidatesVotes, candidateVotes, nota_votes, tendered_votes, rejected_votes, status, table_no, counting_table_no, username, operator_username } = req.body;
+    const wardNum = parseInt(ward);
+    const votesArray = candidateVotes || candidatesVotes;
+    const tableNum = counting_table_no || table_no || 1;
+    const opUser = operator_username || username || 'Operator';
+
+    if (!wardNum || wardNum < 1 || wardNum > 35) {
+        return res.status(400).json({ success: false, message: "अमान्य वार्ड संख्या (1 से 35)" });
+    }
+
+    if (wardNum === 26) {
+        return res.status(400).json({ success: false, message: "वार्ड 26 निर्विरोध निर्वाचित है। इसकी मतगणना आवश्यक नहीं है।" });
+    }
+
+    if (!votesArray || !Array.isArray(votesArray)) {
+        return res.status(400).json({ success: false, message: "प्रत्याशियों के मतों का विवरण आवश्यक है।" });
+    }
+
+    db.serialize(() => {
+        const updateCandStmt = db.prepare(`
+            UPDATE candidates 
+            SET votes_evm = ?, votes_postal = ?, total_votes = ?
+            WHERE id = ? AND ward = ?
+        `);
+
+        let sumCandVotes = 0;
+        votesArray.forEach(cv => {
+            const evm = parseInt(cv.votes_evm) || 0;
+            const postal = parseInt(cv.votes_postal) || 0;
+            const tot = evm + postal;
+            sumCandVotes += tot;
+            updateCandStmt.run(evm, postal, tot, cv.id, wardNum);
+        });
+        updateCandStmt.finalize();
+
+        const nNota = parseInt(nota_votes) || 0;
+        const nTendered = parseInt(tendered_votes) || 0;
+        const nRejected = parseInt(rejected_votes) || 0;
+        const totalCounted = sumCandVotes + nNota;
+
+        // Fetch updated candidates of this ward to find leader and margin
+        db.all('SELECT * FROM candidates WHERE ward = ? ORDER BY total_votes DESC', [wardNum], (err, sortedCands) => {
+            if (err || !sortedCands || sortedCands.length === 0) {
+                return res.status(500).json({ success: false, message: "प्रत्याशी डेटा प्राप्त करने में त्रुटि।" });
+            }
+
+            const leader = sortedCands[0];
+            const runnerUp = sortedCands.length > 1 ? sortedCands[1] : null;
+            const margin = runnerUp ? Math.max(0, leader.total_votes - runnerUp.total_votes) : leader.total_votes;
+            const newStatus = status || 'Counting';
+
+            let winnerId = null;
+            let winnerName = leader.name;
+            let winnerParty = leader.party;
+
+            if (newStatus === 'Declared') {
+                winnerId = leader.id;
+                // Mark winner in candidates table
+                db.run('UPDATE candidates SET is_winner = 0, is_declared = 0 WHERE ward = ?', [wardNum], () => {
+                    db.run('UPDATE candidates SET is_winner = 1, is_declared = 1, declared_at = CURRENT_TIMESTAMP WHERE id = ?', [winnerId]);
+                });
+            }
+
+            const updateWardSql = `
+                UPDATE ward_results 
+                SET nota_votes = ?,
+                    tendered_votes = ?,
+                    rejected_votes = ?,
+                    total_counted_votes = ?,
+                    status = ?,
+                    winner_id = ?,
+                    winner_name = ?,
+                    winner_party = ?,
+                    margin = ?,
+                    counting_table_no = COALESCE(?, counting_table_no),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE ward = ?
+            `;
+
+            db.run(updateWardSql, [
+                nNota, nTendered, nRejected, totalCounted, newStatus, winnerId, winnerName, winnerParty, margin, table_no || 1, wardNum
+            ], function(wErr) {
+                if (wErr) return res.status(500).json({ success: false, message: wErr.message });
+
+                // Log counting activity
+                db.run('INSERT INTO activity_logs (username, action, details) VALUES (?, ?, ?)', [
+                    username || 'Counting Supervisor',
+                    'COUNTING_UPDATE',
+                    `वार्ड ${wardNum} मतगणना अपडेट: ${totalCounted} मत गिने गए | स्थिति: ${newStatus} | बढ़त/विजेता: ${winnerName} (${winnerParty}, +${margin})`
+                ]);
+
+                // Broadcast live update to all screens
+                broadcastUpdate('counting_update', {
+                    ward: wardNum,
+                    status: newStatus,
+                    leader: winnerName,
+                    party: winnerParty,
+                    margin,
+                    totalCounted
+                });
+
+                res.json({
+                    success: true,
+                    message: `वार्ड ${wardNum} का मतगणना डेटा सफलतापूर्वक सहेजा गया!`,
+                    ward: wardNum,
+                    totalCounted,
+                    leader: winnerName,
+                    margin,
+                    status: newStatus
+                });
+            });
+        });
+    });
+});
+
+// 3. Declare Winner Endpoint (RO Official Declaration)
+app.post('/api/counting/declare-winner', (req, res) => {
+    const { ward, winner_id, roUsername, roPassword } = req.body;
+    const wardNum = parseInt(ward);
+
+    if (!wardNum || wardNum < 1 || wardNum > 35) {
+        return res.status(400).json({ success: false, message: "अमान्य वार्ड" });
+    }
+
+    verifyRoCredentials(roUsername, roPassword, (isAuth, errMsg, roUser) => {
+        if (!isAuth) {
+            return res.status(401).json({ success: false, message: errMsg || "अनधिकृत: परिणाम घोषित करने के लिए RO क्रेडेंशियल आवश्यक हैं।" });
+        }
+
+        db.get('SELECT * FROM candidates WHERE id = ? AND ward = ?', [winner_id, wardNum], (cErr, winnerCand) => {
+            if (cErr || !winnerCand) {
+                return res.status(404).json({ success: false, message: "प्रत्याशी नहीं मिला" });
+            }
+
+            db.all('SELECT * FROM candidates WHERE ward = ? ORDER BY total_votes DESC', [wardNum], (err, allCands) => {
+                const runnerUp = (allCands || []).find(c => c.id !== winnerCand.id);
+                const margin = runnerUp ? Math.max(0, winnerCand.total_votes - runnerUp.total_votes) : winnerCand.total_votes;
+
+                db.serialize(() => {
+                    db.run('UPDATE candidates SET is_winner = 0, is_declared = 0 WHERE ward = ?', [wardNum]);
+                    db.run('UPDATE candidates SET is_winner = 1, is_declared = 1, declared_at = CURRENT_TIMESTAMP WHERE id = ?', [winnerCand.id]);
+                    db.run(`
+                        UPDATE ward_results 
+                        SET status = 'Declared', winner_id = ?, winner_name = ?, winner_party = ?, margin = ?, updated_at = CURRENT_TIMESTAMP 
+                        WHERE ward = ?
+                    `, [winnerCand.id, winnerCand.name, winnerCand.party, margin, wardNum]);
+
+                    db.run('INSERT INTO activity_logs (username, action, details) VALUES (?, ?, ?)', [
+                        roUser.name || 'RO SDM',
+                        'WINNER_DECLARED',
+                        `वार्ड ${wardNum} आधिकारिक परिणाम घोषित: ${winnerCand.name} (${winnerCand.party}) निर्वाचित (+${margin} मतों से)`
+                    ]);
+
+                    broadcastUpdate('winner_declared', {
+                        ward: wardNum,
+                        winner: winnerCand.name,
+                        party: winnerCand.party,
+                        margin
+                    });
+
+                    res.json({
+                        success: true,
+                        message: `वार्ड ${wardNum} का परिणाम औपचारिक रूप से घोषित: ${winnerCand.name} (${winnerCand.party}) निर्वाचित (+${margin} मत)!`
+                    });
+                });
+            });
+        });
+    });
+});
+
+// 4. Form 21 / Certificate of Election Data API
+app.get('/api/results/certificate/:ward', (req, res) => {
+    const wardNum = parseInt(req.params.ward);
+    if (!wardNum || wardNum < 1 || wardNum > 35) {
+        return res.status(400).json({ success: false, message: "अमान्य वार्ड" });
+    }
+
+    db.get('SELECT * FROM ward_results WHERE ward = ?', [wardNum], (wErr, ward) => {
+        if (wErr || !ward) return res.status(404).json({ success: false, message: "वार्ड नहीं मिला" });
+
+        db.all('SELECT * FROM candidates WHERE ward = ? ORDER BY total_votes DESC', [wardNum], (cErr, cands) => {
+            if (cErr) return res.status(500).json({ success: false, message: cErr.message });
+
+            const winner = (cands || []).find(c => c.is_winner || c.id === ward.winner_id) || (cands ? cands[0] : null);
+            const runnerUp = (cands || []).find(c => winner && c.id !== winner.id);
+
+            res.json({
+                success: true,
+                certificate: {
+                    form: "प्ररूप - 21 (Form 21)",
+                    title: "निर्वाचन प्रमाण-पत्र (Certificate of Election)",
+                    rule: "राजस्थान नगर पालिका (निर्वाचन) नियम",
+                    municipality: "नगर पालिका सुमेरपुर (जिला पाली, राजस्थान)",
+                    ward: wardNum,
+                    totalElectors: ward.total_electors,
+                    totalPolled: ward.total_polled_votes,
+                    totalCounted: ward.total_counted_votes,
+                    total_electors: ward.total_electors,
+                    total_polled_votes: ward.total_polled_votes,
+                    total_counted_votes: ward.total_counted_votes,
+                    winner_name: winner ? winner.name : ward.winner_name,
+                    winner_address: winner ? winner.address : '',
+                    winner_party: winner ? winner.party : ward.winner_party,
+                    winner_symbol: winner ? winner.symbol : '',
+                    total_votes: winner ? winner.total_votes : 0,
+                    winner: {
+                        name: winner ? winner.name : ward.winner_name,
+                        address: winner ? winner.address : '',
+                        party: winner ? winner.party : ward.winner_party,
+                        symbol: winner ? winner.symbol : '',
+                        votes: winner ? winner.total_votes : 0
+                    },
+                    runnerUp: runnerUp ? {
+                        name: runnerUp.name,
+                        party: runnerUp.party,
+                        votes: runnerUp.total_votes
+                    } : null,
+                    margin: ward.margin || 0,
+                    isNirvirodh: (wardNum === 26),
+                    status: ward.status,
+                    date: "14.09.2026",
+                    place: "सुमेरपुर",
+                    ro_name: "कालुराम कुम्हार (आर.ए.एस.)",
+                    ro_title: "रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट), नगर पालिका सुमेरपुर (पाली)",
+                    returningOfficer: {
+                        name: "कालुराम कुम्हार",
+                        service: "आर.ए.एस.",
+                        designation: "रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट)",
+                        office: "नगर पालिका सुमेरपुर (पाली)"
+                    }
+                }
+            });
+        });
     });
 });
 

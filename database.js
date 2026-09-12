@@ -255,7 +255,85 @@ function initDatabase() {
             bStmt.finalize();
             sStmt.finalize();
             console.log('✅ SQLite Database Synchronized with 36 Booths and 30,598 Electors!');
-            resolve();
+
+            // Lock Voting Data for 11-09-2026 Archive & Activate Results Mode
+            db.run(`INSERT OR REPLACE INTO system_config (key, value) VALUES ('voting_locked', 'true')`);
+            db.run(`INSERT OR REPLACE INTO system_config (key, value) VALUES ('active_portal_mode', 'results')`);
+
+            // 14-09-2026 Counting & Results: Create candidates table
+            db.run(`CREATE TABLE IF NOT EXISTS candidates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ward INTEGER NOT NULL,
+                candidate_no INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                address TEXT,
+                party TEXT NOT NULL,
+                symbol TEXT,
+                votes_evm INTEGER DEFAULT 0,
+                votes_postal INTEGER DEFAULT 0,
+                total_votes INTEGER DEFAULT 0,
+                is_winner INTEGER DEFAULT 0,
+                is_declared INTEGER DEFAULT 0,
+                declared_at DATETIME,
+                UNIQUE(ward, candidate_no)
+            )`, () => {
+                // Create ward_results table
+                db.run(`CREATE TABLE IF NOT EXISTS ward_results (
+                    ward INTEGER PRIMARY KEY,
+                    total_electors INTEGER DEFAULT 0,
+                    total_polled_votes INTEGER DEFAULT 0,
+                    nota_votes INTEGER DEFAULT 0,
+                    tendered_votes INTEGER DEFAULT 0,
+                    rejected_votes INTEGER DEFAULT 0,
+                    total_counted_votes INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'Yet to Start',
+                    winner_id INTEGER,
+                    winner_name TEXT,
+                    winner_party TEXT,
+                    margin INTEGER DEFAULT 0,
+                    counting_table_no INTEGER DEFAULT 1,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`, () => {
+                    // Seed Candidates from Form 6 Master
+                    const candStmt = db.prepare(`INSERT OR REPLACE INTO candidates (ward, candidate_no, name, address, party, symbol, is_winner, is_declared, declared_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+                    const { candidatesMaster } = require('./candidates_master.js');
+                    
+                    candidatesMaster.forEach(c => {
+                        const isWin = c.isWinner ? 1 : 0;
+                        const isDec = c.isWinner ? 1 : 0;
+                        const decAt = c.isWinner ? '2026-09-04 15:00:00' : null;
+                        candStmt.run(c.ward, c.cNo, c.name, c.address, c.party, c.symbol, isWin, isDec, decAt);
+                    });
+                    candStmt.finalize();
+
+                    // Seed Ward Results summary
+                    db.all(`
+                        SELECT b.ward, SUM(b.electors) as el, SUM(CAST(s.v_final AS INTEGER)) as polled 
+                        FROM booths b 
+                        JOIN polling_stats s ON b.id = s.booth_id 
+                        GROUP BY b.ward 
+                        ORDER BY b.ward ASC
+                    `, [], (wErr, wRows) => {
+                        if (!wErr && wRows) {
+                            const wrStmt = db.prepare(`
+                                INSERT OR IGNORE INTO ward_results 
+                                (ward, total_electors, total_polled_votes, status, winner_name, winner_party, margin) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
+                            `);
+                            wRows.forEach(w => {
+                                if (w.ward === 26) {
+                                    wrStmt.run(w.ward, w.el || 841, 0, 'Declared', 'वीणा देवड़ा', 'भारतीय जनता पार्टी', 0);
+                                } else {
+                                    wrStmt.run(w.ward, w.el || 0, w.polled || 0, 'Yet to Start', '', '', 0);
+                                }
+                            });
+                            wrStmt.finalize();
+                        }
+                        console.log('🗳️ Candidates & Results Tables Synchronized (Form 6 - 35 Wards, 145 Candidates Loaded)!');
+                        resolve();
+                    });
+                });
+            });
         });
     });
 }
