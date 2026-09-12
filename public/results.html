@@ -3,55 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>मतगणना एवं परिणाम | नगर पालिका सुमेरपुर आम चुनाव 2026</title>
+    <title>रिटर्निंग ऑफिसर (SDM) सुमेरपुर — नगर पालिका चुनाव 2026 | मतगणना एवं परिणाम</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
         /* Dedicated Results Page Refinements */
-        .portal-switch-bar {
-            background: #0f172a;
-            color: #94a3b8;
-            padding: 8px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            border-bottom: 1px solid #1e293b;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .portal-switch-links {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-        .switch-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 11.5px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .switch-btn.inactive {
-            background: #1e293b;
-            color: #cbd5e1;
-            border: 1px solid #334155;
-        }
-        .switch-btn.inactive:hover {
-            background: #334155;
-            color: white;
-        }
-        .switch-btn.active {
-            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
-            color: white;
-            border: 1px solid #ea580c;
-            box-shadow: 0 2px 8px rgba(234, 88, 12, 0.4);
-        }
         .party-tally-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -97,17 +53,14 @@
 <div class="portal-switch-bar">
     <div style="display: flex; align-items: center; gap: 8px;">
         <i class="fas fa-landmark-dome" style="color: #f97316;"></i>
-        <span style="font-weight: 700; color: white;">राजस्थान राज्य निर्वाचन आयोग | नगर पालिका आम चुनाव 2026 सुमेरपुर</span>
+        <span style="font-weight: 700; color: white;">राजस्थान राज्य निर्वाचन आयोग | कार्यालय उपखण्ड मजिस्ट्रेट (SDM) सुमेरपुर</span>
     </div>
     <div class="portal-switch-links">
         <a href="/" class="switch-btn inactive">
-            <i class="fas fa-vote-yea"></i> मतदान नियंत्रण (Poll Control)
+            <i class="fas fa-vote-yea"></i> मतदान नियंत्रण
         </a>
-        <a href="/results.html" class="switch-btn active">
-            <i class="fas fa-trophy"></i> मतगणना एवं परिणाम (Counting & Results)
-        </a>
-        <a href="/report.html" class="switch-btn inactive">
-            <i class="fas fa-file-pdf"></i> शासकीय रिपोर्ट्स
+        <a href="/results" class="switch-btn active results">
+            <i class="fas fa-trophy"></i> मतगणना एवं परिणाम
         </a>
     </div>
 </div>
@@ -119,8 +72,8 @@
             <i class="fas fa-trophy"></i>
         </div>
         <div class="header-title">
-            <h1 style="font-size: 18px;">रिटर्निंग ऑफिसर (SDM) सुमेरपुर — मतगणना एवं परिणाम केंद्र</h1>
-            <p style="font-size: 12px;">नगर पालिका सुमेरपुर (पाली, राजस्थान) | 35 वार्ड (1 निर्विरोध) | 145 प्रत्याशी | 18 सीटें बहुमत</p>
+            <h1 style="font-size: 18px;">रिटर्निंग ऑफिसर (SDM) सुमेरपुर — नगर पालिका चुनाव 2026</h1>
+            <p style="font-size: 12px;">मतगणना एवं परिणाम — 14-09-2026 चक्रवार मतगणना, दलगत स्थिति एवं निर्वाचन प्रमाण-पत्र (35 वार्ड | 18 सीटें बहुमत)</p>
         </div>
     </div>
     <div class="header-right">
@@ -161,6 +114,9 @@
             <button class="btn-primary" style="background:#0f172a; border-color:#0f172a; font-size: 12px; padding: 8px 14px;" onclick="openCountingEntryModal()">
                 <i class="fas fa-pen-to-square"></i> मतगणना प्रविष्टि करें
             </button>
+            <a href="/report.html" target="_blank" class="btn-secondary" style="font-size: 12px; padding: 8px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fas fa-file-pdf" style="color:#ef4444;"></i> मतदान रिपोर्ट देखें
+            </a>
         </div>
     </div>
 
