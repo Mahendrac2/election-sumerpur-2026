@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-09-12T08:32:00.783Z",
+  "timestamp": "2026-09-12T09:25:17.290Z",
   "totalElectors": 30598,
   "totalVotes": 21325,
   "booths": [
@@ -26,7 +26,7 @@
       "v_queue": 0,
       "v_final": "663",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 663,
       "turnoutPct": 77.91
@@ -54,7 +54,7 @@
       "v_queue": 0,
       "v_final": "692",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 692,
       "turnoutPct": 72.08
@@ -82,7 +82,7 @@
       "v_queue": 0,
       "v_final": "437",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 437,
       "turnoutPct": 71.41
@@ -110,7 +110,7 @@
       "v_queue": 0,
       "v_final": "555",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 555,
       "turnoutPct": 66.95
@@ -138,7 +138,7 @@
       "v_queue": 0,
       "v_final": "289",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 289,
       "turnoutPct": 67.21
@@ -166,7 +166,7 @@
       "v_queue": 0,
       "v_final": "590",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 590,
       "turnoutPct": 65.41
@@ -194,7 +194,7 @@
       "v_queue": 0,
       "v_final": "786",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 786,
       "turnoutPct": 70.18
@@ -222,7 +222,7 @@
       "v_queue": 0,
       "v_final": "791",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 791,
       "turnoutPct": 81.05
@@ -250,7 +250,7 @@
       "v_queue": 0,
       "v_final": "845",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 845,
       "turnoutPct": 78.9
@@ -278,7 +278,7 @@
       "v_queue": 0,
       "v_final": "588",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 588,
       "turnoutPct": 79.89
@@ -306,7 +306,7 @@
       "v_queue": 0,
       "v_final": "581",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 581,
       "turnoutPct": 74.11
@@ -334,7 +334,7 @@
       "v_queue": 0,
       "v_final": "690",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 690,
       "turnoutPct": 79.22
@@ -362,7 +362,7 @@
       "v_queue": 0,
       "v_final": "627",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 627,
       "turnoutPct": 76.28
@@ -390,7 +390,7 @@
       "v_queue": 0,
       "v_final": "578",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 578,
       "turnoutPct": 59.9
@@ -418,7 +418,7 @@
       "v_queue": 0,
       "v_final": "600",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 600,
       "turnoutPct": 72.73
@@ -446,7 +446,7 @@
       "v_queue": 0,
       "v_final": "609",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 609,
       "turnoutPct": 67.52
@@ -474,7 +474,7 @@
       "v_queue": 0,
       "v_final": "506",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 506,
       "turnoutPct": 77.49
@@ -502,7 +502,7 @@
       "v_queue": 0,
       "v_final": "710",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 710,
       "turnoutPct": 68.53
@@ -530,7 +530,7 @@
       "v_queue": 0,
       "v_final": "656",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 656,
       "turnoutPct": 71.3
@@ -558,7 +558,7 @@
       "v_queue": 0,
       "v_final": "612",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 612,
       "turnoutPct": 64.83
@@ -586,7 +586,7 @@
       "v_queue": 0,
       "v_final": "324",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 324,
       "turnoutPct": 79.8
@@ -614,7 +614,7 @@
       "v_queue": 0,
       "v_final": "483",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 483,
       "turnoutPct": 67.36
@@ -642,7 +642,7 @@
       "v_queue": 0,
       "v_final": "614",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 614,
       "turnoutPct": 73.53
@@ -670,7 +670,7 @@
       "v_queue": 0,
       "v_final": "482",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 482,
       "turnoutPct": 64.78
@@ -698,7 +698,7 @@
       "v_queue": 0,
       "v_final": "548",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 548,
       "turnoutPct": 67.4
@@ -726,7 +726,7 @@
       "v_queue": 0,
       "v_final": "514",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 514,
       "turnoutPct": 66.24
@@ -754,7 +754,7 @@
       "v_queue": 0,
       "v_final": "",
       "remark": "वार्ड 26 निर्विरोध निर्वाचित (No Election)",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 0,
       "turnoutPct": 0
@@ -782,7 +782,7 @@
       "v_queue": 0,
       "v_final": "658",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 658,
       "turnoutPct": 72.63
@@ -810,7 +810,7 @@
       "v_queue": 0,
       "v_final": "611",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 611,
       "turnoutPct": 69.43
@@ -838,7 +838,7 @@
       "v_queue": 0,
       "v_final": "674",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 674,
       "turnoutPct": 70.87
@@ -866,7 +866,7 @@
       "v_queue": 0,
       "v_final": "510",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 510,
       "turnoutPct": 78.22
@@ -894,7 +894,7 @@
       "v_queue": 0,
       "v_final": "502",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 502,
       "turnoutPct": 67.29
@@ -922,7 +922,7 @@
       "v_queue": 0,
       "v_final": "721",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 721,
       "turnoutPct": 76.62
@@ -950,7 +950,7 @@
       "v_queue": 0,
       "v_final": "759",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 759,
       "turnoutPct": 70.87
@@ -978,7 +978,7 @@
       "v_queue": 0,
       "v_final": "912",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 912,
       "turnoutPct": 73.91
@@ -1006,7 +1006,7 @@
       "v_queue": 0,
       "v_final": "608",
       "remark": "शांतिपूर्ण",
-      "updated_at": "2026-09-12 08:28:52",
+      "updated_at": "2026-09-12 08:44:49",
       "updated_by": "System",
       "latestVotes": 608,
       "turnoutPct": 69.41

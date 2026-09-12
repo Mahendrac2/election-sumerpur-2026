@@ -1670,6 +1670,51 @@ app.get('/api/results/certificate/:ward', (req, res) => {
     });
 });
 
+// 14-09-2026 Counting Results CSV Export Endpoint
+app.get('/api/results/export/csv', (req, res) => {
+    const qWards = 'SELECT * FROM ward_results ORDER BY ward ASC';
+    const qCands = 'SELECT * FROM candidates ORDER BY ward ASC, candidate_no ASC';
+
+    db.all(qWards, [], (err1, wards) => {
+        if (err1) return res.status(500).send("त्रुटि: " + err1.message);
+        db.all(qCands, [], (err2, cands) => {
+            if (err2) return res.status(500).send("त्रुटि: " + err2.message);
+
+            const candsByWard = {};
+            cands.forEach(c => {
+                if (!candsByWard[c.ward]) candsByWard[c.ward] = [];
+                candsByWard[c.ward].push(c);
+            });
+
+            const rows = wards.map(w => {
+                const wc = candsByWard[w.ward] || [];
+                const cDetail = wc.map(c => `${c.name} (${c.party}): ${c.total_votes || 0}`).join(' | ');
+                return {
+                    "वार्ड सं": w.ward,
+                    "कुल मतदाता": w.total_electors,
+                    "मतदान दिवस मत (Polled)": w.total_polled_votes,
+                    "स्थिति": w.status,
+                    "गिने गए मत (Counted)": w.total_counted_votes || 0,
+                    "NOTA मत": w.nota_votes || 0,
+                    "विजयी प्रत्याशी": w.winner_name || (w.ward === 26 ? 'निर्विरोध' : 'प्रतीक्षारत'),
+                    "विजयी दल": w.winner_party || (w.ward === 26 ? 'BJP' : '-'),
+                    "जीत का अंतर": w.margin || 0,
+                    "टेबल सं": w.counting_table_no || 1,
+                    "प्रत्याशीवार मत": cDetail
+                };
+            });
+
+            const headers = Object.keys(rows[0]).join(',');
+            const csvRows = rows.map(r => Object.values(r).map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(','));
+            const csvContent = '\uFEFF' + [headers, ...csvRows].join('\r\n');
+
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename=Sumerpur_Counting_Results_14_09_2026.csv`);
+            res.send(csvContent);
+        });
+    });
+});
+
 // Multi-page dedicated administrative routes
 app.get('/results', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'results.html'));

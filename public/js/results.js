@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // 2. Authentication & Role Handling (Shared with Main Portal)
 function initAuth() {
     try {
-        const stored = localStorage.getItem("currentUser");
+        const stored = sessionStorage.getItem("sumerpur_user") || localStorage.getItem("sumerpur_user") || localStorage.getItem("currentUser");
         if (stored) {
             currentUser = JSON.parse(stored);
         }
@@ -110,33 +110,38 @@ function logoutUser() {
 // 3. Real-Time Server-Sent Events (SSE)
 function initSSE() {
     try {
-        if (sseConnection) sseConnection.close();
-        sseConnection = new EventSource('/api/stream');
+        if (sseConnection) {
+            try { sseConnection.close(); } catch(e) {}
+        }
+        sseConnection = new EventSource('/api/live-stream');
 
-        sseConnection.onmessage = (event) => {
+        sseConnection.addEventListener('counting_update', (e) => {
             try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'counting_update' || data.type === 'winner_declared' || data.type === 'results_update') {
-                    console.log("⚡ Live Results Event received:", data);
-                    fetchResultsData(true);
-                    if (data.type === 'winner_declared') {
-                        showToast(`🏆 वार्ड ${data.ward} का परिणाम घोषित: ${data.winner} (${data.party}) विजयी!`);
-                    }
-                }
-            } catch(e) {}
-        };
+                const d = JSON.parse(e.data);
+                showToast(`🗳️ वार्ड ${d.ward} मतगणना अपडेट: ${d.total_counted_votes} मत गिने गए!`);
+            } catch(err) {}
+            fetchResultsData(true);
+        });
+
+        sseConnection.addEventListener('winner_declared', (e) => {
+            try {
+                const d = JSON.parse(e.data);
+                showToast(`🏆 वार्ड ${d.ward} परिणाम घोषित: ${d.winner_name || d.winner} (${d.winner_party || d.party}) विजयी!`);
+            } catch(err) {}
+            fetchResultsData(true);
+        });
+
+        sseConnection.addEventListener('connected', () => {
+            const syncStatus = document.getElementById("liveSyncBadge");
+            if (syncStatus) {
+                syncStatus.innerHTML = `<span class="badge" style="background:#15803d; color:white;"><i class="fas fa-bolt"></i> लाइव सिंक सक्रिय</span>`;
+            }
+        });
 
         sseConnection.onerror = () => {
             const syncStatus = document.getElementById("liveSyncBadge");
             if (syncStatus) {
-                syncStatus.innerHTML = `<span class="badge" style="background:#dc2626; color:white;"><i class="fas fa-exclamation-triangle"></i> रिकनेक्टिंग...</span>`;
-            }
-        };
-
-        sseConnection.onopen = () => {
-            const syncStatus = document.getElementById("liveSyncBadge");
-            if (syncStatus) {
-                syncStatus.innerHTML = `<span class="badge" style="background:#15803d; color:white;"><i class="fas fa-bolt"></i> लाइव सिंक सक्रिय</span>`;
+                syncStatus.innerHTML = `<span class="badge" style="background:#d97706; color:white;"><i class="fas fa-rotate"></i> ऑटो-पोलिंग सक्रिय</span>`;
             }
         };
     } catch(err) {
@@ -971,11 +976,155 @@ async function openForm21Certificate(wardNo) {
 }
 
 function printForm21Certificate() {
-    window.print();
+    const printArea = document.getElementById("form21PrintArea");
+    if (!printArea) return;
+    const printWin = window.open('', '_blank', 'width=850,height=950');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>प्ररूप 21 - निर्वाचन प्रमाण-पत्र | सुमेरपुर चुनाव 2026</title>
+            <link rel="stylesheet" href="css/style.css">
+            <style>
+                body { background: white; margin: 0; padding: 25px; font-family: 'Segoe UI', Arial, sans-serif; }
+                .form21-container { border: 3px double #334155; padding: 35px; }
+            </style>
+        </head>
+        <body>
+            ${printArea.innerHTML}
+            <script>
+                window.onload = function() {
+                    window.print();
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
 }
 
 function closeForm21Certificate() {
     document.getElementById("form21Modal").style.display = "none";
+}
+
+// 11. Consolidated 35 Wards Results Print Generator
+function printConsolidatedResults() {
+    if (!resultsData || !resultsData.wards) {
+        alert("डेटा लोड हो रहा है, कृपया प्रतीक्षा करें...");
+        return;
+    }
+
+    const wards = resultsData.wards;
+    const summary = resultsData.summary || {};
+    const tally = resultsData.partyTally || {};
+
+    let tableRows = '';
+    wards.forEach(w => {
+        const isNirvirodh = (w.ward === 26);
+        const winner = w.winner_name || (isNirvirodh ? 'श्रीमती रेखा गर्ग (निर्विरोध)' : '-');
+        const party = w.winner_party || (isNirvirodh ? 'BJP' : '-');
+        const margin = isNirvirodh ? 'निर्विरोध' : (w.margin ? `${w.margin} मत` : '-');
+        const counted = isNirvirodh ? 'निर्विरोध' : (w.total_counted_votes || 0).toLocaleString('hi-IN');
+        const runnerUpName = w.runner_up_name ? `${w.runner_up_name} (${w.runner_up_party || ''})` : '-';
+
+        tableRows += `
+            <tr style="border-bottom: 1px solid #cbd5e1; text-align: center;">
+                <td style="padding: 6px 8px; font-weight: bold;">${w.ward}</td>
+                <td style="padding: 6px 8px;">${(w.total_electors || 0).toLocaleString('hi-IN')}</td>
+                <td style="padding: 6px 8px;">${(w.total_polled_votes || 0).toLocaleString('hi-IN')}</td>
+                <td style="padding: 6px 8px; font-weight: bold;">${counted}</td>
+                <td style="padding: 6px 8px;">${w.nota_votes || 0}</td>
+                <td style="padding: 6px 8px; text-align: left; font-weight: bold;">${winner}</td>
+                <td style="padding: 6px 8px;"><b>${party}</b></td>
+                <td style="padding: 6px 8px; text-align: left;">${runnerUpName}</td>
+                <td style="padding: 6px 8px; font-weight: bold; color: #0284c7;">${margin}</td>
+                <td style="padding: 6px 8px;">
+                    <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; ${w.status === 'Declared' ? 'background: #dcfce7; color: #166534;' : (w.status === 'Counting' ? 'background: #fef3c7; color: #b45309;' : 'background: #f1f5f9; color: #475569;')}">
+                        ${w.status}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    const printWin = window.open('', '_blank', 'width=1050,height=900');
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>समस्त 35 वार्डों का संकलित चुनाव परिणाम | नगर पालिका सुमेरपुर 2026</title>
+            <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; color: #0f172a; }
+                h2, h3, p { margin: 0; text-align: center; }
+                .report-header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
+                .tally-summary { display: flex; justify-content: space-around; margin-bottom: 16px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                th { background: #0f172a; color: white; padding: 8px 6px; font-size: 12px; }
+                td { padding: 6px 6px; font-size: 11.5px; }
+                .footer { display: flex; justify-content: space-between; margin-top: 40px; font-size: 13px; }
+                @media print {
+                    @page { size: A4 landscape; margin: 10mm; }
+                    body { margin: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="report-header">
+                <h3>राजस्थान राज्य निर्वाचन आयोग | कार्यालय रिटर्निंग ऑफिसर (SDM), सुमेरपुर (पाली)</h3>
+                <h2 style="margin: 6px 0;">नगर पालिका आम चुनाव 2026 — समस्त 35 वार्डों का संकलित परिणाम पत्रक</h2>
+                <p style="font-size: 12.5px; color: #475569;">मतगणना दिवस: 14 सितम्बर 2026 | बहुमत का जादुई आंकड़ा: 18 सीटें (कुल 35 सीटें)</p>
+            </div>
+
+            <div class="tally-summary">
+                <span>कुल सीटें: 35</span>
+                <span style="color: #15803d;">घोषित: ${summary.declaredWards || 0}</span>
+                <span style="color: #ea580c;">भाजपा (BJP): ${tally.BJP?.won || 0}</span>
+                <span style="color: #0284c7;">कांग्रेस (INC): ${tally.INC?.won || 0}</span>
+                <span style="color: #9333ea;">निर्दलीय (IND): ${tally.IND?.won || 0}</span>
+                <span style="color: #ca8a04;">आप (AAP): ${tally.AAP?.won || 0}</span>
+                <span>कुल गिने गए मत: ${(summary.totalCountedVotes || 0).toLocaleString('hi-IN')}</span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>वार्ड</th>
+                        <th>वोटर</th>
+                        <th>मतदान मत</th>
+                        <th>गिने गए मत</th>
+                        <th>NOTA</th>
+                        <th style="text-align:left;">विजयी प्रत्याशी</th>
+                        <th>दल</th>
+                        <th style="text-align:left;">निकटतम प्रतिद्वंदी</th>
+                        <th>अंतर</th>
+                        <th>स्थिति</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+
+            <div class="footer">
+                <div>
+                    <div>स्थान: <b>सुमेरपुर</b></div>
+                    <div>तारीख: <b>14.09.2026</b></div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="height: 35px;"></div>
+                    <b>कालुराम कुम्हार (आर.ए.एस.)</b><br>
+                    रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट)<br>
+                    नगर पालिका सुमेरपुर (पाली)
+                </div>
+            </div>
+
+            <script>
+                window.onload = function() { window.print(); };
+            </script>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
 }
 
 // 11. Helpers
