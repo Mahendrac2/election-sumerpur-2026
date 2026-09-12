@@ -270,6 +270,7 @@ function initDatabase() {
                 party TEXT NOT NULL,
                 symbol TEXT,
                 votes_evm INTEGER DEFAULT 0,
+                votes_evm2 INTEGER DEFAULT 0,
                 votes_postal INTEGER DEFAULT 0,
                 total_votes INTEGER DEFAULT 0,
                 is_winner INTEGER DEFAULT 0,
@@ -277,12 +278,18 @@ function initDatabase() {
                 declared_at DATETIME,
                 UNIQUE(ward, candidate_no)
             )`, () => {
+                // Safe column additions for candidates
+                db.run(`ALTER TABLE candidates ADD COLUMN votes_evm2 INTEGER DEFAULT 0`, () => {});
+
                 // Create ward_results table
                 db.run(`CREATE TABLE IF NOT EXISTS ward_results (
                     ward INTEGER PRIMARY KEY,
                     total_electors INTEGER DEFAULT 0,
                     total_polled_votes INTEGER DEFAULT 0,
+                    evm_count INTEGER DEFAULT 1,
                     nota_votes INTEGER DEFAULT 0,
+                    nota_votes_evm1 INTEGER DEFAULT 0,
+                    nota_votes_evm2 INTEGER DEFAULT 0,
                     tendered_votes INTEGER DEFAULT 0,
                     rejected_votes INTEGER DEFAULT 0,
                     total_counted_votes INTEGER DEFAULT 0,
@@ -294,6 +301,12 @@ function initDatabase() {
                     counting_table_no INTEGER DEFAULT 1,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`, () => {
+                    // Safe column additions for ward_results
+                    db.run(`ALTER TABLE ward_results ADD COLUMN evm_count INTEGER DEFAULT 1`, () => {});
+                    db.run(`ALTER TABLE ward_results ADD COLUMN nota_votes_evm1 INTEGER DEFAULT 0`, () => {});
+                    db.run(`ALTER TABLE ward_results ADD COLUMN nota_votes_evm2 INTEGER DEFAULT 0`, () => {});
+                    db.run(`UPDATE ward_results SET evm_count = 2 WHERE ward = 1`, () => {});
+
                     // Seed Candidates from Form 6 Master
                     const candStmt = db.prepare(`INSERT OR REPLACE INTO candidates (ward, candidate_no, name, address, party, symbol, is_winner, is_declared, declared_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
                     const { candidatesMaster } = require('./candidates_master.js');

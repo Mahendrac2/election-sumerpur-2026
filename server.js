@@ -1232,6 +1232,9 @@ app.get('/api/results/data', (req, res) => {
                     total_counted_votes: w.total_counted_votes,
                     notaVotes: w.nota_votes,
                     nota_votes: w.nota_votes,
+                    nota_votes_evm1: w.nota_votes_evm1 || 0,
+                    nota_votes_evm2: w.nota_votes_evm2 || 0,
+                    evm_count: w.evm_count || (w.ward === 1 ? 2 : 1),
                     tenderedVotes: w.tendered_votes,
                     tendered_votes: w.tendered_votes,
                     rejectedVotes: w.rejected_votes,
@@ -1257,6 +1260,8 @@ app.get('/api/results/data', (req, res) => {
                         total_votes: leader.total_votes,
                         votesEvm: leader.votes_evm,
                         votes_evm: leader.votes_evm,
+                        votesEvm2: leader.votes_evm2 || 0,
+                        votes_evm2: leader.votes_evm2 || 0,
                         votesPostal: leader.votes_postal,
                         votes_postal: leader.votes_postal
                     } : null,
@@ -1279,6 +1284,8 @@ app.get('/api/results/data', (req, res) => {
                         symbol: c.symbol,
                         votesEvm: c.votes_evm || 0,
                         votes_evm: c.votes_evm || 0,
+                        votesEvm2: c.votes_evm2 || 0,
+                        votes_evm2: c.votes_evm2 || 0,
                         votesPostal: c.votes_postal || 0,
                         votes_postal: c.votes_postal || 0,
                         totalVotes: c.total_votes || 0,
@@ -1332,7 +1339,7 @@ app.get('/api/results/data', (req, res) => {
 
 // 2. Update Ward Counting Data (EVM + Postal + NOTA)
 app.post('/api/counting/update-ward', (req, res) => {
-    const { ward, candidatesVotes, candidateVotes, nota_votes, tendered_votes, rejected_votes, status, table_no, counting_table_no, username, operator_username } = req.body;
+    const { ward, candidatesVotes, candidateVotes, nota_votes, nota_votes_evm1, nota_votes_evm2, tendered_votes, rejected_votes, status, table_no, counting_table_no, username, operator_username } = req.body;
     const wardNum = parseInt(ward);
     const votesArray = candidateVotes || candidatesVotes;
     const tableNum = counting_table_no || table_no || 1;
@@ -1353,21 +1360,24 @@ app.post('/api/counting/update-ward', (req, res) => {
     db.serialize(() => {
         const updateCandStmt = db.prepare(`
             UPDATE candidates 
-            SET votes_evm = ?, votes_postal = ?, total_votes = ?
+            SET votes_evm = ?, votes_evm2 = ?, votes_postal = ?, total_votes = ?
             WHERE id = ? AND ward = ?
         `);
 
         let sumCandVotes = 0;
         votesArray.forEach(cv => {
             const evm = parseInt(cv.votes_evm) || 0;
+            const evm2 = parseInt(cv.votes_evm2) || 0;
             const postal = parseInt(cv.votes_postal) || 0;
-            const tot = evm + postal;
+            const tot = evm + evm2 + postal;
             sumCandVotes += tot;
-            updateCandStmt.run(evm, postal, tot, cv.id, wardNum);
+            updateCandStmt.run(evm, evm2, postal, tot, cv.id, wardNum);
         });
         updateCandStmt.finalize();
 
-        const nNota = parseInt(nota_votes) || 0;
+        const nNota1 = parseInt(nota_votes_evm1) || 0;
+        const nNota2 = parseInt(nota_votes_evm2) || 0;
+        const nNota = (wardNum === 1 && (nNota1 > 0 || nNota2 > 0)) ? (nNota1 + nNota2) : (parseInt(nota_votes) || 0);
         const nTendered = parseInt(tendered_votes) || 0;
         const nRejected = parseInt(rejected_votes) || 0;
         const totalCounted = sumCandVotes + nNota;
@@ -1398,6 +1408,8 @@ app.post('/api/counting/update-ward', (req, res) => {
             const updateWardSql = `
                 UPDATE ward_results 
                 SET nota_votes = ?,
+                    nota_votes_evm1 = ?,
+                    nota_votes_evm2 = ?,
                     tendered_votes = ?,
                     rejected_votes = ?,
                     total_counted_votes = ?,
@@ -1412,7 +1424,7 @@ app.post('/api/counting/update-ward', (req, res) => {
             `;
 
             db.run(updateWardSql, [
-                nNota, nTendered, nRejected, totalCounted, newStatus, winnerId, winnerName, winnerParty, margin, table_no || 1, wardNum
+                nNota, nNota1, nNota2, nTendered, nRejected, totalCounted, newStatus, winnerId, winnerName, winnerParty, margin, tableNum, wardNum
             ], function(wErr) {
                 if (wErr) return res.status(500).json({ success: false, message: wErr.message });
 

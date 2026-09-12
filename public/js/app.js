@@ -2808,6 +2808,7 @@ function renderResultsGrid() {
         const isDeclared = w.status === 'Declared';
         const isCounting = w.status === 'Counting';
         const isNirvirodh = (w.ward === 26);
+        const isWard1 = (w.ward === 1 || w.evm_count === 2);
 
         let statusBadge = '';
         if (isDeclared) {
@@ -2857,6 +2858,16 @@ function renderResultsGrid() {
             const votePct = w.total_counted_votes > 0 ? ((c.total_votes / w.total_counted_votes) * 100).toFixed(1) : 0;
             const barWidth = maxVotesInWard > 0 ? ((c.total_votes / maxVotesInWard) * 100).toFixed(1) : 0;
 
+            let voteBreakdown = '';
+            if (!isNirvirodh && w.total_counted_votes > 0) {
+                if (isWard1) {
+                    const postalText = c.votes_postal ? ` + ${c.votes_postal} डाक` : '';
+                    voteBreakdown = `<div style="font-size:10px; color:#64748b;">${votePct}% (${c.votes_evm || 0} E1 + ${c.votes_evm2 || 0} E2${postalText})</div>`;
+                } else {
+                    voteBreakdown = `<div style="font-size:10.5px; color:#64748b;">${votePct}% (${c.votes_evm || 0} EVM + ${c.votes_postal || 0} डाक)</div>`;
+                }
+            }
+
             candidateRowsHtml += `
                 <div class="candidate-row ${isWinnerCand ? 'winner-highlight' : ''}">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
@@ -2877,7 +2888,7 @@ function renderResultsGrid() {
                             <div style="font-size:14px; font-weight:800; color:${isWinnerCand ? '#15803d' : '#0f172a'};">
                                 ${isNirvirodh ? 'निर्विरोध' : (c.total_votes || 0).toLocaleString('hi-IN')}
                             </div>
-                            ${!isNirvirodh && w.total_counted_votes > 0 ? `<div style="font-size:10.5px; color:#64748b;">${votePct}% (${c.votes_evm || 0} EVM + ${c.votes_postal || 0} डाक)</div>` : ''}
+                            ${voteBreakdown}
                         </div>
                     </div>
                     ${!isNirvirodh && w.total_counted_votes > 0 ? `
@@ -2890,11 +2901,15 @@ function renderResultsGrid() {
         });
 
         if (w.nota_votes > 0) {
+            let notaBreakdown = '';
+            if (isWard1 && (w.nota_votes_evm1 > 0 || w.nota_votes_evm2 > 0)) {
+                notaBreakdown = ` <span style="font-size:10px; font-weight:normal; color:#64748b;">(${w.nota_votes_evm1 || 0} E1 + ${w.nota_votes_evm2 || 0} E2)</span>`;
+            }
             candidateRowsHtml += `
                 <div class="candidate-row" style="opacity:0.85; background:#fafafa;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-size:12px; color:#64748b; font-weight:600;"><i class="fas fa-ban"></i> NOTA (उपरोक्त में से कोई नहीं)</span>
-                        <span style="font-size:12px; font-weight:700; color:#475569;">${w.nota_votes} मत</span>
+                        <span style="font-size:12px; font-weight:700; color:#475569;">${w.nota_votes} मत${notaBreakdown}</span>
                     </div>
                 </div>
             `;
@@ -2926,9 +2941,11 @@ function renderResultsGrid() {
                 <div class="ward-card-header">
                     <div class="ward-title">
                         वार्ड संख्या ${w.ward}
+                        ${isWard1 ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px; margin-left:6px; vertical-align:middle;"><i class="fas fa-layer-group"></i> 2 EVM (भाग 1 + 2)</span>` : ''}
                         <div class="ward-meta">
                             मतदाता: <b>${w.total_electors.toLocaleString('hi-IN')}</b> | 
                             11-09 पोल: <b>${w.total_polled_votes.toLocaleString('hi-IN')}</b> (${((w.total_polled_votes / w.total_electors) * 100).toFixed(1)}%)
+                            ${isWard1 ? `<br><span style="color:#0284c7; font-size:11px; font-weight:600;"><i class="fas fa-building"></i> बूथ 1 (भाग 1): <b>663 मत</b> | बूथ 2 (भाग 2): <b>692 मत</b></span>` : ''}
                         </div>
                     </div>
                     <div>${statusBadge}</div>
@@ -3021,12 +3038,51 @@ function onCountingWardSelected(wardNo) {
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
 
+    const isWard1 = (currentCountingWard === 1 || ward.evm_count === 2);
+
     const electorsEl = document.getElementById("cModalElectors");
     const polledEl = document.getElementById("cModalPolled");
     const statusEl = document.getElementById("cModalStatus");
     if (electorsEl) electorsEl.innerText = ward.total_electors.toLocaleString('hi-IN');
     if (polledEl) polledEl.innerText = ward.total_polled_votes.toLocaleString('hi-IN');
     if (statusEl) statusEl.innerText = ward.status;
+
+    // Ward 1 Special 2-EVM Notice Banner
+    const w1Notice = document.getElementById("cModalWard1Notice");
+    if (w1Notice) {
+        w1Notice.style.display = isWard1 ? "block" : "none";
+    }
+
+    // Dynamic table header for 2 EVMs vs 1 EVM
+    const thead = document.getElementById("countingCandidatesTableHead");
+    if (thead) {
+        if (isWard1) {
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 35px;">क्र.</th>
+                    <th>प्रत्याशी का नाम</th>
+                    <th>सम्बद्ध दल</th>
+                    <th>प्रतीक</th>
+                    <th style="width: 110px; background: #e0f2fe; color:#0369a1;"><i class="fas fa-box"></i> EVM 1 (भाग 1)</th>
+                    <th style="width: 110px; background: #dbeafe; color:#1e40af;"><i class="fas fa-box"></i> EVM 2 (भाग 2)</th>
+                    <th style="width: 95px;">डाक मत</th>
+                    <th style="width: 105px; background: #f8fafc;">कुल मत</th>
+                </tr>
+            `;
+        } else {
+            thead.innerHTML = `
+                <tr>
+                    <th style="width: 40px;">क्र.</th>
+                    <th>प्रत्याशी का नाम</th>
+                    <th>सम्बद्ध दल</th>
+                    <th>प्रतीक</th>
+                    <th style="width: 120px;">EVM मत</th>
+                    <th style="width: 110px;">डाक मतपत्र</th>
+                    <th style="width: 100px;">कुल मत</th>
+                </tr>
+            `;
+        }
+    }
 
     const tbody = document.getElementById("countingCandidatesTableBody");
     if (!tbody) return;
@@ -3035,32 +3091,82 @@ function onCountingWardSelected(wardNo) {
     ward.candidates.forEach(c => {
         const tr = document.createElement("tr");
         tr.id = `c_row_${c.id}`;
-        tr.innerHTML = `
-            <td><b>${c.candidate_no}</b></td>
-            <td style="text-align:left;">
-                <b>${c.name}</b>
-                ${c.is_winner ? ' <i class="fas fa-crown" style="color:#eab308;"></i>' : ''}
-            </td>
-            <td style="text-align:left;">
-                <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
-            </td>
-            <td><b>${c.symbol}</b></td>
-            <td>
-                <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" style="text-align:center; font-weight:700;" oninput="recalcCountingTotals()">
-            </td>
-            <td>
-                <input type="number" id="c_postal_${c.id}" class="form-control" value="${c.votes_postal || 0}" min="0" style="text-align:center;" oninput="recalcCountingTotals()">
-            </td>
-            <td>
-                <span id="c_tot_${c.id}" style="font-weight:800; font-size:14px; color:#0f172a;">${c.total_votes || 0}</span>
-            </td>
-        `;
+        if (isWard1) {
+            tr.innerHTML = `
+                <td><b>${c.candidate_no}</b></td>
+                <td style="text-align:left;">
+                    <b>${c.name}</b>
+                    ${c.is_winner ? ' <i class="fas fa-crown" style="color:#eab308;"></i>' : ''}
+                </td>
+                <td style="text-align:left;">
+                    <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
+                </td>
+                <td><b>${c.symbol}</b></td>
+                <td style="background: #f0f9ff;">
+                    <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" placeholder="भाग 1" style="text-align:center; font-weight:700; border-color:#7dd3fc;" oninput="recalcCountingTotals()">
+                </td>
+                <td style="background: #eff6ff;">
+                    <input type="number" id="c_evm2_${c.id}" class="form-control" value="${c.votes_evm2 || 0}" min="0" placeholder="भाग 2" style="text-align:center; font-weight:700; border-color:#93c5fd;" oninput="recalcCountingTotals()">
+                </td>
+                <td>
+                    <input type="number" id="c_postal_${c.id}" class="form-control" value="${c.votes_postal || 0}" min="0" style="text-align:center;" oninput="recalcCountingTotals()">
+                </td>
+                <td style="background: #f8fafc;">
+                    <span id="c_tot_${c.id}" style="font-weight:800; font-size:14px; color:#0f172a;">${c.total_votes || 0}</span>
+                </td>
+            `;
+        } else {
+            tr.innerHTML = `
+                <td><b>${c.candidate_no}</b></td>
+                <td style="text-align:left;">
+                    <b>${c.name}</b>
+                    ${c.is_winner ? ' <i class="fas fa-crown" style="color:#eab308;"></i>' : ''}
+                </td>
+                <td style="text-align:left;">
+                    <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
+                </td>
+                <td><b>${c.symbol}</b></td>
+                <td>
+                    <input type="number" id="c_evm_${c.id}" class="form-control" value="${c.votes_evm || 0}" min="0" style="text-align:center; font-weight:700;" oninput="recalcCountingTotals()">
+                </td>
+                <td>
+                    <input type="number" id="c_postal_${c.id}" class="form-control" value="${c.votes_postal || 0}" min="0" style="text-align:center;" oninput="recalcCountingTotals()">
+                </td>
+                <td>
+                    <span id="c_tot_${c.id}" style="font-weight:800; font-size:14px; color:#0f172a;">${c.total_votes || 0}</span>
+                </td>
+            `;
+        }
         tbody.appendChild(tr);
     });
 
-    document.getElementById("countingNotaVotes").value = ward.nota_votes || 0;
-    document.getElementById("countingTenderedVotes").value = ward.tendered_votes || 0;
-    document.getElementById("countingRejectedVotes").value = ward.rejected_votes || 0;
+    // Handle NOTA and extra inputs
+    const stdGrid = document.getElementById("countingNotaStandardGrid");
+    const w1Grid = document.getElementById("countingNotaWard1Grid");
+    if (isWard1) {
+        if (stdGrid) stdGrid.style.display = "none";
+        if (w1Grid) w1Grid.style.display = "grid";
+        const n1 = document.getElementById("countingNotaEvm1");
+        const n2 = document.getElementById("countingNotaEvm2");
+        const nTot = document.getElementById("countingNotaTotalWard1");
+        const tw1 = document.getElementById("countingTenderedVotesW1");
+        const rw1 = document.getElementById("countingRejectedVotesW1");
+        if (n1) n1.value = ward.nota_votes_evm1 || 0;
+        if (n2) n2.value = ward.nota_votes_evm2 || 0;
+        if (nTot) nTot.value = ward.nota_votes || 0;
+        if (tw1) tw1.value = ward.tendered_votes || 0;
+        if (rw1) rw1.value = ward.rejected_votes || 0;
+    } else {
+        if (stdGrid) stdGrid.style.display = "grid";
+        if (w1Grid) w1Grid.style.display = "none";
+        const nEl = document.getElementById("countingNotaVotes");
+        const tEl = document.getElementById("countingTenderedVotes");
+        const rEl = document.getElementById("countingRejectedVotes");
+        if (nEl) nEl.value = ward.nota_votes || 0;
+        if (tEl) tEl.value = ward.tendered_votes || 0;
+        if (rEl) rEl.value = ward.rejected_votes || 0;
+    }
+
     document.getElementById("countingTableNo").value = ward.counting_table_no || 1;
     document.getElementById("countingStatusSelect").value = ward.status === 'Declared' ? 'Declared' : 'Counting';
 
@@ -3072,29 +3178,55 @@ function recalcCountingTotals() {
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
 
+    const isWard1 = (currentCountingWard === 1 || ward.evm_count === 2);
     let candidateSums = [];
     let grandCandidateTotal = 0;
 
     ward.candidates.forEach(c => {
         const evmEl = document.getElementById(`c_evm_${c.id}`);
+        const evm2El = document.getElementById(`c_evm2_${c.id}`);
         const postalEl = document.getElementById(`c_postal_${c.id}`);
         const totEl = document.getElementById(`c_tot_${c.id}`);
 
         const evm = parseInt(evmEl ? evmEl.value : 0) || 0;
+        const evm2 = (isWard1 && evm2El) ? (parseInt(evm2El.value) || 0) : 0;
         const postal = parseInt(postalEl ? postalEl.value : 0) || 0;
-        const tot = evm + postal;
+        const tot = evm + evm2 + postal;
 
         if (totEl) totEl.innerText = tot.toLocaleString('hi-IN');
         grandCandidateTotal += tot;
         candidateSums.push({ id: c.id, name: c.name, party: c.party, total: tot });
     });
 
-    const notaEl = document.getElementById("countingNotaVotes");
-    const nota = parseInt(notaEl ? notaEl.value : 0) || 0;
+    let nota = 0;
+    if (isWard1) {
+        const notaEvm1El = document.getElementById("countingNotaEvm1");
+        const notaEvm2El = document.getElementById("countingNotaEvm2");
+        const notaTotalW1El = document.getElementById("countingNotaTotalWard1");
+        const n1 = parseInt(notaEvm1El ? notaEvm1El.value : 0) || 0;
+        const n2 = parseInt(notaEvm2El ? notaEvm2El.value : 0) || 0;
+        nota = n1 + n2;
+        if (notaTotalW1El) notaTotalW1El.value = nota;
+    } else {
+        const notaEl = document.getElementById("countingNotaVotes");
+        nota = parseInt(notaEl ? notaEl.value : 0) || 0;
+    }
+
     const grandCounted = grandCandidateTotal + nota;
 
     const totalCountedEl = document.getElementById("countingModalTotalCounted");
-    if (totalCountedEl) totalCountedEl.innerText = `${grandCounted.toLocaleString('hi-IN')} मत`;
+    if (totalCountedEl) {
+        let diffText = '';
+        if (ward.total_polled_votes > 0) {
+            const diff = grandCounted - ward.total_polled_votes;
+            if (diff === 0) {
+                diffText = ` <span style="color:#16a34a; font-size:12px; font-weight:600;"><i class="fas fa-check"></i> (100% मिलान - ${ward.total_polled_votes} मत)</span>`;
+            } else if (grandCounted > 0) {
+                diffText = ` <span style="color:${diff > 0 ? '#dc2626' : '#d97706'}; font-size:12px; font-weight:600;">(पोल: ${ward.total_polled_votes} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`;
+            }
+        }
+        totalCountedEl.innerHTML = `${grandCounted.toLocaleString('hi-IN')} मत ${diffText}`;
+    }
 
     candidateSums.sort((a,b) => b.total - a.total);
     const marginEl = document.getElementById("countingModalMarginText");
@@ -3115,21 +3247,40 @@ async function saveCountingData() {
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
 
+    const isWard1 = (currentCountingWard === 1 || ward.evm_count === 2);
+
     const candidateVotes = ward.candidates.map(c => {
         const evmEl = document.getElementById(`c_evm_${c.id}`);
+        const evm2El = document.getElementById(`c_evm2_${c.id}`);
         const postalEl = document.getElementById(`c_postal_${c.id}`);
         return {
             id: c.id,
             votes_evm: parseInt(evmEl ? evmEl.value : 0) || 0,
+            votes_evm2: (isWard1 && evm2El) ? (parseInt(evm2El.value) || 0) : 0,
             votes_postal: parseInt(postalEl ? postalEl.value : 0) || 0
         };
     });
 
-    const nota_votes = parseInt(document.getElementById("countingNotaVotes").value) || 0;
-    const tendered_votes = parseInt(document.getElementById("countingTenderedVotes").value) || 0;
-    const rejected_votes = parseInt(document.getElementById("countingRejectedVotes").value) || 0;
+    let nota_votes = 0;
+    let nota_votes_evm1 = 0;
+    let nota_votes_evm2 = 0;
+    let tendered_votes = 0;
+    let rejected_votes = 0;
+
+    if (isWard1) {
+        nota_votes_evm1 = parseInt(document.getElementById("countingNotaEvm1")?.value) || 0;
+        nota_votes_evm2 = parseInt(document.getElementById("countingNotaEvm2")?.value) || 0;
+        nota_votes = nota_votes_evm1 + nota_votes_evm2;
+        tendered_votes = parseInt(document.getElementById("countingTenderedVotesW1")?.value) || 0;
+        rejected_votes = parseInt(document.getElementById("countingRejectedVotesW1")?.value) || 0;
+    } else {
+        nota_votes = parseInt(document.getElementById("countingNotaVotes")?.value) || 0;
+        tendered_votes = parseInt(document.getElementById("countingTenderedVotes")?.value) || 0;
+        rejected_votes = parseInt(document.getElementById("countingRejectedVotes")?.value) || 0;
+    }
+
     const status = document.getElementById("countingStatusSelect").value;
-    const counting_table_no = parseInt(document.getElementById("countingTableNo").value) || 1;
+    const counting_table_no = parseInt(document.getElementById("countingTableNo")?.value) || 1;
 
     if (status === 'Declared') {
         const isConfirm = confirm(`⚠️ क्या आप वाकई वार्ड संख्या ${ward.ward} का परिणाम "आधिकारिक घोषित (Declared)" करना चाहते हैं?\n\nयह कार्यवाही मुख्य दलगत स्थिति और जादुई आंकड़े (18 सीटें) में विजेता सीट जोड़ देगी एवं प्ररूप 21 निर्वाचन प्रमाण-पत्र जारी करेगी।`);
@@ -3145,6 +3296,8 @@ async function saveCountingData() {
                 ward: currentCountingWard,
                 candidateVotes,
                 nota_votes,
+                nota_votes_evm1,
+                nota_votes_evm2,
                 tendered_votes,
                 rejected_votes,
                 status,

@@ -1465,10 +1465,16 @@
                 <span>वर्तमान स्थिति: <b id="cModalStatus">-</b></span>
             </div>
 
+            <!-- Ward 1 Special 2-EVM Notice Banner -->
+            <div id="cModalWard1Notice" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 8px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 12px;">
+                <i class="fas fa-layer-group" style="color:#0284c7; margin-right:4px;"></i> 
+                <b>वार्ड 1 में 2 मतदान केंद्र (2 EVM) हैं:</b> बूथ 1 (भाग 1: रा.उ.प्रा.वि. संजय नगर - 663 मत) + बूथ 2 (भाग 2: रा.व.उ. संस्कृत विद्यालय - 692 मत) = कुल 1,355 मत
+            </div>
+
             <!-- Candidates Vote Entry Table -->
-            <div style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+            <div style="margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 6px; overflow-x: auto;">
                 <table class="data-table" style="margin: 0; width: 100%;">
-                    <thead style="background: #f1f5f9;">
+                    <thead id="countingCandidatesTableHead" style="background: #f1f5f9;">
                         <tr>
                             <th style="width: 40px;">क्र.</th>
                             <th>प्रत्याशी का नाम</th>
@@ -1485,19 +1491,46 @@
                 </table>
             </div>
 
-            <!-- NOTA, Tendered, Status -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7;">
-                <div>
-                    <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA मत:</label>
-                    <input type="number" id="countingNotaVotes" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
+            <!-- NOTA, Tendered, Status Container -->
+            <div id="countingNotaContainer" style="margin-bottom: 16px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7;">
+                <!-- Standard Single EVM NOTA view (Wards 2 to 35) -->
+                <div id="countingNotaStandardGrid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA मत:</label>
+                        <input type="number" id="countingNotaVotes" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
+                    </div>
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">निविदत्त मत (Tendered):</label>
+                        <input type="number" id="countingTenderedVotes" class="form-control" value="0" min="0">
+                    </div>
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">अस्वीकृत मत (Rejected):</label>
+                        <input type="number" id="countingRejectedVotes" class="form-control" value="0" min="0">
+                    </div>
                 </div>
-                <div>
-                    <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">निविदत्त मत (Tendered):</label>
-                    <input type="number" id="countingTenderedVotes" class="form-control" value="0" min="0">
-                </div>
-                <div>
-                    <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">अस्वीकृत मत (Rejected):</label>
-                    <input type="number" id="countingRejectedVotes" class="form-control" value="0" min="0">
+
+                <!-- Ward 1 Special 2-EVM NOTA view -->
+                <div id="countingNotaWard1Grid" style="display: none; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (EVM 1 - भाग 1):</label>
+                        <input type="number" id="countingNotaEvm1" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
+                    </div>
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">NOTA (EVM 2 - भाग 2):</label>
+                        <input type="number" id="countingNotaEvm2" class="form-control" value="0" min="0" oninput="recalcCountingTotals()">
+                    </div>
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">कुल NOTA मत:</label>
+                        <input type="number" id="countingNotaTotalWard1" class="form-control" value="0" readonly style="background:#f1f5f9; font-weight:bold;">
+                    </div>
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">निविदत्त मत (Tendered):</label>
+                        <input type="number" id="countingTenderedVotesW1" class="form-control" value="0" min="0">
+                    </div>
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: bold; color: #92400e;">अस्वीकृत मत (Rejected):</label>
+                        <input type="number" id="countingRejectedVotesW1" class="form-control" value="0" min="0">
+                    </div>
                 </div>
             </div>
 
