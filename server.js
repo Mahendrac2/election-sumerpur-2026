@@ -1670,6 +1670,23 @@ app.get('/api/results/certificate/:ward', (req, res) => {
     });
 });
 
+// Multi-page dedicated administrative routes
+app.get('/results', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'results.html'));
+});
+
+app.get('/counting', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'results.html'));
+});
+
+app.get('/polling', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/voting', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // SPA Fallback / Multi-page routing helpers
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -1693,11 +1710,10 @@ initDatabase().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         const localIP = getLocalNetworkIP();
         console.log(`\n=============================================================`);
-        console.log(` 🏛️  सुमेरपुर नगर पालिका आम चुनाव 2026 — कंट्रोल रूम पोर्टल`);
+        console.log(` 🏛️  सुमेरपुर नगर पालिका आम चुनाव 2026 — आधिकारिक पोर्टल`);
         console.log(`=============================================================`);
-        console.log(` 🖥️  कंट्रोल रूम सर्वर:  http://localhost:${PORT}`);
-        console.log(` 📱  ऑफिस Wi-Fi / LAN: http://${localIP}:${PORT}`);
-        console.log(` 🌐  पब्लिक लाइव डिस्प्ले: http://${localIP}:${PORT}/#livedisplay`);
+        console.log(` 🗳️  मतदान नियंत्रण:    http://${localIP}:${PORT}/`);
+        console.log(` 🏆  मतगणना एवं परिणाम:  http://${localIP}:${PORT}/results`);
         console.log(` 📄  शासकीय रिपोर्ट्स:   http://${localIP}:${PORT}/report.html`);
         console.log(` 💾  डेटाबेस:           SQLite (election_sumerpur.db)`);
         console.log(` ⚡  रियल-टाइम सिंक:   सक्रिय (Server-Sent Events)`);

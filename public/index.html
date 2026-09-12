@@ -3,12 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>नगर पालिका सुमेरपुर आम चुनाव 2026 | कंट्रोल रूम पोर्टल</title>
+    <title>मतदान नियंत्रण | नगर पालिका सुमेरपुर आम चुनाव 2026</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+<!-- Official Portal Switcher Bar -->
+<div class="portal-switch-bar">
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-landmark-dome" style="color: #60a5fa;"></i>
+        <span style="font-weight: 700; color: white;">राजस्थान राज्य निर्वाचन आयोग | नगर पालिका आम चुनाव 2026 सुमेरपुर</span>
+    </div>
+    <div class="portal-switch-links">
+        <a href="/" class="switch-btn active">
+            <i class="fas fa-vote-yea"></i> मतदान नियंत्रण (Poll Control)
+        </a>
+        <a href="/results" class="switch-btn inactive">
+            <i class="fas fa-trophy"></i> मतगणना एवं परिणाम (Counting & Results)
+        </a>
+        <a href="/report.html" class="switch-btn inactive" target="_blank">
+            <i class="fas fa-file-pdf"></i> शासकीय रिपोर्ट्स
+        </a>
+    </div>
+</div>
 
 <!-- Login & Operator Registration Modal -->
 <div id="loginOverlay">
@@ -193,13 +212,13 @@
 
 <!-- Multi-Page Sub-Navigation Bar -->
 <nav class="nav-bar">
-    <a class="nav-link" data-tab="results" id="navResultsLink" onclick="navigateTo('results')" style="background: #fff7ed; color: #ea580c; border-bottom: 3px solid #ea580c; font-weight: 700;">
-        <i class="fas fa-trophy" style="color:#f97316;"></i> 14-09-2026 मतगणना व परिणाम
+    <a class="nav-link" href="/results" style="background: #fff7ed; color: #ea580c; font-weight: 700;">
+        <i class="fas fa-trophy" style="color:#f97316;"></i> मतगणना एवं परिणाम &rarr;
     </a>
+    <a class="nav-link active" data-tab="dashboard" id="navDashboardLink" onclick="navigateTo('dashboard')"><i class="fas fa-chart-pie"></i> RO मास्टर डैशबोर्ड</a>
     <a class="nav-link" data-tab="archive" id="navArchiveLink" onclick="navigateTo('archive')" style="background: #f0fdf4; color: #166534; font-weight: 700;">
         <i class="fas fa-file-shield" style="color:#16a34a;"></i> 11-09-2026 मतदान अभिलेख (प्रमाण)
     </a>
-    <a class="nav-link active" data-tab="dashboard" id="navDashboardLink" onclick="navigateTo('dashboard')"><i class="fas fa-chart-pie"></i> RO मास्टर डैशबोर्ड</a>
     <a class="nav-link" data-tab="booths" id="navBoothsLink" onclick="navigateTo('booths')"><i class="fas fa-list-check"></i> 36 बूथ मॉनिटर</a>
     <a class="nav-link" data-tab="entry" id="navEntryLink" onclick="navigateTo('entry')"><i class="fas fa-edit"></i> मतदान प्रविष्टि</a>
     <a class="nav-link" data-tab="zones" id="navZonesLink" onclick="navigateTo('zones')"><i class="fas fa-map-marked-alt"></i> 6 जोनल मजिस्ट्रेट</a>
@@ -214,139 +233,17 @@
 <!-- Main Container for Multi-Page Content -->
 <main class="main-container">
 
-    <!-- ================= PAGE: 14-09-2026 COUNTING & RESULTS ================= -->
-    <div id="view_results" class="page-view">
-        <!-- Results Top Control Strip -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; background: white; padding: 14px 20px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
-            <div>
-                <h2 style="margin: 0; font-size: 19px; color: var(--primary); display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-trophy" style="color:#f97316;"></i> 14-09-2026 मतगणना एवं चुनाव परिणाम केंद्र
-                    <span class="status-pill counting" style="font-size: 11px; padding: 3px 10px;"><i class="fas fa-bolt"></i> लाइव मतगणना</span>
-                </h2>
-                <p style="margin: 3px 0 0 0; font-size: 12.5px; color: var(--text-muted);">
-                    नगर पालिका सुमेरपुर (जिला पाली, राजस्थान) | 35 वार्ड (1 निर्विरोध सहित) | 145 प्रत्याशी | 18 सीटें बहुमत
-                </p>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="btn-primary" style="background: #0f172a; border-color: #0f172a; font-size: 12.5px; padding: 8px 14px;" onclick="openCountingEntryModal()">
-                    <i class="fas fa-edit"></i> मतगणना प्रविष्टि करें
-                </button>
-                <button class="btn-secondary" style="font-size: 12.5px; padding: 8px 14px;" onclick="toggleProjectorMode()">
-                    <i class="fas fa-expand"></i> टीवी / प्रोजेक्टर मोड
-                </button>
-                <button class="btn-secondary" style="font-size: 12.5px; padding: 8px 14px;" onclick="printConsolidatedResults()">
-                    <i class="fas fa-print"></i> परिणाम समरी प्रिंट
-                </button>
-                <button class="btn-secondary" style="font-size: 12.5px; padding: 8px 14px;" onclick="fetchResultsData(true)">
-                    <i class="fas fa-rotate"></i> रीफ्रेश
-                </button>
-            </div>
-        </div>
-
-        <!-- Party Tally Board & Majority Gauge -->
-        <div class="party-tally-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #f8fafc;">
-                        <i class="fas fa-chart-bar" style="color: #38bdf8;"></i> दलगत स्थिति (Party Position Tally)
-                    </h3>
-                    <p style="margin: 2px 0 0 0; font-size: 11.5px; opacity: 0.8;">
-                        कुल 35 सीटें | परिणाम घोषित: <b id="resDeclaredCount" style="color:#4ade80;">1</b> | मतगणना जारी: <b id="resCountingCount" style="color:#fde047;">0</b> | प्रतीक्षारत: <b id="resPendingCount" style="color:#cbd5e1;">34</b>
-                    </p>
-                </div>
-                <div style="display: flex; gap: 16px; align-items: center; font-size: 12px; background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 20px;">
-                    <div>कुल गिने गए मत: <b id="resCountedVotes" style="color: #38bdf8; font-size: 14px;">0</b> / 21,325</div>
-                    <div>मतगणना प्रगति: <b id="resCountedPct" style="color: #4ade80; font-size: 14px;">0.00%</b></div>
-                </div>
-            </div>
-
-            <!-- Party Cards -->
-            <div class="party-tally-grid">
-                <div class="party-tally-card bjp">
-                    <div class="p-name">
-                        <span>भाजपा (BJP)</span>
-                        <span class="party-tag bjp">कमल</span>
-                    </div>
-                    <div class="p-counts">
-                        <div class="p-total" id="tallyBjpTotal" style="color: #fb923c;">1</div>
-                        <div class="p-sub">जीते: <b id="tallyBjpWon">1</b> | बढ़त: <b id="tallyBjpLead">0</b></div>
-                    </div>
-                </div>
-                <div class="party-tally-card inc">
-                    <div class="p-name">
-                        <span>कांग्रेस (INC)</span>
-                        <span class="party-tag inc">हाथ</span>
-                    </div>
-                    <div class="p-counts">
-                        <div class="p-total" id="tallyIncTotal" style="color: #38bdf8;">0</div>
-                        <div class="p-sub">जीते: <b id="tallyIncWon">0</b> | बढ़त: <b id="tallyIncLead">0</b></div>
-                    </div>
-                </div>
-                <div class="party-tally-card ind">
-                    <div class="p-name">
-                        <span>निर्दलीय (IND)</span>
-                        <span class="party-tag ind">स्वतंत्र</span>
-                    </div>
-                    <div class="p-counts">
-                        <div class="p-total" id="tallyIndTotal" style="color: #c084fc;">0</div>
-                        <div class="p-sub">जीते: <b id="tallyIndWon">0</b> | बढ़त: <b id="tallyIndLead">0</b></div>
-                    </div>
-                </div>
-                <div class="party-tally-card aap">
-                    <div class="p-name">
-                        <span>आप (AAP)</span>
-                        <span class="party-tag aap">झाड़ू</span>
-                    </div>
-                    <div class="p-counts">
-                        <div class="p-total" id="tallyAapTotal" style="color: #facc15;">0</div>
-                        <div class="p-sub">जीते: <b id="tallyAapWon">0</b> | बढ़त: <b id="tallyAapLead">0</b></div>
-                    </div>
-                </div>
-                <div class="party-tally-card oth">
-                    <div class="p-name">
-                        <span>अन्य (OTH)</span>
-                        <span class="party-tag oth">अन्य</span>
-                    </div>
-                    <div class="p-counts">
-                        <div class="p-total" id="tallyOthTotal" style="color: #94a3b8;">0</div>
-                        <div class="p-sub">जीते: <b id="tallyOthWon">0</b> | बढ़त: <b id="tallyOthLead">0</b></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Majority Bar (18 / 35 seats) -->
-            <div class="majority-meter-box">
-                <div class="majority-meter-label">
-                    <span>बहुमत का जादुई आंकड़ा: <b>18 सीटें</b> (कुल 35 में से)</span>
-                    <span id="majorityStatusText" style="color: #fbbf24;">बहुमत के लिए 17 सीटें शेष</span>
-                </div>
-                <div class="majority-bar-track">
-                    <div class="majority-marker" title="बहुमत मार्क (18 सीटें)"></div>
-                    <div id="majBarBjp" style="width: 2.85%; background: #f97316; height: 100%;" title="BJP: 1"></div>
-                    <div id="majBarInc" style="width: 0%; background: #0ea5e9; height: 100%;" title="INC: 0"></div>
-                    <div id="majBarInd" style="width: 0%; background: #a855f7; height: 100%;" title="IND: 0"></div>
-                    <div id="majBarAap" style="width: 0%; background: #eab308; height: 100%;" title="AAP: 0"></div>
-                    <div id="majBarOth" style="width: 0%; background: #64748b; height: 100%;" title="OTH: 0"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filter & Search Bar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button class="btn-primary" id="resFilterAll" style="padding: 6px 12px; font-size: 12px;" onclick="filterResults('all')">समस्त 35 वार्ड</button>
-                <button class="btn-secondary" id="resFilterDeclared" style="padding: 6px 12px; font-size: 12px;" onclick="filterResults('Declared')">घोषित (Declared)</button>
-                <button class="btn-secondary" id="resFilterCounting" style="padding: 6px 12px; font-size: 12px;" onclick="filterResults('Counting')">मतगणना जारी (Counting)</button>
-                <button class="btn-secondary" id="resFilterPending" style="padding: 6px 12px; font-size: 12px;" onclick="filterResults('Yet to Start')">प्रतीक्षारत (Pending)</button>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="resSearchInput" placeholder="वार्ड नं. या प्रत्याशी खोजें..." class="form-control" style="width: 220px; padding: 6px 10px; font-size: 12px;" oninput="applyResultsFilter()">
-            </div>
-        </div>
-
-        <!-- Ward Results Grid (35 Cards dynamically populated) -->
-        <div id="resultsWardsGrid" class="results-grid">
-            <!-- Rendered by JavaScript -->
+    <!-- ================= REDIRECT VIEW: 14-09-2026 COUNTING & RESULTS ================= -->
+    <div id="view_results" class="page-view" style="text-align: center; padding: 40px 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background: white; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 30px; box-shadow: var(--shadow-sm);">
+            <div style="font-size: 40px; color: #ea580c; margin-bottom: 12px;"><i class="fas fa-trophy"></i></div>
+            <h2 style="font-size: 20px; color: var(--primary); margin-bottom: 8px;">14-09-2026 मतगणना एवं परिणाम पोर्टल</h2>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6;">
+                सुमेरपुर नगर पालिका चुनाव की संपूर्ण मतगणना, टेबल-वाइज प्रविष्टि, दलगत स्थिति एवं प्ररूप 21 प्रमाण-पत्र अब समर्पित आधिकारिक परिणाम पोर्टल पर स्थानांतरित कर दिया गया है।
+            </p>
+            <a href="/results" class="btn-primary" style="padding: 12px 24px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); border-color: #ea580c;">
+                <i class="fas fa-arrow-right"></i> मतगणना एवं परिणाम पोर्टल खोलें &rarr;
+            </a>
         </div>
     </div>
 
@@ -1429,113 +1326,6 @@
                     <i class="fas fa-times"></i> रद्द करें
                 </button>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ================= 14-09-2026 COUNTING ENTRY MODAL ================= -->
-<div id="countingEntryModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeCountingEntryModal()">
-    <div class="modal-box" style="max-width: 760px; border-top: 5px solid #f97316;">
-        <div class="modal-header" style="background: #fff7ed; border-bottom: 1px solid #ffedd5;">
-            <h3 style="color:#c2410c; margin:0; font-size:16px;">
-                <i class="fas fa-edit" style="color:#f97316;"></i> मतगणना कक्ष डेटा प्रविष्टि (Counting Hall Data Entry)
-            </h3>
-            <button class="btn-secondary" onclick="closeCountingEntryModal()" style="border:none; background:transparent; font-size:18px; cursor:pointer;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="modal-body" style="padding: 20px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
-                <div>
-                    <label style="font-size: 12px; font-weight: bold; color: var(--text-dark);">वार्ड चुनें (Select Ward):</label>
-                    <select id="countingWardSelect" class="form-control" style="font-weight: 700; padding: 8px;" onchange="onCountingWardSelected(this.value)">
-                        <!-- Populated with 1 to 35 -->
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 12px; font-weight: bold; color: var(--text-dark);">मतगणना टेबल संख्या (Counting Table No.):</label>
-                    <input type="number" id="countingTableNo" class="form-control" value="1" min="1" max="15" title="मतगणना कक्ष में इस वार्ड हेतु आवंटित टेबल संख्या">
-                </div>
-            </div>
-
-            <!-- Ward Basic Info Strip -->
-            <div id="countingWardInfoStrip" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                <span>कुल मतदाता: <b id="cModalElectors">0</b></span>
-                <span>मतदान दिवस मत: <b id="cModalPolled">0</b></span>
-                <span>वर्तमान स्थिति: <b id="cModalStatus">-</b></span>
-            </div>
-
-            <!-- Dynamic Parts/Rounds Notice Banner -->
-            <div id="cModalPartsNotice" style="display:none; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 12px; line-height: 1.5;">
-                <!-- Populated dynamically by JavaScript -->
-            </div>
-
-            <!-- Candidates Vote Entry Table -->
-            <div style="margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 6px; overflow-x: auto;">
-                <table class="data-table" style="margin: 0; width: 100%;">
-                    <thead id="countingCandidatesTableHead" style="background: #f1f5f9;">
-                        <!-- Dynamic Columns based on ward parts/rounds -->
-                    </thead>
-                    <tbody id="countingCandidatesTableBody">
-                        <!-- Populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Live Round-by-Round Breakdown & Tally Status -->
-            <div id="countingRoundBreakdownStrip" style="display:none; margin-bottom: 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; font-size: 11.5px; color: #334155;">
-                <!-- Populated dynamically by JavaScript during input -->
-            </div>
-
-            <!-- NOTA, Tendered, Rejected Container (Dynamic per Part) -->
-            <div id="countingNotaContainer" style="margin-bottom: 16px; background: #fffbeb; padding: 12px; border-radius: 6px; border: 1px solid #fef3c7;">
-                <!-- Populated dynamically by JavaScript -->
-            </div>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; flex-wrap: wrap; gap: 8px;">
-                <div style="font-size: 13px; color: #166534; font-weight: 700;">
-                    कुल गिने गए मत: <span id="countingModalTotalCounted" style="font-size: 16px; color: #15803d;">0</span>
-                    <span id="countingModalMarginText" style="margin-left: 14px; font-size: 12px; color: #0369a1;"></span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label style="font-size: 12px; font-weight: bold; color: #166534;">स्थिति सेट करें:</label>
-                    <select id="countingStatusSelect" class="form-control" style="width: auto; padding: 5px 10px; font-weight: 700;">
-                        <option value="Counting">मतगणना जारी (Counting)</option>
-                        <option value="Declared">परिणाम घोषित (Declared)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button class="btn-primary" style="flex: 2; padding: 11px; font-size: 13px; background: #f97316; border-color: #f97316;" onclick="saveCountingData()">
-                    <i class="fas fa-save"></i> मतगणना सुरक्षित करें एवं लाइव प्रसारित करें
-                </button>
-                <button class="btn-secondary" style="flex: 1; padding: 11px; font-size: 13px;" onclick="closeCountingEntryModal()">
-                    <i class="fas fa-times"></i> रद्द करें
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ================= FORM 21 CERTIFICATE OF ELECTION MODAL ================= -->
-<div id="form21Modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeForm21Modal()">
-    <div class="modal-box" style="max-width: 860px; background: #f8fafc; padding: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
-            <h4 style="margin:0; font-size: 15px; color: var(--primary);">
-                <i class="fas fa-award" style="color: #f59e0b;"></i> प्ररूप 21 — निर्वाचन प्रमाण-पत्र (Certificate of Election)
-            </h4>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-primary" style="font-size: 12px; padding: 7px 14px; background: #0f172a;" onclick="printForm21Area()">
-                    <i class="fas fa-print"></i> प्रमाण-पत्र प्रिंट करें (Print)
-                </button>
-                <button class="btn-secondary" onclick="closeForm21Modal()" style="font-size: 12px; padding: 7px 10px;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-        <div id="form21PrintArea" style="background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); overflow-y: auto; max-height: 80vh;">
-            <!-- Rendered by JS -->
         </div>
     </div>
 </div>
