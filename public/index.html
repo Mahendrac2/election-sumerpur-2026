@@ -927,6 +927,26 @@
                             🛡️ 'लाइव मतदान सुरक्षा लॉक' सक्रिय है — डेटा रीसेट पूरी तरह ब्लॉक है।
                         </div>
                     </div>
+
+                    <!-- 4. Database Backup & Instant Restore (Fail-Safe Disaster Recovery) -->
+                    <div style="background:#eff6ff; padding:18px; border-radius:10px; border:1px solid #bfdbfe;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <h4 style="margin:0; color:#1e40af;"><i class="fas fa-database"></i> डेटाबेस बैकअप एवं रिकवरी</h4>
+                            <span class="status-badge" style="background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; font-size:11px;">2-वे सुरक्षित</span>
+                        </div>
+                        <p style="font-size:12px; color:#1e40af; margin-bottom:14px;">
+                            चुनाव के किसी भी मोड़ पर पूरे डेटाबेस का 1-क्लिक बैकअप डाउनलोड करें या पूर्व बैकअप से 1 सेकंड में रीस्टोर करें।
+                        </p>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn-primary" style="background:#2563eb; border-color:#2563eb;" onclick="downloadDatabaseBackup()">
+                                <i class="fas fa-cloud-arrow-down"></i> 📥 बैकअप डाउनलोड (JSON)
+                            </button>
+                            <button class="btn-secondary" style="border-color:#93c5fd; color:#1e40af;" onclick="document.getElementById('restoreFileInput').click()">
+                                <i class="fas fa-cloud-arrow-up"></i> 📤 फ़ाइल से रीस्टोर करें
+                            </button>
+                            <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="handleRestoreFileSelected(event)">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Registered Operators & Authorization Control Table -->

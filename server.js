@@ -990,6 +990,107 @@ app.get('/api/export/csv', (req, res) => {
     });
 });
 
+// Admin API: Export Full Database Snapshot (JSON Backup)
+app.get('/api/admin/backup-snapshot', (req, res) => {
+    const isDownload = req.query.download === 'true';
+    db.all('SELECT * FROM polling_stats ORDER BY booth_id ASC', [], (err1, stats) => {
+        if (err1) return res.status(500).json({ success: false, error: err1.message });
+        db.all('SELECT username, role, name, mobile, designation, status, last_login FROM users', [], (err2, users) => {
+            db.all('SELECT * FROM system_config', [], (err3, config) => {
+                db.all('SELECT * FROM activity_logs ORDER BY id DESC LIMIT 500', [], (err4, logs) => {
+                    const snapshot = {
+                        version: "1.0",
+                        timestamp: new Date().toISOString(),
+                        system: "Sumerpur Municipal Election 2026 Control Room",
+                        polling_stats: stats || [],
+                        users: users || [],
+                        system_config: config || [],
+                        activity_logs: logs || []
+                    };
+                    if (isDownload) {
+                        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                        res.setHeader('Content-Disposition', `attachment; filename=Sumerpur_Backup_${Date.now()}.json`);
+                        return res.send(JSON.stringify(snapshot, null, 2));
+                    }
+                    res.json({ success: true, snapshot });
+                });
+            });
+        });
+    });
+});
+
+// Admin API: Restore Database Snapshot
+app.post('/api/admin/restore-snapshot', (req, res) => {
+    const { snapshot, syncKey, roUsername, roPassword } = req.body;
+    
+    // Authenticate via master sync key OR RO credentials
+    const isMasterSync = (syncKey === 'SUMERPUR_SECURE_SYNC_2026');
+    
+    const executeRestore = (restoredBy) => {
+        if (!snapshot || !snapshot.polling_stats || !Array.isArray(snapshot.polling_stats)) {
+            return res.status(400).json({ success: false, message: "अमान्य बैकअप फ़ाइल: 'polling_stats' डेटा अनुपलब्ध है।" });
+        }
+
+        db.serialize(() => {
+            const updateStmt = db.prepare(`
+                UPDATE polling_stats 
+                SET mock_done = ?, started = ?, v10 = ?, v13 = ?, v15 = ?, v18 = ?, v_queue = ?, v_final = ?, remark = ?, updated_at = ?, updated_by = ?
+                WHERE booth_id = ?
+            `);
+
+            let restoredCount = 0;
+            snapshot.polling_stats.forEach(r => {
+                if (r && r.booth_id) {
+                    updateStmt.run(
+                        r.mock_done || 'No',
+                        r.started || 'No',
+                        r.v10 || '',
+                        r.v13 || '',
+                        r.v15 || '',
+                        r.v18 || '',
+                        parseInt(r.v_queue) || 0,
+                        r.v_final || '',
+                        r.remark || 'शांतिपूर्ण',
+                        r.updated_at || new Date().toISOString(),
+                        r.updated_by || 'Auto-Sync Restore',
+                        r.booth_id
+                    );
+                    restoredCount++;
+                }
+            });
+            updateStmt.finalize();
+
+            // Log activity
+            db.run(`INSERT INTO activity_logs (username, action, details) VALUES (?, ?, ?)`, [
+                restoredBy,
+                'DATABASE_RESTORED',
+                `डेटाबेस बैकअप से रीस्टोर किया गया (${restoredCount} बूथ सफलतापूर्वक अपडेट)`
+            ]);
+
+            // Broadcast real-time update to all live displays
+            broadcastUpdate('data_reset', { message: "Database Restored from Backup Snapshot" });
+
+            res.json({
+                success: true,
+                message: `सफलतापूर्वक रीस्टोर किया गया: ${restoredCount} मतदान बूथों का डेटा सफलतापूर्वक लोड हो गया है!`,
+                restoredBooths: restoredCount,
+                timestamp: new Date().toISOString()
+            });
+        });
+    };
+
+    if (isMasterSync) {
+        return executeRestore('Auto-Sync Engine');
+    }
+
+    verifyRoCredentials(roUsername, roPassword, (isAuth, errMsg, roUser) => {
+        if (!isAuth) {
+            return res.status(401).json({ success: false, message: errMsg || "अनधिकृत: रीस्टोर के लिए RO क्रेडेंशियल आवश्यक हैं।" });
+        }
+        executeRestore(roUser.name || 'RO SDM');
+    });
+});
+
 // SPA Fallback / Multi-page routing helpers
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

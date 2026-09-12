@@ -2520,3 +2520,62 @@ function showToast(msg) {
     toast.className = "show";
     setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
 }
+
+// 1-Click Database Backup Download
+function downloadDatabaseBackup() {
+    showToast("💾 बैकअप तैयार हो रहा है...");
+    window.location.href = '/api/admin/backup-snapshot?download=true';
+}
+
+// 1-Click Database Restore from JSON File
+async function handleRestoreFileSelected(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!confirm(`⚠️ क्या आप वाकई '${file.name}' बैकअप फ़ाइल से डेटाबेस रीस्टोर करना चाहते हैं?\n\nयह क्रिया सभी वर्तमान मतदान बूथों के आंकड़ों को इस बैकअप से अपडेट कर देगी।`)) {
+        event.target.value = '';
+        return;
+    }
+
+    const roPass = prompt("🔐 रीस्टोर की पुष्टि हेतु अपना RO मास्टर पासवर्ड दर्ज करें:");
+    if (!roPass) {
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            const snapshot = JSON.parse(e.target.result);
+            if (!snapshot.polling_stats || !Array.isArray(snapshot.polling_stats)) {
+                alert("❌ अमान्य बैकअप फ़ाइल! कृपया वैध Sumerpur Election Backup JSON फ़ाइल चुनें।");
+                return;
+            }
+
+            showToast("⏳ डेटाबेस रीस्टोर हो रहा है...");
+            const res = await fetch('/api/admin/restore-snapshot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    snapshot,
+                    roUsername: currentUser ? currentUser.username : 'ro_sumerpur',
+                    roPassword: roPass.trim()
+                })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert(`🎉 ${data.message}`);
+                showToast("✅ डेटाबेस सफलतापूर्वक रीस्टोर हो गया!");
+                await fetchData();
+            } else {
+                alert(`❌ रीस्टोर विफल: ${data.message}`);
+            }
+        } catch(err) {
+            alert("❌ फ़ाइल पढ़ने में त्रुटि: " + err.message);
+        } finally {
+            event.target.value = '';
+        }
+    };
+    reader.readAsText(file);
+}
