@@ -576,10 +576,10 @@ function onCountingWardSelected(wardNo) {
         }
         thead.innerHTML = `
             <tr>
-                <th style="width: 35px;">क्र.</th>
-                <th>प्रत्याशी का नाम</th>
-                <th>सम्बद्ध दल</th>
-                <th>प्रतीक</th>
+                <th class="counting-sticky-cno" style="width: 40px;">क्र.</th>
+                <th class="counting-sticky-name">प्रत्याशी का नाम</th>
+                <th style="min-width: 90px;">सम्बद्ध दल</th>
+                <th style="min-width: 75px;">प्रतीक</th>
                 ${thRounds}
                 <th style="width: 95px; text-align: center;">डाक मत</th>
                 <th style="width: 105px; background: #f8fafc; text-align: center;">कुल मत</th>
@@ -612,8 +612,8 @@ function onCountingWardSelected(wardNo) {
             }
 
             tr.innerHTML = `
-                <td><b>${c.candidate_no}</b></td>
-                <td style="text-align:left;">
+                <td class="counting-sticky-cno"><b>${c.candidate_no}</b></td>
+                <td class="counting-sticky-name" style="text-align:left;">
                     <b>${c.name}</b>
                     ${c.is_winner ? ' <i class="fas fa-crown" style="color:#eab308;"></i>' : ''}
                 </td>
@@ -633,6 +633,35 @@ function onCountingWardSelected(wardNo) {
             `;
             tbody.appendChild(tr);
         });
+    }
+
+    // Dynamic table footer for round subtotals
+    const tfoot = document.getElementById("countingCandidatesTableFoot");
+    if (tfoot) {
+        let tdFootRounds = '';
+        for (let i = 1; i <= partCount; i++) {
+            const pt = parts[i - 1];
+            const pVotes = pt ? (pt.polled_votes || 0) : 0;
+            tdFootRounds += `
+                <td id="c_foot_round_${i}" style="text-align: center; font-weight: 800; color: #0369a1; background: #e0f2fe; padding: 6px;">
+                    0
+                    <div style="font-size: 9.5px; font-weight: normal; color: #0284c7;">लक्ष्य: ${pVotes.toLocaleString('hi-IN')}</div>
+                </td>
+            `;
+        }
+        tfoot.innerHTML = `
+            <tr>
+                <td class="counting-sticky-cno" style="text-align:center;">-</td>
+                <td class="counting-sticky-name" style="text-align:left;">
+                    <i class="fas fa-calculator" style="color:#0284c7;"></i> <b>राउंड प्रत्याशी योग</b>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                ${tdFootRounds}
+                <td id="c_foot_postal" style="text-align:center; font-weight:800; color:#475569;">0</td>
+                <td id="c_foot_grand_cands" style="text-align:center; font-weight:900; background:#e2e8f0; color:#0f172a;">0</td>
+            </tr>
+        `;
     }
 
     // Dynamic NOTA Inputs
@@ -703,7 +732,8 @@ function recalcCountingTotals() {
 
     let candidateSums = [];
     let grandCandidateTotal = 0;
-    const roundTotals = new Array(partCount).fill(0);
+    let totalPostalSum = 0;
+    const candRoundTotals = new Array(partCount).fill(0);
 
     ward.candidates.forEach(c => {
         let candRoundSum = 0;
@@ -711,11 +741,12 @@ function recalcCountingTotals() {
             const rEl = document.getElementById(`c_round_${c.id}_${i}`);
             const rVal = parseInt(rEl ? rEl.value : 0) || 0;
             candRoundSum += rVal;
-            roundTotals[i - 1] += rVal;
+            candRoundTotals[i - 1] += rVal;
         }
 
         const postalEl = document.getElementById(`c_postal_${c.id}`);
         const postal = parseInt(postalEl ? postalEl.value : 0) || 0;
+        totalPostalSum += postal;
         const tot = candRoundSum + postal;
 
         const totEl = document.getElementById(`c_tot_${c.id}`);
@@ -725,15 +756,35 @@ function recalcCountingTotals() {
     });
 
     let totalNota = 0;
+    const notaRoundTotals = new Array(partCount).fill(0);
     for (let i = 1; i <= partCount; i++) {
         const nEl = document.getElementById(`c_nota_round_${i}`);
         const nVal = parseInt(nEl ? nEl.value : 0) || 0;
         totalNota += nVal;
-        roundTotals[i - 1] += nVal;
+        notaRoundTotals[i - 1] = nVal;
     }
 
     const nTotEl = document.getElementById("countingNotaTotal");
     if (nTotEl) nTotEl.value = totalNota;
+
+    // Update tfoot values
+    for (let i = 1; i <= partCount; i++) {
+        const fEl = document.getElementById(`c_foot_round_${i}`);
+        if (fEl) {
+            const pt = parts[i - 1];
+            const pVotes = pt ? (pt.polled_votes || 0) : 0;
+            const cSum = candRoundTotals[i - 1] || 0;
+            fEl.innerHTML = `
+                <div>${cSum.toLocaleString('hi-IN')}</div>
+                <div style="font-size: 9.5px; font-weight: 600; color: #0284c7;">लक्ष्य: ${pVotes.toLocaleString('hi-IN')}</div>
+            `;
+        }
+    }
+    const footPostalEl = document.getElementById("c_foot_postal");
+    if (footPostalEl) footPostalEl.innerText = totalPostalSum.toLocaleString('hi-IN');
+
+    const footGrandEl = document.getElementById("c_foot_grand_cands");
+    if (footGrandEl) footGrandEl.innerText = grandCandidateTotal.toLocaleString('hi-IN');
 
     const grandCounted = grandCandidateTotal + totalNota;
 
@@ -743,7 +794,9 @@ function recalcCountingTotals() {
         if (isMultiRound) {
             breakdownStrip.style.display = "block";
             const roundPills = parts.map((p, idx) => {
-                const rCounted = roundTotals[idx];
+                const cCounted = candRoundTotals[idx] || 0;
+                const nCounted = notaRoundTotals[idx] || 0;
+                const rCounted = cCounted + nCounted;
                 const rTarget = p.polled_votes || 0;
                 const rDiff = rCounted - rTarget;
                 let statusColor = '#16a34a';
@@ -755,10 +808,15 @@ function recalcCountingTotals() {
                     tag = `अंतर: ${rDiff > 0 ? '+' : ''}${rDiff}`;
                 }
                 return `
-                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 8px; flex: 1; min-width: 140px;">
-                        <span style="font-weight: 700; color: #1e40af;">राउंड ${idx + 1} (भाग ${p.part}):</span>
-                        <span style="font-weight: 800; margin-left: 4px;">${rCounted}</span> / ${rTarget} मत
-                        <span style="color: ${statusColor}; font-weight: 600; font-size: 11px; margin-left: 4px;">${icon} ${tag}</span>
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 10px; flex: 1; min-width: 170px;">
+                        <div style="font-weight: 700; color: #1e40af; font-size: 11.5px; display:flex; justify-content:space-between;">
+                            <span>राउंड ${idx + 1} (भाग ${p.part})</span>
+                            <span style="color: ${statusColor}; font-weight: 700; font-size: 11px;">${icon} ${tag}</span>
+                        </div>
+                        <div style="font-size: 12px; margin-top: 2px;">
+                            गिने: <b>${rCounted}</b> / ${rTarget} मत
+                            <span style="font-size: 10px; color: #64748b; margin-left: 2px;">(प्रत्याशी ${cCounted} + NOTA ${nCounted})</span>
+                        </div>
                     </div>
                 `;
             }).join('');
