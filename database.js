@@ -200,10 +200,53 @@ function initDatabase() {
             const bStmt = db.prepare(`INSERT OR REPLACE INTO booths (id, zone, ward, ward_part, name, electors, male_electors, female_electors, tg_electors, operator_role, praganak_name, praganak_mob, is_nirvirodh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
             const sStmt = db.prepare(`INSERT OR IGNORE INTO polling_stats (booth_id, mock_done, started, v10, v13, v15, v18, v_queue, v_final, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
+            // Official Polling Data from Returning Officer Master Report (21,325 votes, 71.66%)
+            const masterOfficialStats = {
+                1: { mock: 'Yes', started: 'Yes', v10: '217', v13: '493', v15: '564', v18: '663', v_final: '663', remark: 'शांतिपूर्ण' },
+                2: { mock: 'Yes', started: 'Yes', v10: '261', v13: '490', v15: '590', v18: '692', v_final: '692', remark: 'शांतिपूर्ण' },
+                3: { mock: 'Yes', started: 'Yes', v10: '158', v13: '320', v15: '374', v18: '437', v_final: '437', remark: 'शांतिपूर्ण' },
+                4: { mock: 'Yes', started: 'Yes', v10: '227', v13: '461', v15: '512', v18: '555', v_final: '555', remark: 'शांतिपूर्ण' },
+                5: { mock: 'Yes', started: 'Yes', v10: '145', v13: '218', v15: '253', v18: '289', v_final: '289', remark: 'शांतिपूर्ण' },
+                6: { mock: 'Yes', started: 'Yes', v10: '200', v13: '400', v15: '499', v18: '590', v_final: '590', remark: 'शांतिपूर्ण' },
+                7: { mock: 'Yes', started: 'Yes', v10: '245', v13: '485', v15: '660', v18: '786', v_final: '786', remark: 'शांतिपूर्ण' },
+                8: { mock: 'Yes', started: 'Yes', v10: '293', v13: '583', v15: '715', v18: '791', v_final: '791', remark: 'शांतिपूर्ण' },
+                9: { mock: 'Yes', started: 'Yes', v10: '255', v13: '545', v15: '724', v18: '845', v_final: '845', remark: 'शांतिपूर्ण' },
+                10: { mock: 'Yes', started: 'Yes', v10: '270', v13: '466', v15: '528', v18: '588', v_final: '588', remark: 'शांतिपूर्ण' },
+                11: { mock: 'Yes', started: 'Yes', v10: '216', v13: '440', v15: '503', v18: '581', v_final: '581', remark: 'शांतिपूर्ण' },
+                12: { mock: 'Yes', started: 'Yes', v10: '257', v13: '535', v15: '648', v18: '690', v_final: '690', remark: 'शांतिपूर्ण' },
+                13: { mock: 'Yes', started: 'Yes', v10: '210', v13: '408', v15: '524', v18: '627', v_final: '627', remark: 'शांतिपूर्ण' },
+                14: { mock: 'Yes', started: 'Yes', v10: '200', v13: '441', v15: '516', v18: '578', v_final: '578', remark: 'शांतिपूर्ण' },
+                15: { mock: 'Yes', started: 'Yes', v10: '243', v13: '465', v15: '553', v18: '600', v_final: '600', remark: 'शांतिपूर्ण' },
+                16: { mock: 'Yes', started: 'Yes', v10: '256', v13: '493', v15: '552', v18: '609', v_final: '609', remark: 'शांतिपूर्ण' },
+                17: { mock: 'Yes', started: 'Yes', v10: '185', v13: '395', v15: '465', v18: '506', v_final: '506', remark: 'शांतिपूर्ण' },
+                18: { mock: 'Yes', started: 'Yes', v10: '190', v13: '454', v15: '563', v18: '709', v_final: '710', remark: 'शांतिपूर्ण' },
+                19: { mock: 'Yes', started: 'Yes', v10: '220', v13: '477', v15: '600', v18: '656', v_final: '656', remark: 'शांतिपूर्ण' },
+                20: { mock: 'Yes', started: 'Yes', v10: '200', v13: '430', v15: '519', v18: '612', v_final: '612', remark: 'शांतिपूर्ण' },
+                21: { mock: 'Yes', started: 'Yes', v10: '170', v13: '276', v15: '309', v18: '324', v_final: '324', remark: 'शांतिपूर्ण' },
+                22: { mock: 'Yes', started: 'Yes', v10: '180', v13: '352', v15: '420', v18: '483', v_final: '483', remark: 'शांतिपूर्ण' },
+                23: { mock: 'Yes', started: 'Yes', v10: '247', v13: '448', v15: '534', v18: '614', v_final: '614', remark: 'शांतिपूर्ण' },
+                24: { mock: 'Yes', started: 'Yes', v10: '111', v13: '285', v15: '429', v18: '482', v_final: '482', remark: 'शांतिपूर्ण' },
+                25: { mock: 'Yes', started: 'Yes', v10: '217', v13: '432', v15: '495', v18: '548', v_final: '548', remark: 'शांतिपूर्ण' },
+                26: { mock: 'Yes', started: 'Yes', v10: '212', v13: '411', v15: '472', v18: '514', v_final: '514', remark: 'शांतिपूर्ण' },
+                27: { mock: 'No', started: 'No', v10: '', v13: '', v15: '', v18: '', v_final: '', remark: 'वार्ड 26 निर्विरोध निर्वाचित (No Election)' },
+                28: { mock: 'Yes', started: 'Yes', v10: '255', v13: '512', v15: '593', v18: '658', v_final: '658', remark: 'शांतिपूर्ण' },
+                29: { mock: 'Yes', started: 'Yes', v10: '313', v13: '486', v15: '557', v18: '611', v_final: '611', remark: 'शांतिपूर्ण' },
+                30: { mock: 'Yes', started: 'Yes', v10: '294', v13: '523', v15: '618', v18: '674', v_final: '674', remark: 'शांतिपूर्ण' },
+                31: { mock: 'Yes', started: 'Yes', v10: '186', v13: '397', v15: '457', v18: '510', v_final: '510', remark: 'शांतिपूर्ण' },
+                32: { mock: 'Yes', started: 'Yes', v10: '193', v13: '400', v15: '472', v18: '502', v_final: '502', remark: 'शांतिपूर्ण' },
+                33: { mock: 'Yes', started: 'Yes', v10: '297', v13: '580', v15: '680', v18: '721', v_final: '721', remark: 'शांतिपूर्ण' },
+                34: { mock: 'Yes', started: 'Yes', v10: '188', v13: '404', v15: '556', v18: '759', v_final: '759', remark: 'शांतिपूर्ण' },
+                35: { mock: 'Yes', started: 'Yes', v10: '251', v13: '525', v15: '710', v18: '911', v_final: '912', remark: 'शांतिपूर्ण' },
+                36: { mock: 'Yes', started: 'Yes', v10: '242', v13: '490', v15: '550', v18: '608', v_final: '608', remark: 'शांतिपूर्ण' }
+            };
+
             masterBooths.forEach(b => {
                 bStmt.run(b.b, b.z, b.w, b.part || 1, b.name, b.el, b.male_el || 0, b.female_el || 0, b.tg_el || 0, b.op, b.pName, b.pMob, b.isNirvirodh ? 1 : 0);
-                if (b.isNirvirodh) {
-                    sStmt.run(b.b, 'N/A', 'N/A', '0', '0', '0', '0', 0, '0', 'वार्ड 26 निर्विरोध निर्वाचित (No Election)');
+                const s = masterOfficialStats[b.b];
+                if (s) {
+                    sStmt.run(b.b, s.mock, s.started, s.v10, s.v13, s.v15, s.v18, 0, s.v_final, s.remark);
+                } else if (b.isNirvirodh) {
+                    sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'वार्ड 26 निर्विरोध निर्वाचित (No Election)');
                 } else {
                     sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'शांतिपूर्ण');
                 }
