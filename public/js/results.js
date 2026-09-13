@@ -743,13 +743,9 @@ function renderDashboardSummaryTable() {
                         <i class="fas fa-award"></i> प्ररूप 21
                     </button>
                 ` : ''}
-                ${canEdit ? `
-                    <button class="btn-secondary" style="padding:5px 12px; font-size:12px; font-weight:700; background:#fff7ed; border-color:#fdba74; color:#c2410c; border-radius:5px;" onclick="openCountingEntryModal(${w.ward})" title="गणना प्रविष्टि">
-                        <i class="fas fa-pen-to-square"></i> प्रविष्टि
-                    </button>
-                ` : ''}
             </div>
         `;
+
 
         html += `
             <tr style="background:#ffffff;">
