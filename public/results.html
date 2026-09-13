@@ -421,9 +421,6 @@
                 <i class="fas fa-bolt" style="color: #f97316;"></i> 35 वार्ड मतगणना लाइव समरी
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn-primary" style="background: #0284c7; border-color: #0284c7; font-size: 13px; padding: 8px 16px; font-weight:700;" onclick="navigateTo('entry')">
-                    <i class="fas fa-pen-to-square"></i> मतगणना प्रविष्टि करें
-                </button>
                 <button class="btn-secondary" style="font-size: 13px; padding: 8px 16px; font-weight:600;" onclick="printConsolidatedResults()">
                     <i class="fas fa-print"></i> परिणाम समरी प्रिंट
                 </button>
@@ -432,6 +429,10 @@
                 </a>
                 <button class="btn-secondary" style="font-size: 13px; padding: 8px 16px; font-weight:600;" onclick="fetchResultsData(true)">
                     <i class="fas fa-rotate"></i> रीफ्रेश
+                </button>
+                <!-- RO-only Reset Button -->
+                <button id="roResetBtn" style="display:none; font-size: 13px; padding: 8px 16px; font-weight:700; background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; border-radius:7px; cursor:pointer;" onclick="resetResultsData()">
+                    <i class="fas fa-rotate-left"></i> डेटा रीसेट करें
                 </button>
             </div>
         </div>

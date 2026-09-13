@@ -252,6 +252,7 @@ function updateAuthUI() {
     const authBtn = document.getElementById("headerAuthBtn");
     const userNameEl = document.getElementById("currentUserName");
     const entryLink = document.getElementById("navEntryLink");
+    const resetBtn = document.getElementById("roResetBtn");
 
     if (currentUser && !currentUser.isGuest) {
         const roleLabel = currentUser.role === 'RO' ? 'RO (SDM)' : (currentUser.role.startsWith('OP') ? `टेबल ${currentUser.role.replace('OP','')}` : currentUser.role);
@@ -266,6 +267,8 @@ function updateAuthUI() {
             authBtn.onclick = logoutUser;
         }
         if (entryLink) entryLink.style.display = "";
+        // Show Reset button only for RO role
+        if (resetBtn) resetBtn.style.display = currentUser.role === 'RO' ? "" : "none";
     } else {
         if (userNameEl) {
             userNameEl.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fas fa-eye"></i> नागरिक / पब्लिक मोड</span>`;
@@ -281,6 +284,25 @@ function updateAuthUI() {
                 switchAuthTab('op_login');
             };
         }
+        if (resetBtn) resetBtn.style.display = "none";
+    }
+}
+
+// Reset all results data (RO only)
+async function resetResultsData() {
+    const confirmed = confirm("⚠️ सभी 35 वार्ड का मतगणना डेटा रीसेट होगा और 0 हो जाएगा!\n\nक्या आप सुनिश्चित हैं?");
+    if (!confirmed) return;
+    try {
+        const res = await fetch('/api/results/reset-test', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await res.json();
+        if (data.success) {
+            showToast("✅ डेटा रीसेट सफल! सभी वार्ड 0 कर दिए गए हैं");
+            fetchResultsData(false);
+        } else {
+            showToast("❌ रीसेट फेल हुआ: " + data.message);
+        }
+    } catch(err) {
+        showToast("❌ नेटवर्क एरर: " + err.message);
     }
 }
 
