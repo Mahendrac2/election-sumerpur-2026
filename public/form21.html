@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>प्ररूप — 21 (अन्तिम परिणाम पत्र) | नगर पालिका सुमेरपुर 2026</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Yatra+One&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px 0;
+            background: #f1f5f9;
+            color: #000000;
+            font-family: 'Tiro Devanagari Hindi', 'Mangal', 'Noto Sans Devanagari', 'Segoe UI', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Floating Action Bar on Screen (Hidden on Print) */
+        .no-print-bar {
+            position: sticky;
+            top: 10px;
+            z-index: 1000;
+            max-width: 900px;
+            margin: 0 auto 25px auto;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .bar-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #facc15;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ward-select-box {
+            padding: 7px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background: #ffffff;
+            color: #0f172a;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .bar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3);
+            transition: transform 0.15s;
+        }
+
+        .btn-print:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12.5px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Form 21 A4 Sheet Layout */
+        .form21-sheet-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .form21-sheet {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 22mm 22mm 20mm 22mm;
+            background: #ffffff;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Gazette Headers */
+        .form21-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header-title-1 {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+            color: #000000;
+        }
+
+        .header-rule {
+            font-size: 14.5px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #000000;
+        }
+
+        .header-title-2 {
+            font-size: 18.5px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #000000;
+        }
+
+        /* Meta Lines (नगरपालिका & वार्ड संख्या) */
+        .form21-meta {
+            margin-bottom: 20px;
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: baseline;
+            font-size: 15.5px;
+            margin-bottom: 6px;
+            color: #000000;
+        }
+
+        .meta-label {
+            font-weight: 700;
+            min-width: 100px;
+            color: #000000;
+        }
+
+        .meta-val {
+            font-weight: 800;
+            font-size: 16px;
+            color: #000000;
+            margin-left: 6px;
+        }
+
+        /* Gazette Table */
+        .form21-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            color: #000000;
+        }
+
+        .form21-table thead tr.border-top-header th {
+            border-top: 1.5px solid #000000;
+            border-bottom: 1px solid #000000;
+            padding: 8px 4px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .form21-table thead tr.sub-numbers th {
+            border-bottom: 1.5px solid #000000;
+            padding: 4px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .form21-table tbody tr td {
+            padding: 9px 6px;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #000000;
+        }
+
+        .form21-table tbody tr:last-child td {
+            border-bottom: 1.5px solid #000000;
+            padding-bottom: 12px;
+        }
+
+        .col-cno {
+            width: 14%;
+            text-align: center;
+        }
+
+        .col-cname {
+            width: 38%;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .col-party {
+            width: 28%;
+            text-align: left;
+        }
+
+        .col-votes {
+            width: 20%;
+            text-align: right;
+            font-weight: 700;
+            padding-right: 12px !important;
+        }
+
+        /* Statistics Section (Below Table) */
+        .form21-stats {
+            margin-top: 22px;
+            color: #000000;
+            font-size: 14.5px;
+            line-height: 1.9;
+        }
+
+        .stats-nota-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .stats-line {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+
+        .stats-lbl {
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .stats-num {
+            font-weight: 800;
+            font-size: 15px;
+            color: #000000;
+            margin-left: 10px;
+        }
+
+        /* Footer: Date, Seal & Signatures */
+        .form21-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 25px;
+            padding-top: 5px;
+            color: #000000;
+        }
+
+        .date-and-seal-block {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .date-block {
+            display: flex;
+            align-items: baseline;
+            font-size: 15px;
+        }
+
+        .date-lbl {
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .date-val {
+            font-weight: 700;
+            margin-left: 8px;
+            color: #000000;
+        }
+
+        .office-seal-circle {
+            width: 90px;
+            height: 90px;
+            border: 1.5px dashed #475569;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10.5px;
+            color: #475569;
+            text-align: center;
+            line-height: 1.25;
+        }
+
+        .sign-block {
+            text-align: center;
+            font-size: 14.5px;
+            line-height: 1.45;
+            min-width: 270px;
+        }
+
+        .sign-officer-name {
+            font-size: 15.5px;
+            font-weight: 800;
+            color: #000000;
+        }
+
+        .sign-officer-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111111;
+            margin-top: 3px;
+        }
+
+        .sign-officer-sub {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #222222;
+            margin-top: 2px;
+        }
+
+        /* Gazette Page Number Footer */
+        .sheet-page-number {
+            text-align: center;
+            font-size: 13px;
+            color: #333333;
+            margin-top: 25px;
+        }
+
+        /* PRINT STYLES (Clean A4 Document) */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 15mm 15mm 15mm 15mm;
+            }
+
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                color: #000000 !important;
+            }
+
+            .no-print-bar {
+                display: none !important;
+            }
+
+            .form21-sheet-container {
+                gap: 0 !important;
+            }
+
+            .form21-sheet {
+                width: 100% !important;
+                min-height: auto !important;
+                height: auto !important;
+                padding: 10mm 10mm !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+
+            .form21-sheet:last-child {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Action Bar (Screen only) -->
+    <div class="no-print-bar">
+        <div class="bar-left">
+            <div class="bar-title">
+                <i class="fas fa-file-contract"></i> प्ररूप — 21 (अन्तिम परिणाम पत्र)
+            </div>
+            <select id="sheetWardSelect" class="ward-select-box" onchange="onWardFilterChanged(this.value)">
+                <option value="ALL">📋 समस्त 35 वार्ड (एक साथ - संयुक्त PDF)</option>
+                <!-- Populated dynamically 1 to 35 -->
+            </select>
+        </div>
+        <div class="bar-right">
+            <button class="btn-print" onclick="window.print()">
+                <i class="fas fa-print"></i> प्रिंट करें / PDF सेव करें
+            </button>
+            <a href="/results#reports" class="btn-back">
+                <i class="fas fa-arrow-left"></i> परिणाम स्टूडियो लौटें
+            </a>
+        </div>
+    </div>
+
+    <!-- Printable Sheets Container -->
+    <div class="form21-sheet-container" id="form21Container">
+        <div style="text-align:center; padding: 60px; font-size: 16px; color: #475569;">
+            <i class="fas fa-spinner fa-spin fa-2x" style="color: #2563eb; margin-bottom: 12px; display: block;"></i>
+            शासकीय प्ररूप — 21 लोड हो रहा है, कृपया प्रतीक्षा करें...
+        </div>
+    </div>
+
+    <script>
+        let allResultsData = null;
+
+        async function initForm21() {
+            try {
+                // Populate Ward Dropdown 1 to 35
+                const selectEl = document.getElementById("sheetWardSelect");
+                for (let w = 1; w <= 35; w++) {
+                    const opt = document.createElement("option");
+                    opt.value = w;
+                    opt.innerText = `वार्ड संख्या ${w}${w === 26 ? ' (निर्विरोध)' : ''}`;
+                    selectEl.appendChild(opt);
+                }
+
+                // Check URL params
+                const params = new URLSearchParams(window.location.search);
+                const wardParam = params.get('ward') || 'ALL';
+                const autoPrint = params.get('print') === 'true' || params.get('print') === '1';
+
+                selectEl.value = wardParam;
+
+                // Fetch results store
+                const res = await fetch('/api/results/data');
+                allResultsData = await res.json();
+
+                renderSheets(wardParam);
+
+                if (autoPrint) {
+                    setTimeout(() => {
+                        window.print();
+                    }, 800);
+                }
+            } catch(e) {
+                document.getElementById("form21Container").innerHTML = `
+                    <div style="color:red; font-size:16px; padding:40px; text-align:center;">
+                        डेटा लोड करने में त्रुटि: ${e.message}
+                    </div>
+                `;
+            }
+        }
+
+        function onWardFilterChanged(val) {
+            const url = new URL(window.location);
+            url.searchParams.set('ward', val);
+            window.history.replaceState({}, '', url);
+            renderSheets(val);
+        }
+
+        function renderSheets(wardFilter) {
+            const container = document.getElementById("form21Container");
+            if (!allResultsData || !allResultsData.wards) {
+                container.innerHTML = '<div style="padding:40px;">परिणाम डेटा उपलब्ध नहीं है।</div>';
+                return;
+            }
+
+            let wardsToRender = [];
+            if (wardFilter === 'ALL') {
+                wardsToRender = allResultsData.wards;
+            } else {
+                const targetW = parseInt(wardFilter);
+                const found = allResultsData.wards.find(w => w.ward === targetW);
+                if (found) wardsToRender = [found];
+            }
+
+            if (wardsToRender.length === 0) {
+                container.innerHTML = '<div style="padding:40px;">चयनित वार्ड का डेटा नहीं मिला।</div>';
+                return;
+            }
+
+            let html = '';
+            wardsToRender.forEach((w, index) => {
+                const isNirvirodh = (w.ward === 26 || w.isNirvirodh);
+                let candRows = '';
+                let col4Total = 0;
+
+                if (isNirvirodh) {
+                    candRows = `
+                        <tr>
+                            <td class="col-cno">1</td>
+                            <td class="col-cname">श्रीमती वीणा देवड़ा</td>
+                            <td class="col-party">भारतीय जनता पार्टी</td>
+                            <td class="col-votes">निर्विरोध निर्वाचित</td>
+                        </tr>
+                    `;
+                } else if (w.candidates && w.candidates.length > 0) {
+                    w.candidates.forEach((c) => {
+                        const votes = c.total_votes || 0;
+                        col4Total += votes;
+                        candRows += `
+                            <tr>
+                                <td class="col-cno">${c.candidate_no}</td>
+                                <td class="col-cname">${c.name}</td>
+                                <td class="col-party">${c.party || 'निर्दलीय'}</td>
+                                <td class="col-votes">${votes.toLocaleString('hi-IN')}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    candRows = `
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding:15px;">मतगणना डेटा प्रतीक्षारत</td>
+                        </tr>
+                    `;
+                }
+
+                const validVotesPolled = isNirvirodh ? 'निर्विरोध निर्वाचित' : col4Total.toLocaleString('hi-IN');
+                const col4Display = isNirvirodh ? '-' : col4Total.toLocaleString('hi-IN');
+                const notaVotes = isNirvirodh ? '0' : (w.nota_votes || 0).toLocaleString('hi-IN');
+                const rejectedVotes = (w.rejected_votes || 0).toLocaleString('hi-IN');
+                const tenderedVotes = (w.tendered_votes || 0).toLocaleString('hi-IN');
+
+                html += `
+                    <div class="form21-sheet" id="sheet_ward_${w.ward}">
+                        <!-- Gazette Header -->
+                        <div class="form21-header">
+                            <div class="header-title-1">प्ररूप — 21</div>
+                            <div class="header-rule">(नियम — 66 देखिये)</div>
+                            <div class="header-title-2">अन्तिम परिणाम पत्र</div>
+                        </div>
+
+                        <!-- Meta Lines -->
+                        <div class="form21-meta">
+                            <div class="meta-row">
+                                <span class="meta-label">नगरपालिका :</span>
+                                <span class="meta-val">सुमेरपुर</span>
+                            </div>
+                            <div class="meta-row">
+                                <span class="meta-label">वार्ड संख्या :</span>
+                                <span class="meta-val">${w.ward}</span>
+                            </div>
+                        </div>
+
+                        <!-- Gazette Table -->
+                        <table class="form21-table">
+                            <thead>
+                                <tr class="border-top-header">
+                                    <th class="col-cno">क्रम संख्या</th>
+                                    <th class="col-cname">अभ्यर्थी का नाम</th>
+                                    <th class="col-party">संबद्ध दल</th>
+                                    <th class="col-votes">डाले गये मतों की संख्या</th>
+                                </tr>
+                                <tr class="sub-numbers">
+                                    <th class="col-cno">1</th>
+                                    <th class="col-cname">2</th>
+                                    <th class="col-party">3</th>
+                                    <th class="col-votes">4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${candRows}
+                            </tbody>
+                        </table>
+
+                        <!-- Statistics Section -->
+                        <div class="form21-stats">
+                            <div class="stats-nota-title">नोटा (इनमें से कोई नहीं)</div>
+                            
+                            <div class="stats-line">
+                                <span class="stats-lbl">डाले गये विधि मान्य मतों की कुल संख्या :</span>
+                                <span class="stats-num">${validVotesPolled}</span>
+                            </div>
+                            <div class="stats-line">
+                                <span class="stats-lbl">ऊपर अंकित सारणी के कालम 4 का भाग :</span>
+                                <span class="stats-num">${col4Display}</span>
+                            </div>
+                            <div class="stats-line">
+                                <span class="stats-lbl">नोटा को दिये गये कुल मतों की संख्या :</span>
+                                <span class="stats-num">${notaVotes}</span>
+                            </div>
+                            <div class="stats-line">
+                                <span class="stats-lbl">अस्वीकृत मतों की संख्या :</span>
+                                <span class="stats-num">${rejectedVotes}</span>
+                            </div>
+                            <div class="stats-line">
+                                <span class="stats-lbl">निविदत्त मतों की कुल संख्या :</span>
+                                <span class="stats-num">${tenderedVotes}</span>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="form21-footer">
+                            <div class="date-block">
+                                <span class="date-lbl">तारीख :</span>
+                                <span class="date-val">14-09-2026</span>
+                            </div>
+                            <div class="sign-block">
+                                <div style="height: 32px;"></div>
+                                <div class="sign-officer-name">कालुराम कुम्हार (आर.ए.एस.)</div>
+                                <div class="sign-officer-title">रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट)</div>
+                                <div class="sign-officer-sub">नगर पालिका सुमेरपुर (पाली)</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        window.addEventListener('DOMContentLoaded', initForm21);
+    </script>
+</body>
+</html>

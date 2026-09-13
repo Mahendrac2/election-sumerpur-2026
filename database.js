@@ -56,44 +56,44 @@ const zonesMaster = {
     }
 };
 
-// 36 Booths Master Data with Ward, Part, Male, Female, TG and Total Electors
+// 36 Booths Master Data with Zone, Ward, Elector, and Official in charge
 const masterBooths = [
-  { b: 1,  z: 1, w: 1,  part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय,संजय नगर सुमेरपुर", el: 851, male_el: 445, female_el: 406, tg_el: 0, op: "OP1", pName: "श्री रामस्वरूप छाबा (अध्यापक)", pMob: "9680355685" },
-  { b: 2,  z: 1, w: 1,  part: 2, name: "राजकीय वरिष्ठ उपाध्याय संस्कृत विद्यालय, संजय नगर सुमेरपुर", el: 960, male_el: 501, female_el: 459, tg_el: 0, op: "OP1", pName: "श्री गणेश राम (सहा. प्रशा. अधि.)", pMob: "8560055330" },
-  { b: 3,  z: 1, w: 2,  part: 1, name: "राजकीय प्राथमिक विद्यालय,विवेकानन्द नगर सुमेरपुर", el: 612, male_el: 302, female_el: 310, tg_el: 0, op: "OP1", pName: "श्री अंकित चतुर्वेदी (अध्यापक)", pMob: "7891826768" },
-  { b: 4,  z: 1, w: 3,  part: 1, name: "महाराणा प्रताप गाडोलिया लौहार सभा भवन टेलिफोन एक्सचेंज के पास, ,सुमेरपुर", el: 829, male_el: 414, female_el: 415, tg_el: 0, op: "OP1", pName: "श्री नारायण लाल लखारा (वरिष्ठ सहायक)", pMob: "7742526889" },
-  { b: 5,  z: 1, w: 4,  part: 1, name: "सामुदायिक भवन,तहसील के पीछे, संजय नगर, सुमेरपुर", el: 430, male_el: 229, female_el: 201, tg_el: 0, op: "OP1", pName: "श्री दिलीप सिंह (प्रयोगशाला सहायक)", pMob: "9680003880" },
-  { b: 6,  z: 2, w: 5,  part: 1, name: "पीएम श्री राजकीय उच्च माध्यमिक विद्यालय (दाया भाग), सुमेरपुर", el: 902, male_el: 451, female_el: 451, tg_el: 0, op: "OP2", pName: "श्री फूजाराम (पर्यवेक्षक)", pMob: "7073956394" },
-  { b: 7,  z: 1, w: 6,  part: 1, name: "डॉ. भीमराव अम्बेडकर सामुदायिक भवन,हाथी गडा,पानी टंकी के पास, सुमेरपुर", el: 1120, male_el: 562, female_el: 558, tg_el: 0, op: "OP1", pName: "श्री महेन्द्र सिंह राठौड़ (कनिष्ठ सहायक)", pMob: "9983114557" },
-  { b: 8,  z: 1, w: 7,  part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.3, नया भवन उषापुरी गेट के अन्दर,सुमेरपुर", el: 976, male_el: 498, female_el: 478, tg_el: 0, op: "OP1", pName: "श्री करणसिंह देवड़ा (वरिष्ठ सहायक)", pMob: "7742689419" },
-  { b: 9,  z: 1, w: 8,  part: 1, name: "आश्रय स्थल रैन बसेरा भवन बाईपास रोड, सुमेरपुर (बायां भाग)", el: 1071, male_el: 541, female_el: 530, tg_el: 0, op: "OP1", pName: "श्री हिमांशु (कनिष्ठ लिपिक)", pMob: "9971893668" },
-  { b: 10, z: 4, w: 9,  part: 1, name: "आश्रय स्थल रैन बसेरा भवन बाईपास रोड, सुमेरपुर (दायां भाग)", el: 736, male_el: 371, female_el: 365, tg_el: 0, op: "OP4", pName: "श्री अशोक कुमार माली (कनिष्ठ लिपिक)", pMob: "8441067097" },
-  { b: 11, z: 4, w: 10, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.2,सुमेरपुर(बांया भाग)", el: 784, male_el: 390, female_el: 394, tg_el: 0, op: "OP4", pName: "श्री योगेश गर्ग (वरिष्ठ सहायक)", pMob: "7073373171" },
-  { b: 12, z: 2, w: 11, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.2,सुमेरपुर(दांया भाग)", el: 871, male_el: 446, female_el: 425, tg_el: 0, op: "OP2", pName: "श्री भरत कुमार (वरिष्ठ प्रबोधक)", pMob: "7791893959" },
-  { b: 13, z: 2, w: 12, part: 1, name: "कार्यालय मुख्य ब्लॉक शिक्षा अधिकारी,जवाई बांध रोड ,सुमेरपुर (बायां भाग)", el: 822, male_el: 424, female_el: 398, tg_el: 0, op: "OP2", pName: "श्री शंभु कुमार (कनिष्ठ लिपिक)", pMob: "9983946132" },
-  { b: 14, z: 2, w: 13, part: 1, name: "कार्यालय मुख्य ब्लॉक शिक्षा अधिकारी,जवाई बांध रोड ,सुमेरपुर (दायां भाग)", el: 965, male_el: 489, female_el: 476, tg_el: 0, op: "OP2", pName: "श्री भीखाराम (पर्यवेक्षक)", pMob: "9079852688" },
-  { b: 15, z: 2, w: 14, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर, कमरा नं. 2", el: 825, male_el: 413, female_el: 412, tg_el: 0, op: "OP2", pName: "श्री नरेश परमार (अध्यापक)", pMob: "8107286454" },
-  { b: 16, z: 2, w: 15, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर, कमरा नं. 3", el: 902, male_el: 444, female_el: 458, tg_el: 0, op: "OP2", pName: "श्री महेश पालीवाल (वरिष्ठ लिपिक)", pMob: "7610085209" },
-  { b: 17, z: 2, w: 16, part: 1, name: "कार्यालय गृह एवं नगरीय विकास कर,नगरपालिका,सुमेरपुर", el: 653, male_el: 318, female_el: 335, tg_el: 0, op: "OP2", pName: "श्री रिडमल राम (वरिष्ठ प्रयोगशाला सहा.)", pMob: "9982493610" },
-  { b: 18, z: 3, w: 17, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर कमरा नं. 9", el: 1036, male_el: 530, female_el: 506, tg_el: 0, op: "OP3", pName: "श्री ईमरान मोहम्मद (अध्यापक)", pMob: "9602959723" },
-  { b: 19, z: 3, w: 18, part: 1, name: "सरदार वल्लभ भाई पटेल विवाह स्थल,आदर्श काॅलोनी,सुमेरपुर", el: 920, male_el: 482, female_el: 438, tg_el: 0, op: "OP3", pName: "श्री सुरेश कुमार (अध्यापक)", pMob: "9982935583" },
-  { b: 20, z: 3, w: 19, part: 1, name: "कृषि उपज मण्डी श्रमिक विश्राम गृह,सुमेरपुर", el: 944, male_el: 492, female_el: 452, tg_el: 0, op: "OP3", pName: "श्री पुकाराम (वरिष्ठ सहायक)", pMob: "8619885001" },
-  { b: 21, z: 3, w: 20, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.1,वासू पूज्य काॅलोनी,सुमेरपुर (बांया भाग)", el: 406, male_el: 203, female_el: 203, tg_el: 0, op: "OP3", pName: "श्री दिनेश कुमार बगठिया (वरिष्ठ सहा.)", pMob: "9929884975" },
-  { b: 22, z: 3, w: 21, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.1,वासू पूज्य काॅलोनी,सुमेरपुर(दांया भाग)", el: 717, male_el: 361, female_el: 356, tg_el: 0, op: "OP3", pName: "श्री छोगाराम देवासी (अध्यापक)", pMob: "7742747519" },
-  { b: 23, z: 5, w: 22, part: 1, name: "कार्यालय अधिशाषी अभियंता,जवाई नहर खण्ड,भैरू चौक,सुमेरपुर(बांया भाग)", el: 835, male_el: 433, female_el: 402, tg_el: 0, op: "OP5", pName: "श्री हनुवन्तसिंह (कनिष्ठ लिपिक)", pMob: "8233193295" },
-  { b: 24, z: 4, w: 23, part: 1, name: "राजकीय बालिका उच्च माध्यमिक विद्यालय,सुमेरपुर, कमरा नं. 11", el: 744, male_el: 388, female_el: 356, tg_el: 0, op: "OP4", pName: "श्री प्रधान बैरवा (अध्यापक)", pMob: "9602328272" },
-  { b: 25, z: 4, w: 24, part: 1, name: "सुमेरपुर क्रय-विक्रय सहकारी समिति लि., नगरपालिका रोड,सुमेरपुर", el: 813, male_el: 409, female_el: 404, tg_el: 0, op: "OP4", pName: "श्री मनीष कुमार (अध्यापक)", pMob: "8432470870" },
-  { b: 26, z: 4, w: 25, part: 1, name: "महावीर जीवावत वाचनालय, नगरपालिका रोड,सुमेरपुर", el: 776, male_el: 385, female_el: 391, tg_el: 0, op: "OP4", pName: "श्री धर्मेन्द्र सिंह (प्रयोगशाला सहायक)", pMob: "8619796516" },
-  { b: 27, z: 4, w: 26, part: 1, name: "कार्यालय अधिशाषी अभियंता,जवाई नहर खण्ड,भैरू चौक,सुमेरपुर (दायां भाग)", el: 841, male_el: 429, female_el: 412, tg_el: 0, op: "OP4", pName: "निर्विरोध निर्वाचित (वीणा देवड़ा - BJP)", pMob: "-", isNirvirodh: 1 },
-  { b: 28, z: 4, w: 27, part: 1, name: "लालबहादुर शास्त्री वाचनालय,भैरू चौक, सुमेरपुर", el: 906, male_el: 471, female_el: 435, tg_el: 0, op: "OP4", pName: "श्री कृष्णपाल सिंह (कनिष्ठ लिपिक)", pMob: "9950565481" },
-  { b: 29, z: 5, w: 28, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.1,वासू पूज्य काॅलोनी,सुमेरपुर(मध्य भाग)", el: 880, male_el: 464, female_el: 416, tg_el: 0, op: "OP5", pName: "श्री जोगाराम मीणा (वरिष्ठ सहायक)", pMob: "6377310993" },
-  { b: 30, z: 5, w: 29, part: 1, name: "डाॅ. श्यामा प्रसाद मुखर्जी सामुदायिक भवन, शनि महाराज मन्दिर के सामने, नहर के पास,सुमेर", el: 951, male_el: 477, female_el: 474, tg_el: 0, op: "OP5", pName: "श्री मनीष कुमार (कनिष्ठ लिपिक)", pMob: "9772309165" },
-  { b: 31, z: 5, w: 30, part: 1, name: "सामुदायिक सभा भवन, बाणमाता मन्दिर के पास, सुमेरपुर", el: 652, male_el: 347, female_el: 305, tg_el: 0, op: "OP5", pName: "श्री मनीष सांखला (कनिष्ठ लिपिक)", pMob: "9358693913" },
-  { b: 32, z: 5, w: 31, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.5,जूना जाखोडा रोड,सुमेरपुर(बाँया भाग)", el: 746, male_el: 408, female_el: 338, tg_el: 0, op: "OP5", pName: "श्री अश्विन सिंह राव (कनिष्ठ लिपिक)", pMob: "9667161210" },
-  { b: 33, z: 6, w: 32, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय नं.5,जूना जाखोडा रोड,सुमेरपुर(दांया भाग)", el: 941, male_el: 471, female_el: 470, tg_el: 0, op: "OP6", pName: "श्री देवेन्द्र सिंह (वरिष्ठ लिपिक)", pMob: "8094145551" },
-  { b: 34, z: 6, w: 33, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय, जाखानगर दाया भाग,सुमेरपुर", el: 1071, male_el: 542, female_el: 529, tg_el: 0, op: "OP6", pName: "श्री हस्तीमल (प्रयोगशाला सहायक)", pMob: "8442047725" },
-  { b: 35, z: 6, w: 34, part: 1, name: "राजकीय उच्च प्राथमिक विद्यालय, जाखानगर बांया भाग,सुमेरपुर", el: 1234, male_el: 626, female_el: 599, tg_el: 9, op: "OP6", pName: "श्री राहुल राज (प्रयोगशाला सहायक)", pMob: "8290269639" },
-  { b: 36, z: 6, w: 35, part: 1, name: "कार्यालय सहायक अभियंता जलदाय विभाग तखतगढ रोड ,सुमेरपुर", el: 876, male_el: 453, female_el: 423, tg_el: 0, op: "OP6", pName: "श्री जितेन्द्र सिंह (सहा. प्रशा. अधि.)", pMob: "7726017808" }
+  { b: 1,  z: 1, w: 1,  name: "रा.उ.प्रा.वि., संजय नगर (भाग 1)", el: 904, op: "OP1", pName: "श्री रामस्वरूप छाबा (अध्यापक)", pMob: "9680355685" },
+  { b: 2,  z: 1, w: 1,  name: "रा.व.उ. संस्कृत वि., संजय नगर (भाग 2)", el: 904, op: "OP1", pName: "श्री गणेश राम (सहा. प्रशा. अधि.)", pMob: "8560055330" },
+  { b: 3,  z: 1, w: 2,  name: "रा.प्रा.वि., विवेकानन्द नगर", el: 595, op: "OP1", pName: "श्री अंकित चतुर्वेदी (अध्यापक)", pMob: "7891826768" },
+  { b: 4,  z: 1, w: 3,  name: "महाराणा प्रताप गाडोलिया लौहार सभा भवन", el: 861, op: "OP1", pName: "श्री नारायण लाल लखारा (वरिष्ठ सहायक)", pMob: "7742526889" },
+  { b: 5,  z: 1, w: 4,  name: "सामुदायिक भवन, तहसील के पीछे", el: 369, op: "OP1", pName: "श्री दिलीप सिंह (प्रयोगशाला सहायक)", pMob: "9680003880" },
+  { b: 6,  z: 2, w: 5,  name: "पीएम श्री रा.उ.मा.वि. (दाया भाग)", el: 893, op: "OP2", pName: "श्री फूजाराम (पर्यवेक्षक)", pMob: "7073956394" },
+  { b: 7,  z: 1, w: 6,  name: "डॉ. अम्बेडकर सामुदायिक भवन, हाथी गडा", el: 1134, op: "OP1", pName: "श्री महेन्द्र सिंह राठौड़ (कनिष्ठ सहायक)", pMob: "9983114557" },
+  { b: 8,  z: 1, w: 7,  name: "रा.उ.प्रा.वि. नं.3 नया भवन उषापुरी गेट", el: 972, op: "OP1", pName: "श्री करणसिंह देवड़ा (वरिष्ठ सहायक)", pMob: "7742689419" },
+  { b: 9,  z: 1, w: 8,  name: "रैन बसेरा भवन बाईपास रोड (बायां भाग)", el: 1032, op: "OP1", pName: "श्री हिमांशु (कनिष्ठ लिपिक)", pMob: "9971893668" },
+  { b: 10, z: 4, w: 9,  name: "रैन बसेरा भवन बाईपास रोड (दायां भाग)", el: 780, op: "OP4", pName: "श्री अशोक कुमार माली (कनिष्ठ लिपिक)", pMob: "8441067097" },
+  { b: 11, z: 4, w: 10, name: "रा.उ.प्रा.वि. नं.2 (बांया भाग)", el: 805, op: "OP4", pName: "श्री योगेश गर्ग (वरिष्ठ सहायक)", pMob: "7073373171" },
+  { b: 12, z: 2, w: 11, name: "रा.उ.प्रा.वि. नं.2 (दांया भाग)", el: 860, op: "OP2", pName: "श्री भरत कुमार (वरिष्ठ प्रबोधक)", pMob: "7791893959" },
+  { b: 13, z: 2, w: 12, name: "कार्यालय CBEO जवाई बांध रोड़ (बायां)", el: 820, op: "OP2", pName: "श्री शंभु कुमार (कनिष्ठ लिपिक)", pMob: "9983946132" },
+  { b: 14, z: 2, w: 13, name: "कार्यालय CBEO जवाई बांध रोड़ (दायां)", el: 966, op: "OP2", pName: "श्री भीखाराम (पर्यवेक्षक)", pMob: "9079852688" },
+  { b: 15, z: 2, w: 14, name: "रा.बा.उ.मा.वि., कमरा नं. 2", el: 807, op: "OP2", pName: "श्री नरेश परमार (अध्यापक)", pMob: "8107286454" },
+  { b: 16, z: 2, w: 15, name: "रा.बा.उ.मा.वि., कमरा नं. 3", el: 939, op: "OP2", pName: "श्री महेश पालीवाल (वरिष्ठ लिपिक)", pMob: "7610085209" },
+  { b: 17, z: 2, w: 16, name: "कार्यालय गृह एवं नगरीय विकास कर", el: 660, op: "OP2", pName: "श्री रिडमल राम (वरिष्ठ प्रयोगशाला सहा.)", pMob: "9982493610" },
+  { b: 18, z: 3, w: 17, name: "रा.बा.उ.मा.वि., कमरा नं. 9", el: 1039, op: "OP3", pName: "श्री ईमरान मोहम्मद (अध्यापक)", pMob: "9602959723" },
+  { b: 19, z: 3, w: 18, name: "सरदार वल्लभ भाई पटेल विवाह स्थल", el: 912, op: "OP3", pName: "श्री सुरेश कुमार (अध्यापक)", pMob: "9982935583" },
+  { b: 20, z: 3, w: 19, name: "कृषि उपज मण्डी श्रमिक विश्राम गृह", el: 949, op: "OP3", pName: "श्री पुकाराम (वरिष्ठ सहायक)", pMob: "8619885001" },
+  { b: 21, z: 3, w: 20, name: "रा.उ.प्रा.वि. नं.1 वासू पूज्य काॅलोनी (बांया)", el: 368, op: "OP3", pName: "श्री दिनेश कुमार बगठिया (वरिष्ठ सहा.)", pMob: "9929884975" },
+  { b: 22, z: 3, w: 21, name: "रा.उ.प्रा.वि. नं.1 वासू पूज्य काॅलोनी (दांया)", el: 725, op: "OP3", pName: "श्री छोगाराम देवासी (अध्यापक)", pMob: "7742747519" },
+  { b: 23, z: 5, w: 22, name: "कार्यालय अधिशाषी अभियंता जवाई नहर (बांया)", el: 818, op: "OP5", pName: "श्री हनुवन्तसिंह (कनिष्ठ लिपिक)", pMob: "8233193295" },
+  { b: 24, z: 4, w: 23, name: "रा.बा.उ.मा.वि., कमरा नं. 11", el: 767, op: "OP4", pName: "श्री प्रधान बैरवा (अध्यापक)", pMob: "9602328272" },
+  { b: 25, z: 4, w: 24, name: "सुमेरपुर क्रय-विक्रय सहकारी समिति", el: 834, op: "OP4", pName: "श्री मनीष कुमार (अध्यापक)", pMob: "8432470870" },
+  { b: 26, z: 4, w: 25, name: "महावीर जीवावत वाचनालय", el: 766, op: "OP4", pName: "श्री धर्मेन्द्र सिंह (प्रयोगशाला सहायक)", pMob: "8619796516" },
+  { b: 27, z: 4, w: 26, name: "कार्यालय अधिशाषी अभियंता जवाई नहर (दायां)", el: 833, op: "OP4", pName: "निर्विरोध निर्वाचित (वीणा देवड़ा - BJP)", pMob: "-", isNirvirodh: 1 },
+  { b: 28, z: 4, w: 27, name: "लालबहादुर शास्त्री वाचनालय", el: 919, op: "OP4", pName: "श्री कृष्णपाल सिंह (कनिष्ठ लिपिक)", pMob: "9950565481" },
+  { b: 29, z: 5, w: 28, name: "रा.उ.प्रा.वि. नं.1 वासू पूज्य काॅलोनी (मध्य)", el: 826, op: "OP5", pName: "श्री जोगाराम मीणा (वरिष्ठ सहायक)", pMob: "6377310993" },
+  { b: 30, z: 5, w: 29, name: "डाॅ. श्यामा प्रसाद मुखर्जी सामुदायिक भवन", el: 977, op: "OP5", pName: "श्री मनीष कुमार (कनिष्ठ लिपिक)", pMob: "9772309165" },
+  { b: 31, z: 5, w: 30, name: "सामुदायिक सभा भवन, बाणमाता मन्दिर", el: 622, op: "OP5", pName: "श्री मनीष सांखला (कनिष्ठ लिपिक)", pMob: "9358693913" },
+  { b: 32, z: 5, w: 31, name: "रा.उ.प्रा.वि. नं.5 जूना जाखोडा (बाँया)", el: 712, op: "OP5", pName: "श्री अश्विन सिंह राव (कनिष्ठ लिपिक)", pMob: "9667161210" },
+  { b: 33, z: 6, w: 32, name: "रा.उ.प्रा.वि. नं.5 जूना जाखोडा (दांया)", el: 935, op: "OP6", pName: "श्री देवेन्द्र सिंह (वरिष्ठ लिपिक)", pMob: "8094145551" },
+  { b: 34, z: 6, w: 33, name: "रा.उ.प्रा.वि., जाखानगर दाया भाग", el: 1123, op: "OP6", pName: "श्री हस्तीमल (प्रयोगशाला सहायक)", pMob: "8442047725" },
+  { b: 35, z: 6, w: 34, name: "रा.उ.प्रा.वि., जाखानगर बांया भाग", el: 1260, op: "OP6", pName: "श्री राहुल राज (प्रयोगशाला सहायक)", pMob: "8290269639" },
+  { b: 36, z: 6, w: 35, name: "कार्यालय सहायक अभियंता जलदाय विभाग", el: 843, op: "OP6", pName: "श्री जितेन्द्र सिंह (सहा. प्रशा. अधि.)", pMob: "7726017808" }
 ];
 
 const defaultUsers = [
@@ -115,23 +115,13 @@ function initDatabase() {
                 id INTEGER PRIMARY KEY,
                 zone INTEGER NOT NULL,
                 ward INTEGER NOT NULL,
-                ward_part INTEGER DEFAULT 1,
                 name TEXT NOT NULL,
                 electors INTEGER NOT NULL,
-                male_electors INTEGER DEFAULT 0,
-                female_electors INTEGER DEFAULT 0,
-                tg_electors INTEGER DEFAULT 0,
                 operator_role TEXT NOT NULL,
                 praganak_name TEXT,
                 praganak_mob TEXT,
                 is_nirvirodh INTEGER DEFAULT 0
             )`);
-
-            // Safe column additions for existing db
-            db.run(`ALTER TABLE booths ADD COLUMN ward_part INTEGER DEFAULT 1`, () => {});
-            db.run(`ALTER TABLE booths ADD COLUMN male_electors INTEGER DEFAULT 0`, () => {});
-            db.run(`ALTER TABLE booths ADD COLUMN female_electors INTEGER DEFAULT 0`, () => {});
-            db.run(`ALTER TABLE booths ADD COLUMN tg_electors INTEGER DEFAULT 0`, () => {});
 
             // Polling stats table
             db.run(`CREATE TABLE IF NOT EXISTS polling_stats (
@@ -158,15 +148,13 @@ function initDatabase() {
                 name TEXT NOT NULL,
                 mobile TEXT DEFAULT '',
                 designation TEXT DEFAULT '',
-                status TEXT DEFAULT 'APPROVED',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 last_login DATETIME
             )`);
 
-            // Safe column additions for existing users table
+            // Safe column additions for existing db
             db.run(`ALTER TABLE users ADD COLUMN mobile TEXT DEFAULT ''`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN designation TEXT DEFAULT ''`, () => {});
-            db.run(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'APPROVED'`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`, () => {});
             db.run(`ALTER TABLE users ADD COLUMN last_login DATETIME`, () => {});
 
@@ -196,159 +184,65 @@ function initDatabase() {
             defaultUsers.forEach(u => userStmt.run(u.username, u.pass, u.role, u.name));
             userStmt.finalize();
 
-            // Always update/synchronize master booths data (electors, names, male/female/tg, etc.)
-            const bStmt = db.prepare(`INSERT OR REPLACE INTO booths (id, zone, ward, ward_part, name, electors, male_electors, female_electors, tg_electors, operator_role, praganak_name, praganak_mob, is_nirvirodh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-            const sStmt = db.prepare(`INSERT OR IGNORE INTO polling_stats (booth_id, mock_done, started, v10, v13, v15, v18, v_queue, v_final, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-
-            // Official Polling Data from Returning Officer Master Report (21,325 votes, 71.66%)
-            const masterOfficialStats = {
-                1: { mock: 'Yes', started: 'Yes', v10: '217', v13: '493', v15: '564', v18: '663', v_final: '663', remark: 'शांतिपूर्ण' },
-                2: { mock: 'Yes', started: 'Yes', v10: '261', v13: '490', v15: '590', v18: '692', v_final: '692', remark: 'शांतिपूर्ण' },
-                3: { mock: 'Yes', started: 'Yes', v10: '158', v13: '320', v15: '374', v18: '437', v_final: '437', remark: 'शांतिपूर्ण' },
-                4: { mock: 'Yes', started: 'Yes', v10: '227', v13: '461', v15: '512', v18: '555', v_final: '555', remark: 'शांतिपूर्ण' },
-                5: { mock: 'Yes', started: 'Yes', v10: '145', v13: '218', v15: '253', v18: '289', v_final: '289', remark: 'शांतिपूर्ण' },
-                6: { mock: 'Yes', started: 'Yes', v10: '200', v13: '400', v15: '499', v18: '590', v_final: '590', remark: 'शांतिपूर्ण' },
-                7: { mock: 'Yes', started: 'Yes', v10: '245', v13: '485', v15: '660', v18: '786', v_final: '786', remark: 'शांतिपूर्ण' },
-                8: { mock: 'Yes', started: 'Yes', v10: '293', v13: '583', v15: '715', v18: '791', v_final: '791', remark: 'शांतिपूर्ण' },
-                9: { mock: 'Yes', started: 'Yes', v10: '255', v13: '545', v15: '724', v18: '845', v_final: '845', remark: 'शांतिपूर्ण' },
-                10: { mock: 'Yes', started: 'Yes', v10: '270', v13: '466', v15: '528', v18: '588', v_final: '588', remark: 'शांतिपूर्ण' },
-                11: { mock: 'Yes', started: 'Yes', v10: '216', v13: '440', v15: '503', v18: '581', v_final: '581', remark: 'शांतिपूर्ण' },
-                12: { mock: 'Yes', started: 'Yes', v10: '257', v13: '535', v15: '648', v18: '690', v_final: '690', remark: 'शांतिपूर्ण' },
-                13: { mock: 'Yes', started: 'Yes', v10: '210', v13: '408', v15: '524', v18: '627', v_final: '627', remark: 'शांतिपूर्ण' },
-                14: { mock: 'Yes', started: 'Yes', v10: '200', v13: '441', v15: '516', v18: '578', v_final: '578', remark: 'शांतिपूर्ण' },
-                15: { mock: 'Yes', started: 'Yes', v10: '243', v13: '465', v15: '553', v18: '600', v_final: '600', remark: 'शांतिपूर्ण' },
-                16: { mock: 'Yes', started: 'Yes', v10: '256', v13: '493', v15: '552', v18: '609', v_final: '609', remark: 'शांतिपूर्ण' },
-                17: { mock: 'Yes', started: 'Yes', v10: '185', v13: '395', v15: '465', v18: '506', v_final: '506', remark: 'शांतिपूर्ण' },
-                18: { mock: 'Yes', started: 'Yes', v10: '190', v13: '454', v15: '563', v18: '709', v_final: '710', remark: 'शांतिपूर्ण' },
-                19: { mock: 'Yes', started: 'Yes', v10: '220', v13: '477', v15: '600', v18: '656', v_final: '656', remark: 'शांतिपूर्ण' },
-                20: { mock: 'Yes', started: 'Yes', v10: '200', v13: '430', v15: '519', v18: '612', v_final: '612', remark: 'शांतिपूर्ण' },
-                21: { mock: 'Yes', started: 'Yes', v10: '170', v13: '276', v15: '309', v18: '324', v_final: '324', remark: 'शांतिपूर्ण' },
-                22: { mock: 'Yes', started: 'Yes', v10: '180', v13: '352', v15: '420', v18: '483', v_final: '483', remark: 'शांतिपूर्ण' },
-                23: { mock: 'Yes', started: 'Yes', v10: '247', v13: '448', v15: '534', v18: '614', v_final: '614', remark: 'शांतिपूर्ण' },
-                24: { mock: 'Yes', started: 'Yes', v10: '111', v13: '285', v15: '429', v18: '482', v_final: '482', remark: 'शांतिपूर्ण' },
-                25: { mock: 'Yes', started: 'Yes', v10: '217', v13: '432', v15: '495', v18: '548', v_final: '548', remark: 'शांतिपूर्ण' },
-                26: { mock: 'Yes', started: 'Yes', v10: '212', v13: '411', v15: '472', v18: '514', v_final: '514', remark: 'शांतिपूर्ण' },
-                27: { mock: 'No', started: 'No', v10: '', v13: '', v15: '', v18: '', v_final: '', remark: 'वार्ड 26 निर्विरोध निर्वाचित (No Election)' },
-                28: { mock: 'Yes', started: 'Yes', v10: '255', v13: '512', v15: '593', v18: '658', v_final: '658', remark: 'शांतिपूर्ण' },
-                29: { mock: 'Yes', started: 'Yes', v10: '313', v13: '486', v15: '557', v18: '611', v_final: '611', remark: 'शांतिपूर्ण' },
-                30: { mock: 'Yes', started: 'Yes', v10: '294', v13: '523', v15: '618', v18: '674', v_final: '674', remark: 'शांतिपूर्ण' },
-                31: { mock: 'Yes', started: 'Yes', v10: '186', v13: '397', v15: '457', v18: '510', v_final: '510', remark: 'शांतिपूर्ण' },
-                32: { mock: 'Yes', started: 'Yes', v10: '193', v13: '400', v15: '472', v18: '502', v_final: '502', remark: 'शांतिपूर्ण' },
-                33: { mock: 'Yes', started: 'Yes', v10: '297', v13: '580', v15: '680', v18: '721', v_final: '721', remark: 'शांतिपूर्ण' },
-                34: { mock: 'Yes', started: 'Yes', v10: '188', v13: '404', v15: '556', v18: '759', v_final: '759', remark: 'शांतिपूर्ण' },
-                35: { mock: 'Yes', started: 'Yes', v10: '251', v13: '525', v15: '710', v18: '911', v_final: '912', remark: 'शांतिपूर्ण' },
-                36: { mock: 'Yes', started: 'Yes', v10: '242', v13: '490', v15: '550', v18: '608', v_final: '608', remark: 'शांतिपूर्ण' }
-            };
-
-            masterBooths.forEach(b => {
-                bStmt.run(b.b, b.z, b.w, b.part || 1, b.name, b.el, b.male_el || 0, b.female_el || 0, b.tg_el || 0, b.op, b.pName, b.pMob, b.isNirvirodh ? 1 : 0);
-                const s = masterOfficialStats[b.b];
-                if (s) {
-                    sStmt.run(b.b, s.mock, s.started, s.v10, s.v13, s.v15, s.v18, 0, s.v_final, s.remark);
-                } else if (b.isNirvirodh) {
-                    sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'वार्ड 26 निर्विरोध निर्वाचित (No Election)');
-                } else {
-                    sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'शांतिपूर्ण');
+            // Load saved live voting seed data (21,325 votes across 35 booths)
+            const fs = require('fs');
+            let seedStatsMap = {};
+            try {
+                const seedPath = path.join(__dirname, 'live_polling_stats_seed.json');
+                if (fs.existsSync(seedPath)) {
+                    const seedList = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+                    seedList.forEach(s => { seedStatsMap[s.booth_id] = s; });
                 }
-            });
+            } catch(e) {
+                console.error("Error loading live_polling_stats_seed:", e);
+            }
 
-            bStmt.finalize();
-            sStmt.finalize();
-            console.log('✅ SQLite Database Synchronized with 36 Booths and 30,598 Electors!');
+            // Seed Booths & Polling Stats
+            db.get(`SELECT COUNT(*) as count FROM booths`, (err, row) => {
+                if (err) return reject(err);
+                if (row.count === 0) {
+                    const bStmt = db.prepare(`INSERT INTO booths (id, zone, ward, name, electors, operator_role, praganak_name, praganak_mob, is_nirvirodh) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+                    const sStmt = db.prepare(`INSERT INTO polling_stats (booth_id, mock_done, started, v10, v13, v15, v18, v_queue, v_final, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
-            // Lock Voting Data for 11-09-2026 Archive & Activate Results Mode
-            db.run(`INSERT OR REPLACE INTO system_config (key, value) VALUES ('voting_locked', 'true')`);
-            db.run(`INSERT OR REPLACE INTO system_config (key, value) VALUES ('active_portal_mode', 'results')`);
-
-            // 14-09-2026 Counting & Results: Create candidates table
-            db.run(`CREATE TABLE IF NOT EXISTS candidates (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ward INTEGER NOT NULL,
-                candidate_no INTEGER NOT NULL,
-                name TEXT NOT NULL,
-                address TEXT,
-                party TEXT NOT NULL,
-                symbol TEXT,
-                votes_evm INTEGER DEFAULT 0,
-                votes_evm2 INTEGER DEFAULT 0,
-                votes_postal INTEGER DEFAULT 0,
-                total_votes INTEGER DEFAULT 0,
-                is_winner INTEGER DEFAULT 0,
-                is_declared INTEGER DEFAULT 0,
-                declared_at DATETIME,
-                UNIQUE(ward, candidate_no)
-            )`, () => {
-                // Safe column additions for candidates
-                db.run(`ALTER TABLE candidates ADD COLUMN votes_evm2 INTEGER DEFAULT 0`, () => {});
-                db.run(`ALTER TABLE candidates ADD COLUMN votes_rounds TEXT`, () => {});
-
-                // Create ward_results table
-                db.run(`CREATE TABLE IF NOT EXISTS ward_results (
-                    ward INTEGER PRIMARY KEY,
-                    total_electors INTEGER DEFAULT 0,
-                    total_polled_votes INTEGER DEFAULT 0,
-                    evm_count INTEGER DEFAULT 1,
-                    nota_votes INTEGER DEFAULT 0,
-                    nota_votes_evm1 INTEGER DEFAULT 0,
-                    nota_votes_evm2 INTEGER DEFAULT 0,
-                    nota_rounds TEXT,
-                    tendered_votes INTEGER DEFAULT 0,
-                    rejected_votes INTEGER DEFAULT 0,
-                    total_counted_votes INTEGER DEFAULT 0,
-                    status TEXT DEFAULT 'Yet to Start',
-                    winner_id INTEGER,
-                    winner_name TEXT,
-                    winner_party TEXT,
-                    margin INTEGER DEFAULT 0,
-                    counting_table_no INTEGER DEFAULT 1,
-                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                )`, () => {
-                    // Safe column additions for ward_results
-                    db.run(`ALTER TABLE ward_results ADD COLUMN evm_count INTEGER DEFAULT 1`, () => {});
-                    db.run(`ALTER TABLE ward_results ADD COLUMN nota_votes_evm1 INTEGER DEFAULT 0`, () => {});
-                    db.run(`ALTER TABLE ward_results ADD COLUMN nota_votes_evm2 INTEGER DEFAULT 0`, () => {});
-                    db.run(`ALTER TABLE ward_results ADD COLUMN nota_rounds TEXT`, () => {});
-                    db.run(`UPDATE ward_results SET evm_count = 2 WHERE ward = 1`, () => {});
-
-                    // Seed Candidates from Form 6 Master
-                    const candStmt = db.prepare(`INSERT OR REPLACE INTO candidates (ward, candidate_no, name, address, party, symbol, is_winner, is_declared, declared_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-                    const { candidatesMaster } = require('./candidates_master.js');
-                    
-                    candidatesMaster.forEach(c => {
-                        const isWin = c.isWinner ? 1 : 0;
-                        const isDec = c.isWinner ? 1 : 0;
-                        const decAt = c.isWinner ? '2026-09-04 15:00:00' : null;
-                        candStmt.run(c.ward, c.cNo, c.name, c.address, c.party, c.symbol, isWin, isDec, decAt);
-                    });
-                    candStmt.finalize();
-
-                    // Seed Ward Results summary
-                    db.all(`
-                        SELECT b.ward, SUM(b.electors) as el, SUM(CAST(s.v_final AS INTEGER)) as polled 
-                        FROM booths b 
-                        JOIN polling_stats s ON b.id = s.booth_id 
-                        GROUP BY b.ward 
-                        ORDER BY b.ward ASC
-                    `, [], (wErr, wRows) => {
-                        if (!wErr && wRows) {
-                            const wrStmt = db.prepare(`
-                                INSERT OR IGNORE INTO ward_results 
-                                (ward, total_electors, total_polled_votes, status, winner_name, winner_party, margin) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?)
-                            `);
-                            wRows.forEach(w => {
-                                if (w.ward === 26) {
-                                    wrStmt.run(w.ward, w.el || 841, 0, 'Declared', 'वीणा देवड़ा', 'भारतीय जनता पार्टी', 0);
-                                } else {
-                                    wrStmt.run(w.ward, w.el || 0, w.polled || 0, 'Yet to Start', '', '', 0);
-                                }
-                            });
-                            wrStmt.finalize();
+                    masterBooths.forEach(b => {
+                        bStmt.run(b.b, b.z, b.w, b.name, b.el, b.op, b.pName, b.pMob, b.isNirvirodh ? 1 : 0);
+                        const seed = seedStatsMap[b.b];
+                        if (b.isNirvirodh) {
+                            sStmt.run(b.b, 'N/A', 'N/A', '0', '0', '0', '0', 0, '0', 'वार्ड 26 निर्विरोध निर्वाचित (No Election)');
+                        } else if (seed) {
+                            sStmt.run(b.b, seed.mock_done || 'Yes', seed.started || 'Yes', seed.v10 || '', seed.v13 || '', seed.v15 || '', seed.v18 || '', seed.v_queue || 0, seed.v_final || '', seed.remark || 'शांतिपूर्ण');
+                        } else {
+                            sStmt.run(b.b, 'No', 'No', '', '', '', '', 0, '', 'शांतिपूर्ण');
                         }
-                        console.log('🗳️ Candidates & Results Tables Synchronized (Form 6 - 35 Wards, 145 Candidates Loaded)!');
+                    });
+
+                    bStmt.finalize();
+                    sStmt.finalize(() => {
+                        console.log('✅ SQLite Database Seeded with 36 Booths, Polling Data & Users!');
                         resolve();
                     });
-                });
+                } else {
+                    // AUTO-HEAL: If booths already exist but polling_stats has 0 votes, restore saved live votes!
+                    db.get("SELECT COUNT(*) as totalVoted FROM polling_stats WHERE v_final != '' AND booth_id != 27", (err2, statRow) => {
+                        if (!err2 && statRow && statRow.totalVoted === 0 && Object.keys(seedStatsMap).length > 0) {
+                            console.log("⚡ [AUTO-HEAL] Re-populating empty polling_stats with 21,325 live voting records...");
+                            const healStmt = db.prepare(`
+                                UPDATE polling_stats 
+                                SET mock_done = ?, started = ?, v10 = ?, v13 = ?, v15 = ?, v18 = ?, v_queue = ?, v_final = ?, remark = ?
+                                WHERE booth_id = ?
+                            `);
+                            Object.values(seedStatsMap).forEach(s => {
+                                healStmt.run(s.mock_done, s.started, s.v10, s.v13, s.v15, s.v18, s.v_queue, s.v_final, s.remark, s.booth_id);
+                            });
+                            healStmt.finalize(() => {
+                                console.log("✅ [AUTO-HEAL SUCCESS] All 35 booths voting data restored!");
+                                resolve();
+                            });
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
             });
         });
     });
@@ -357,6 +251,5 @@ function initDatabase() {
 module.exports = {
     db,
     zonesMaster,
-    masterBooths,
     initDatabase
 };

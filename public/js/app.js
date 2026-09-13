@@ -1373,6 +1373,40 @@ function updateBoothInputsLock(boothId) {
     applyStrictTimeLocks();
 }
 
+// ⚡ 1-Click Quick Unlock all booths in currently selected zone
+function quickUnlockZoneBooths() {
+    const zoneVal = document.getElementById("entryZoneSelect")?.value || "1";
+    const zNum = parseInt(zoneVal);
+    if (!portalData || !portalData.booths) return;
+
+    const zoneBooths = portalData.booths.filter(b => b.zone === zNum && !b.is_nirvirodh);
+    zoneBooths.forEach(b => {
+        const mockEl = document.getElementById(`mock_${b.id}`);
+        const startedEl = document.getElementById(`started_${b.id}`);
+        if (mockEl) {
+            mockEl.value = 'Yes';
+            mockEl.style.color = '#15803d';
+        }
+        if (startedEl) {
+            startedEl.value = 'Yes';
+            startedEl.style.color = '#15803d';
+        }
+
+        const slotKeys = ['v10', 'v13', 'v15', 'v18', 'vQueue', 'vFinal'];
+        slotKeys.forEach(key => {
+            const el = document.getElementById(`${key}_${b.id}`);
+            if (el) {
+                el.disabled = false;
+                el.classList.remove('input-locked-mock');
+                el.placeholder = '0';
+                el.title = '';
+            }
+        });
+    });
+
+    showToast("🔓 ज़ोन के समस्त बूथों के इनपुट अनलॉक हो गए हैं! अब आप सीधे मत दर्ज कर सकते हैं।");
+}
+
 function autoCalcFinalRow(boothId) {
     const v18El = document.getElementById(`v18_${boothId}`);
     const qEl = document.getElementById(`vQueue_${boothId}`);
@@ -2561,6 +2595,43 @@ async function executeSecureDatabaseReset() {
         }
     } catch(e) {
         alert("सर्वर से कनेक्ट करने में त्रुटि!");
+    }
+}
+
+// Dedicated Clean Reset for Counting Results (14-09-2026)
+async function executeCountingDataReset() {
+    if (!currentUser || currentUser.role !== "RO") {
+        alert("⛔ केवल अधिकृत रिटर्निंग ऑफिसर (SDM) को मतगणना डेटा रीसेट करने की अनुमति है!");
+        return;
+    }
+
+    const isConfirm = confirm(
+        "⚠️ मतगणना परिणाम डेटा स्वच्छ रीसेट (Counting Data Clean Reset)?\n\n" +
+        "• यह समस्त 34 वार्डों के दर्ज मत 0 कर देगा।\n" +
+        "• वार्ड 26 (निर्विरोध निर्वाचित) यथावत सुरक्षित रहेगा।\n" +
+        "• यह कल 14-09 की वास्तविक मतगणना से पूर्व संपूर्ण सिस्टम को स्वच्छ स्थिति में ले आएगा।\n\n" +
+        "क्या आप मतगणना डेटा को स्वच्छ रीसेट करना चाहते हैं?"
+    );
+    if (!isConfirm) return;
+
+    try {
+        showToast("⏳ मतगणना डेटा रीसेट हो रहा है...");
+        const res = await fetch('/api/results/reset-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                roUsername: currentUser.username || 'ro_sumerpur'
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert(`✅ ${result.message}`);
+            showToast("✅ मतगणना डेटा सफलतापूर्वक स्वच्छ रीसेट हो गया है!");
+        } else {
+            alert(`❌ रीसेट विफल: ${result.message || 'त्रुटि'}`);
+        }
+    } catch(e) {
+        alert("सर्वर से कनेक्ट करने में त्रुटि: " + e.message);
     }
 }
 

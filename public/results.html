@@ -197,25 +197,30 @@
 </header>
 
 <!-- Multi-Page Sub-Navigation Bar -->
-<nav class="nav-bar">
-    <a class="nav-link" href="/" style="background: #eff6ff; color: #1d4ed8; font-weight: 700;">
-        <i class="fas fa-vote-yea"></i> &larr; मतदान नियंत्रण पोर्टल
-    </a>
-    <a class="nav-link active" data-tab="dashboard" id="navDashboardLink" onclick="navigateTo('dashboard')">
-        <i class="fas fa-chart-pie"></i> RO परिणाम डैशबोर्ड
-    </a>
-    <a class="nav-link" data-tab="wards" id="navWardsLink" onclick="navigateTo('wards')">
-        <i class="fas fa-list-check"></i> 35 वार्ड परिणाम पत्रक
-    </a>
-    <a class="nav-link" data-tab="entry" id="navEntryLink" onclick="navigateTo('entry')">
-        <i class="fas fa-edit"></i> मतगणना प्रविष्टि
-    </a>
-    <a class="nav-link" data-tab="reports" id="navReportsLink" onclick="navigateTo('reports')">
-        <i class="fas fa-file-pdf" style="color:#e11d48;"></i> शासकीय परिणाम रिपोर्ट्स
-    </a>
-    <a class="nav-link" data-tab="livedisplay" id="navLiveDisplayLink" onclick="navigateTo('livedisplay')">
-        <i class="fas fa-tv" style="color:#38bdf8;"></i> कंट्रोल रूम लाइव डिस्प्ले
-    </a>
+<nav class="nav-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+        <a class="nav-link" href="/" style="background: #eff6ff; color: #1d4ed8; font-weight: 700;">
+            <i class="fas fa-vote-yea"></i> &larr; मतदान पोर्टल
+        </a>
+        <a class="nav-link active" data-tab="dashboard" id="navDashboardLink" onclick="navigateTo('dashboard')">
+            <i class="fas fa-chart-pie"></i> RO परिणाम डैशबोर्ड
+        </a>
+        <a class="nav-link" data-tab="wards" id="navWardsLink" onclick="navigateTo('wards')">
+            <i class="fas fa-list-check"></i> 35 वार्ड परिणाम पत्रक
+        </a>
+        <a class="nav-link" data-tab="entry" id="navEntryLink" onclick="navigateTo('entry')">
+            <i class="fas fa-edit"></i> मतगणना प्रविष्टि
+        </a>
+        <a class="nav-link" data-tab="reports" id="navReportsLink" onclick="navigateTo('reports')">
+            <i class="fas fa-file-pdf" style="color:#e11d48;"></i> शासकीय परिणाम
+        </a>
+        <a class="nav-link" data-tab="livedisplay" id="navLiveDisplayLink" onclick="navigateTo('livedisplay')">
+            <i class="fas fa-tv" style="color:#38bdf8;"></i> LED लाइव डिस्प्ले
+        </a>
+        <a class="nav-link" href="/form21" target="_blank" style="background:#fff1f2; color:#be123c; font-weight:700; border:1px solid #fecdd3;">
+            <i class="fas fa-scroll"></i> प्ररूप 21 (Form 21)
+        </a>
+    </div>
 </nav>
 
 <!-- Main Container for Multi-Page Content -->
@@ -223,7 +228,7 @@
 
     <!-- ================= PAGE 1: RO RESULTS DASHBOARD ================= -->
     <div id="view_dashboard" class="page-view active">
-        
+
         <!-- Highlights Strip -->
         <div class="highlights-strip">
             <div class="highlight-card high" style="cursor:pointer;" onclick="navigateTo('wards')">
@@ -231,7 +236,7 @@
                 <div class="info" style="flex:1;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h6>सर्वाधिक बढ़त / अंतर (Highest Margin)</h6>
-                        <span style="font-size:11px; color:#10b981; font-weight:bold;"><i class="fas fa-arrow-right"></i> वार्ड देखें</span>
+                        <span style="font-size:13px; color:#10b981; font-weight:700;"><i class="fas fa-arrow-right"></i> वार्ड देखें</span>
                     </div>
                     <div class="title" id="hlHighestMarginWard">-</div>
                     <div class="sub" id="hlHighestMarginSub">अग्रणी प्रत्याशी: -</div>
@@ -242,7 +247,7 @@
                 <div class="info" style="flex:1;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <h6>घोषित परिणाम प्रगति (Results Declared)</h6>
-                        <span style="font-size:11px; color:#3b82f6; font-weight:bold;">35 कुल वार्ड</span>
+                        <span style="font-size:13px; color:#3b82f6; font-weight:700;">35 कुल वार्ड</span>
                     </div>
                     <div class="title" id="hlDeclaredCountTitle">0 / 35 वार्ड घोषित</div>
                     <div class="sub" id="hlDeclaredCountSub">मतगणना प्रगति: 0.00%</div>
@@ -280,27 +285,36 @@
                 <div class="number" id="kpiTotalCountedVotes" style="color:#0284c7;">0</div>
                 <small id="kpiCountedPercentageSub">0.00% गिने गए</small>
             </div>
+            <div class="kpi-card" style="border-top: 4px solid #ec4899;">
+                <h5>विजेता लिंगवार (Gender)</h5>
+                <div class="number" id="kpiGenderBifurcation" style="font-size: 26px; display: flex; justify-content: center; gap: 12px; align-items: center; line-height: 1.1;">
+                    <span style="color:#2563eb;" title="पुरुष"><i class="fas fa-mars" style="font-size:22px;"></i> <span id="kpiMaleWin">0</span></span>
+                    <span style="color:#cbd5e1; font-size: 18px;">|</span>
+                    <span style="color:#db2777;" title="महिला"><i class="fas fa-venus" style="font-size:22px;"></i> <span id="kpiFemaleWin">0</span></span>
+                </div>
+                <small id="kpiGenderRatioSub">👨 पुरुष vs 👩 महिला</small>
+            </div>
             <div class="kpi-card" style="border-top: 4px solid #8b5cf6;">
-                <h5>बहुमत का जादुई आंकड़ा</h5>
+                <h5>बहुमत</h5>
                 <div class="number" style="color:#8b5cf6;">18</div>
                 <small id="kpiMajoritySub">सीटें आवश्यक</small>
             </div>
         </div>
 
-        <!-- Party Tally Board & Majority Progress Meter -->
+        <!-- Party Tally Board & Majority Progress Meter - Executive Light Mode -->
         <div class="party-tally-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div>
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #f8fafc;">
-                        <i class="fas fa-chart-bar" style="color: #38bdf8;"></i> दलगत स्थिति (Party Position Tally)
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 9px; color: #0f172a;">
+                        <i class="fas fa-chart-bar" style="color: #0284c7;"></i> दलगत स्थिति (Party Position Tally)
                     </h3>
-                    <p style="margin: 2px 0 0 0; font-size: 11.5px; opacity: 0.8;">
-                        कुल 35 सीटें | परिणाम घोषित: <b id="resDeclaredCount" style="color:#4ade80;">0</b> | मतगणना जारी: <b id="resCountingCount" style="color:#fde047;">0</b> | प्रतीक्षारत: <b id="resPendingCount" style="color:#cbd5e1;">35</b>
+                    <p style="margin: 4px 0 0 0; font-size: 13.5px; color: #64748b; font-weight: 500;">
+                        कुल 35 सीटें | परिणाम घोषित: <b id="resDeclaredCount" style="color:#16a34a; font-size:14.5px;">0</b> | मतगणना जारी: <b id="resCountingCount" style="color:#d97706; font-size:14.5px;">0</b> | प्रतीक्षारत: <b id="resPendingCount" style="color:#475569; font-size:14.5px;">35</b>
                     </p>
                 </div>
-                <div style="display: flex; gap: 16px; align-items: center; font-size: 12px; background: rgba(255,255,255,0.08); padding: 6px 14px; border-radius: 20px;">
-                    <div>कुल गिने मत: <b id="resCountedVotes" style="color: #38bdf8; font-size: 14px;">0</b> / 21,325</div>
-                    <div>गणना प्रगति: <b id="resCountedPct" style="color: #4ade80; font-size: 14px;">0.00%</b></div>
+                <div style="display: flex; gap: 18px; align-items: center; font-size: 13.5px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 20px; color: #334155; font-weight: 600;">
+                    <div>कुल गिने मत: <b id="resCountedVotes" style="color: #0284c7; font-size: 16px;">0</b> / 21,325</div>
+                    <div>गणना प्रगति: <b id="resCountedPct" style="color: #16a34a; font-size: 16px;">0.00%</b></div>
                 </div>
             </div>
 
@@ -312,7 +326,7 @@
                         <span class="party-tag bjp">कमल</span>
                     </div>
                     <div class="p-counts">
-                        <div class="p-total" id="tallyBjpTotal" style="color: #fb923c;">0</div>
+                        <div class="p-total" id="tallyBjpTotal" style="color: #ea580c;">0</div>
                         <div class="p-sub">जीते: <b id="tallyBjpWon">0</b> | बढ़त: <b id="tallyBjpLead">0</b></div>
                     </div>
                 </div>
@@ -322,7 +336,7 @@
                         <span class="party-tag inc">हाथ</span>
                     </div>
                     <div class="p-counts">
-                        <div class="p-total" id="tallyIncTotal" style="color: #38bdf8;">0</div>
+                        <div class="p-total" id="tallyIncTotal" style="color: #0284c7;">0</div>
                         <div class="p-sub">जीते: <b id="tallyIncWon">0</b> | बढ़त: <b id="tallyIncLead">0</b></div>
                     </div>
                 </div>
@@ -332,7 +346,7 @@
                         <span class="party-tag ind">स्वतंत्र</span>
                     </div>
                     <div class="p-counts">
-                        <div class="p-total" id="tallyIndTotal" style="color: #c084fc;">0</div>
+                        <div class="p-total" id="tallyIndTotal" style="color: #9333ea;">0</div>
                         <div class="p-sub">जीते: <b id="tallyIndWon">0</b> | बढ़त: <b id="tallyIndLead">0</b></div>
                     </div>
                 </div>
@@ -342,7 +356,7 @@
                         <span class="party-tag aap">झाड़ू</span>
                     </div>
                     <div class="p-counts">
-                        <div class="p-total" id="tallyAapTotal" style="color: #facc15;">0</div>
+                        <div class="p-total" id="tallyAapTotal" style="color: #ca8a04;">0</div>
                         <div class="p-sub">जीते: <b id="tallyAapWon">0</b> | बढ़त: <b id="tallyAapLead">0</b></div>
                     </div>
                 </div>
@@ -352,7 +366,7 @@
                         <span class="party-tag oth">अन्य</span>
                     </div>
                     <div class="p-counts">
-                        <div class="p-total" id="tallyOthTotal" style="color: #94a3b8;">0</div>
+                        <div class="p-total" id="tallyOthTotal" style="color: #475569;">0</div>
                         <div class="p-sub">जीते: <b id="tallyOthWon">0</b> | बढ़त: <b id="tallyOthLead">0</b></div>
                     </div>
                 </div>
@@ -361,36 +375,64 @@
             <!-- Majority Bar (18 / 35 seats) -->
             <div class="majority-meter-box">
                 <div class="majority-meter-label">
-                    <span>बहुमत का जादुई आंकड़ा: <b>18 सीटें</b> (कुल 35 में से)</span>
-                    <span id="majorityStatusText" style="color: #fbbf24;">बहुमत के लिए 18 सीटें शेष</span>
+                    <span>बहुमत: <b style="font-size:14.5px;">18 सीटें</b> (कुल 35 में से)</span>
+                    <span id="majorityStatusText" style="color: #b45309; font-weight: 800; font-size:14px;">बहुमत के लिए 18 सीटें शेष</span>
                 </div>
                 <div class="majority-bar-track">
                     <div class="majority-marker" title="बहुमत मार्क (18 सीटें)"></div>
-                    <div id="majBarBjp" style="width: 0%; background: #f97316; height: 100%; transition: width 0.4s ease;" title="BJP"></div>
-                    <div id="majBarInc" style="width: 0%; background: #0ea5e9; height: 100%; transition: width 0.4s ease;" title="INC"></div>
-                    <div id="majBarInd" style="width: 0%; background: #a855f7; height: 100%; transition: width 0.4s ease;" title="IND"></div>
-                    <div id="majBarAap" style="width: 0%; background: #eab308; height: 100%; transition: width 0.4s ease;" title="AAP"></div>
+                    <div id="majBarBjp" style="width: 0%; background: #ea580c; height: 100%; transition: width 0.4s ease;" title="BJP"></div>
+                    <div id="majBarInc" style="width: 0%; background: #0284c7; height: 100%; transition: width 0.4s ease;" title="INC"></div>
+                    <div id="majBarInd" style="width: 0%; background: #9333ea; height: 100%; transition: width 0.4s ease;" title="IND"></div>
+                    <div id="majBarAap" style="width: 0%; background: #ca8a04; height: 100%; transition: width 0.4s ease;" title="AAP"></div>
                     <div id="majBarOth" style="width: 0%; background: #64748b; height: 100%; transition: width 0.4s ease;" title="OTH"></div>
+                </div>
+            </div>
+
+            <!-- Gender Bifurcation Widget (Male vs Female Winners & Leading) -->
+            <div class="gender-bifurcation-box" style="margin-top: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 14px 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                    <div style="font-size: 14.5px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-venus-mars" style="color: #db2777; font-size:16px;"></i>
+                        <span>विजेता एवं बढ़त लिंगवार विश्लेषण (Gender Bifurcation)</span>
+                    </div>
+                    <div style="display: flex; gap: 18px; font-size: 14px; font-weight: 600;">
+                        <span style="color: #1d4ed8; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-mars" style="font-size:16px;"></i> <b>पुरुष:</b> <span id="genderMaleWon" style="font-weight: 800; font-size: 17px; color: #1d4ed8;">0</span> जीते <span style="font-size: 12.5px; color:#475569;">(<span id="genderMaleLead">0</span> बढ़त)</span>
+                        </span>
+                        <span style="color: #be185d; display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-venus" style="font-size:16px;"></i> <b>महिला:</b> <span id="genderFemaleWon" style="font-weight: 800; font-size: 17px; color: #be185d;">0</span> जीते <span style="font-size: 12.5px; color:#475569;">(<span id="genderFemaleLead">0</span> बढ़त)</span>
+                        </span>
+                    </div>
+                </div>
+                <!-- Dual-colored Gender Distribution Track -->
+                <div style="height: 12px; background: #e2e8f0; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; display: flex; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);">
+                    <div id="genderBarMale" style="width: 0%; background: linear-gradient(90deg, #2563eb, #3b82f6); height: 100%; transition: width 0.4s ease;" title="पुरुष (Male)"></div>
+                    <div id="genderBarFemale" style="width: 0%; background: linear-gradient(90deg, #db2777, #ec4899); height: 100%; transition: width 0.4s ease;" title="महिला (Female)"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569; margin-top: 6px; font-weight: 600;">
+                    <span id="genderMaleRatioText">पुरुष: 0%</span>
+                    <span id="genderTotalDeclaredText">कुल घोषित परिणाम: 0 / 35</span>
+                    <span id="genderFemaleRatioText">महिला: 0%</span>
                 </div>
             </div>
         </div>
 
         <!-- Quick Action Toolbar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; background: white; padding: 12px 18px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
-            <div style="font-size: 13.5px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; background: white; padding: 14px 20px; border-radius: var(--radius-md); border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 15px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-bolt" style="color: #f97316;"></i> 35 वार्ड मतगणना लाइव समरी
             </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="btn-primary" style="background: #0f172a; border-color: #0f172a; font-size: 12px; padding: 7px 14px;" onclick="navigateTo('entry')">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-primary" style="background: #0284c7; border-color: #0284c7; font-size: 13px; padding: 8px 16px; font-weight:700;" onclick="navigateTo('entry')">
                     <i class="fas fa-pen-to-square"></i> मतगणना प्रविष्टि करें
                 </button>
-                <button class="btn-secondary" style="font-size: 12px; padding: 7px 14px;" onclick="printConsolidatedResults()">
+                <button class="btn-secondary" style="font-size: 13px; padding: 8px 16px; font-weight:600;" onclick="printConsolidatedResults()">
                     <i class="fas fa-print"></i> परिणाम समरी प्रिंट
                 </button>
-                <a href="/api/results/export/csv" class="btn-secondary" style="font-size: 12px; padding: 7px 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                <a href="/api/results/export/csv" class="btn-secondary" style="font-size: 13px; padding: 8px 16px; font-weight:600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                     <i class="fas fa-file-excel" style="color:#10b981;"></i> Excel / CSV
                 </a>
-                <button class="btn-secondary" style="font-size: 12px; padding: 7px 14px;" onclick="fetchResultsData(true)">
+                <button class="btn-secondary" style="font-size: 13px; padding: 8px 16px; font-weight:600;" onclick="fetchResultsData(true)">
                     <i class="fas fa-rotate"></i> रीफ्रेश
                 </button>
             </div>
@@ -398,12 +440,12 @@
 
         <!-- 35 Ward Summary Table -->
         <div class="card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--primary);">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 16px 20px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--primary);">
                     <i class="fas fa-table"></i> समस्त 35 वार्ड — लाइव परिणाम एवं बढ़त स्थिति सारणी
                 </h3>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="dashSearchInput" placeholder="वार्ड या प्रत्याशी खोजें..." class="form-control" style="width: 200px; padding: 5px 10px; font-size: 12px;" oninput="renderDashboardSummaryTable()">
+                    <input type="text" id="dashSearchInput" placeholder="वार्ड या प्रत्याशी खोजें..." class="form-control" style="width: 220px; padding: 7px 12px; font-size: 13px;" oninput="renderDashboardSummaryTable()">
                 </div>
             </div>
             <div class="card-body" style="padding: 0; overflow-x: auto;">
@@ -415,6 +457,7 @@
                             <th>11-09 पोल</th>
                             <th>EVM पार्ट</th>
                             <th>अग्रणी / विजयी प्रत्याशी</th>
+                            <th>लिंग</th>
                             <th>दल</th>
                             <th>प्राप्त मत</th>
                             <th>अंतर (Margin)</th>
@@ -470,79 +513,88 @@
 
     <!-- ================= PAGE 3: DEDICATED ON-PAGE COUNTING ENTRY ================= -->
     <div id="view_entry" class="page-view">
-        
-        <div class="card" style="max-width: 1050px; margin: 0 auto; box-shadow: var(--shadow-md);">
-            <div class="card-header" style="background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%); color: white;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #ffbc00;">
+        <div class="counting-entry-shell">
+            
+            <!-- Sleek Top Header Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: linear-gradient(135deg, #0a2540 0%, #1e3a8a 100%); color: white; padding: 14px 22px; border-radius: 14px; box-shadow: 0 4px 20px -4px rgba(10, 37, 64, 0.35);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.14); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: #ffbc00; border: 1px solid rgba(255,255,255,0.2);">
                         <i class="fas fa-calculator"></i>
                     </div>
                     <div>
-                        <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: white;">मतगणना प्रविष्टि एवं परिणाम प्रमाणीकरण पत्रक</h3>
-                        <p style="margin: 0; font-size: 11.5px; opacity: 0.85;">रिटर्निंग ऑफिसर (SDM) सुमेरपुर &bull; नगर पालिका आम चुनाव 2026</p>
+                        <h2 style="margin: 0; font-size: 17px; font-weight: 800; letter-spacing: 0.2px; color: white;">मतगणना प्रविष्टि एवं परिणाम प्रमाणीकरण पत्रक</h2>
+                        <p style="margin: 2px 0 0 0; font-size: 12px; opacity: 0.85;">कार्यालय रिटर्निंग ऑफिसर (SDM), सुमेरपुर &bull; चक्रवार EVM एवं डाक मत प्रविष्टि प्रणाली</p>
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn-secondary" style="padding: 5px 12px; font-size: 11.5px; color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1);" onclick="openCountingEntryModal(currentCountingWard)">
+                    <button class="btn-secondary" style="padding: 7px 14px; font-size: 12px; font-weight: 700; color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.12); border-radius: 8px;" onclick="openCountingEntryModal(currentCountingWard)">
                         <i class="fas fa-expand"></i> पॉपअप मोड में खोलें
                     </button>
                 </div>
             </div>
 
-            <div class="card-body" style="padding: 16px 20px;">
-                <!-- Ward & Part Selectors Strip -->
-                <div style="display: grid; grid-template-columns: 1.3fr 2.3fr 0.8fr; gap: 12px; align-items: end; background: #f8fafc; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 16px;">
-                    <div>
-                        <label style="font-size: 12px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px;">
-                            <i class="fas fa-map-location-dot" style="color: var(--accent);"></i> 1. वार्ड चुनें (Select Ward):
-                        </label>
-                        <select id="onPageWardSelect" onchange="onOnPageWardSelected(this.value)" class="form-control" style="font-weight: bold; cursor: pointer;">
-                            <!-- Populated dynamically: Ward 1 to 35 -->
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px;">
-                            <i class="fas fa-layer-group" style="color: var(--info);"></i> 2. भाग / चक्र चुनें (Select Part / Round):
-                        </label>
-                        <select id="onPagePartSelect" onchange="switchCountingPart(parseInt(this.value), true)" class="form-control" style="font-weight: bold; border-color: var(--info); background: #f0f9ff; cursor: pointer;">
-                            <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px;">
-                            <i class="fas fa-hashtag"></i> टेबल सं.:
-                        </label>
-                        <input type="number" id="onPageTableNo" class="form-control" style="text-align: center; font-weight: bold;" value="1" min="1" max="15">
+            <!-- Modern Ward & Booth Selector Card -->
+            <div class="counting-controls-card">
+                <div class="counting-control-group">
+                    <label><i class="fas fa-map-location-dot" style="color:#ff6b35;"></i> 1. वार्ड चुनें (Select Ward):</label>
+                    <select id="onPageWardSelect" onchange="onOnPageWardSelected(this.value)" class="counting-ward-select">
+                        <!-- Populated dynamically: Ward 1 to 35 -->
+                    </select>
+                </div>
+                <div class="counting-control-group">
+                    <label><i class="fas fa-layer-group" style="color:#0284c7;"></i> 2. मतदान केंद्र संरचना:</label>
+                    <div id="onPageWardStructurePill" class="counting-booth-pill">
+                        <i class="fas fa-info-circle"></i> <span id="onPageStructureText">वार्ड प्रविष्टि लोड हो रही है...</span>
                     </div>
                 </div>
-
-                <!-- Ward Info Strip -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 16px; padding: 10px 14px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); font-size: 12.5px;">
-                    <div><b>कुल मतदाता:</b> <span id="onPageElectors" style="font-weight: 700; color: var(--primary);">0</span></div>
-                    <div><b>11-09 पोल लक्ष्य:</b> <span id="onPagePolled" style="font-weight: 700; color: var(--info);">0 मत</span></div>
-                    <div><b>वार्ड स्थिति:</b> <span id="onPageStatus" style="font-weight: 700;">-</span></div>
-                    <div id="onPageQuickBadge" style="text-align: right;"></div>
+                <div class="counting-control-group">
+                    <label><i class="fas fa-hashtag" style="color:#8b5cf6;"></i> 3. टेबल संख्या:</label>
+                    <input type="number" id="onPageTableNo" class="counting-table-input" value="1" min="1" max="15" onchange="if(countingState) countingState.table_no = this.value">
                 </div>
+            </div>
 
-                <!-- Active Container (Candidate Entry / Consolidated) -->
-                <div id="onPageActiveContainer">
-                    <!-- Injected dynamically via results.js -->
+            <!-- Executive KPI Metadata Cards -->
+            <div class="counting-kpi-grid">
+                <div class="counting-kpi-card electors">
+                    <div class="kpi-icon-box electors"><i class="fas fa-users"></i></div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">कुल पंजीकृत मतदाता</div>
+                        <div class="kpi-val" id="onPageElectors">0</div>
+                    </div>
                 </div>
-
-                <!-- Action Buttons -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
-                    <div id="onPageSummaryBadge" style="font-size: 12px; color: var(--text-muted); font-weight: 600;"></div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="button" class="btn-secondary" onclick="navigateTo('wards')">वार्ड ग्रिड देखें</button>
-                        <button type="button" class="btn-primary" style="background: var(--success); padding: 9px 22px; font-weight: 700;" onclick="saveCountingData(true)">
-                            <i class="fas fa-save"></i> मतगणना डेटा सुरक्षित करें (Save)
-                        </button>
+                <div class="counting-kpi-card polled">
+                    <div class="kpi-icon-box polled"><i class="fas fa-check-to-slot"></i></div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">11-09 पोल लक्ष्य (Polled)</div>
+                        <div class="kpi-val" id="onPagePolled">0</div>
+                    </div>
+                </div>
+                <div class="counting-kpi-card booths">
+                    <div class="kpi-icon-box booths"><i class="fas fa-building-flag"></i></div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">EVM गणना भाग (Parts)</div>
+                        <div class="kpi-val" id="onPageBoothCount">1 भाग</div>
+                    </div>
+                </div>
+                <div class="counting-kpi-card status">
+                    <div class="kpi-icon-box status"><i class="fas fa-award"></i></div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">वर्तमान वार्ड स्थिति</div>
+                        <div class="kpi-val" id="onPageStatusContainer">
+                            <span id="onPageStatus" class="status-pill-pending">लोड हो रहा है...</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
+            <!-- Active Dynamic Container (Unified Candidate Entry + Auto-Calculations + Winner Card + Save All) -->
+            <div id="onPageActiveContainer">
+                <!-- Injected dynamically via results.js -->
+            </div>
+
+        </div>
     </div>
+
 
     <!-- ================= PAGE 4: OFFICIAL REPORTS STUDIO ================= -->
     <div id="view_reports" class="page-view">
@@ -569,18 +621,46 @@
                         </button>
                     </div>
 
-                    <!-- Report Card 2: Form 21 -->
-                    <div class="card" style="padding: 18px; border-left: 5px solid #d97706; margin: 0;">
-                        <div style="font-size: 11px; color: #d97706; font-weight: bold; text-transform: uppercase;">निर्वाचन प्रमाण-पत्र</div>
-                        <h4 style="margin: 6px 0; color: var(--primary); font-size: 15px;">
-                            <i class="fas fa-award" style="color: #d97706;"></i> प्ररूप 21 (Certificate of Election)
-                        </h4>
-                        <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">
-                            घोषित वार्डों के विजयी प्रत्याशियों को जारी किए जाने वाला रिटर्निंग ऑफिसर हस्ताक्षरित प्रमाण-पत्र।
-                        </p>
-                        <button class="btn-primary" style="font-size: 12px; padding: 8px 14px; background: #d97706; border-color: #d97706;" onclick="openFirstDeclaredForm21()">
-                            <i class="fas fa-certificate"></i> प्रमाण-पत्र स्टूडियो खोलें
-                        </button>
+                    <!-- Report Card 2: Form 21 (अन्तिम परिणाम पत्र) -->
+                    <div class="card" style="padding: 20px; border-left: 5px solid #d97706; margin: 0; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size: 11px; color: #d97706; font-weight: 800; text-transform: uppercase;">वैधानिक परिणाम पत्र</span>
+                                <span style="font-size: 10.5px; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px; font-weight: 700;">नियम 66</span>
+                            </div>
+                            <h4 style="margin: 4px 0 8px 0; color: var(--primary); font-size: 16px; font-weight: 800;">
+                                <i class="fas fa-file-contract" style="color: #d97706;"></i> प्ररूप — 21 (अन्तिम परिणाम पत्र)
+                            </h4>
+                            <p style="font-size: 12px; color: #64748b; margin-bottom: 14px; line-height: 1.5;">
+                                राजस्थान नगरपालिका (निर्वाचन) नियम, 1994 के नियम 66 के अधीन शासकीय प्रारूप। समस्त 35 वार्डों का चक्रवार मत, नोटा, विधिमान्य मत एवं रिटर्निंग अधिकारी हस्ताक्षरित पत्रक।
+                            </p>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px; background: #fffbeb; padding: 14px; border-radius: 8px; border: 1px solid #fde68a;">
+                            <div>
+                                <label style="font-size: 11.5px; font-weight: 700; color: #78350f; display: block; margin-bottom: 4px;">
+                                    <i class="fas fa-layer-group"></i> वार्ड चुनें या सभी एक साथ:
+                                </label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <select id="reportsWardForm21Select" style="flex: 1; padding: 7px 10px; font-size: 12.5px; font-weight: 700; border-radius: 6px; border: 1px solid #cbd5e1; background: white;">
+                                        <option value="ALL">📋 समस्त 35 वार्ड (एक साथ संयुक्त PDF)</option>
+                                        <!-- Dynamically populated 1 to 35 -->
+                                    </select>
+                                    <button class="btn-primary" style="font-size: 12px; padding: 7px 14px; background: #b45309; border-color: #b45309; font-weight: 700;" onclick="openSelectedWardForm21()">
+                                        <i class="fas fa-eye"></i> देखें
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 8px;">
+                                <a href="/form21?ward=ALL" target="_blank" class="btn-primary" style="flex: 1; font-size: 12.5px; padding: 9px 12px; background: linear-gradient(135deg, #d97706 0%, #b45309 100%); border: none; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; border-radius: 6px; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);">
+                                    <i class="fas fa-file-pdf"></i> सभी वार्ड 1 PDF में
+                                </a>
+                                <button class="btn-secondary" style="font-size: 12px; padding: 8px 14px; font-weight: 700; background: #ffffff; border: 1.5px solid #d97706; color: #b45309; border-radius: 6px; cursor: pointer;" onclick="openForm21Certificate(1)">
+                                    <i class="fas fa-window-maximize"></i> स्टूडियो
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Report Card 3: Party Position -->
@@ -635,70 +715,187 @@
         <div class="live-tv-container" id="liveTvContainer">
             <!-- TV Header -->
             <div class="tv-header">
-                <div>
-                    <h2><i class="fas fa-tv" style="color:#38bdf8;"></i> सुमेरपुर नगर पालिका चुनाव 2026 — मतगणना लाइव कंट्रोल रूम</h2>
-                    <small style="color:#94a3b8;"><span class="live-pulse-dot"></span> <b>लाइव ऑटो-सिंक सक्रिय</b> | नियंत्रण कक्ष डिस्प्ले मोड</small>
+                <div class="tv-header-left">
+                    <div class="tv-badge-live">
+                        <span class="live-pulse-dot"></span> <b>लाइव मतगणना नियंत्रण कक्ष (SDM CONTROL ROOM)</b>
+                    </div>
+                    <h2><i class="fas fa-tv" style="color:#38bdf8;"></i> सुमेरपुर नगर पालिका आम चुनाव 2026 — लाइव परिणाम एवं रुझान</h2>
                 </div>
-                <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-                    <div style="font-size:22px; font-weight:bold; color:#facc15; background:#0f2238; padding:6px 14px; border-radius:8px; border:1px solid #1e3a5f;" id="tvLiveClock">00:00:00 AM</div>
+                <div class="tv-header-right">
+                    <div class="tv-clock-badge" id="tvLiveClock">00:00:00 AM</div>
                     <button class="btn-tv-fullscreen" id="btnTvFullscreen" onclick="toggleProjectorMode()" title="फुल स्क्रीन मोड टॉगल करें">
                         <i class="fas fa-expand"></i> ⛶ फुल स्क्रीन (Full Screen)
                     </button>
                 </div>
             </div>
 
-            <!-- TV Big KPIs -->
+            <!-- TV Big KPIs (Larger & Prominent Cards) -->
             <div class="tv-kpi-row">
-                <div class="tv-kpi-card" style="border-top:4px solid #10b981;">
-                    <div class="tv-lbl">परिणाम घोषित</div>
+                <div class="tv-kpi-card tv-card-green">
+                    <div class="tv-lbl"><i class="fas fa-trophy" style="color:#10b981;"></i> परिणाम घोषित</div>
                     <div class="tv-val" id="tvDeclaredWards" style="color:#10b981;">0 / 35</div>
+                    <div class="tv-sub" id="tvDeclaredSub">कुल 35 में से सीट स्थिति</div>
                 </div>
-                <div class="tv-kpi-card" style="border-top:4px solid #f59e0b;">
-                    <div class="tv-lbl">मतगणना जारी</div>
+                <div class="tv-kpi-card tv-card-amber">
+                    <div class="tv-lbl"><i class="fas fa-hourglass-half" style="color:#f59e0b;"></i> मतगणना जारी</div>
                     <div class="tv-val" id="tvCountingWards" style="color:#f59e0b;">0</div>
+                    <div class="tv-sub" id="tvCountingSub">सक्रिय काउंटिंग टेबल</div>
                 </div>
-                <div class="tv-kpi-card" style="border-top:4px solid #38bdf8;">
-                    <div class="tv-lbl">कुल गिने गए मत</div>
+                <div class="tv-kpi-card tv-card-blue">
+                    <div class="tv-lbl"><i class="fas fa-vote-yea" style="color:#38bdf8;"></i> कुल गिने गए मत</div>
                     <div class="tv-val" id="tvCountedVotes" style="color:#38bdf8;">0</div>
+                    <div class="tv-sub" id="tvCountedVotesSub">EVM + डाक मतपत्र</div>
                 </div>
-                <div class="tv-kpi-card" style="border-top:4px solid #c084fc;">
-                    <div class="tv-lbl">मतगणना प्रगति</div>
+                <div class="tv-kpi-card tv-card-purple">
+                    <div class="tv-lbl"><i class="fas fa-chart-line" style="color:#c084fc;"></i> मतगणना प्रगति</div>
                     <div class="tv-val" id="tvCountedPct" style="color:#c084fc;">0.00%</div>
+                    <div class="tv-sub" id="tvCountedPctSub">कुल मतदान के सापेक्ष</div>
                 </div>
-                <div class="tv-kpi-card" style="border-top:4px solid #facc15;">
-                    <div class="tv-lbl">अग्रणी दल</div>
-                    <div class="tv-val" id="tvLeadingParty" style="color:#facc15; font-size: 20px;">-</div>
+                <div class="tv-kpi-card tv-card-gold">
+                    <div class="tv-lbl"><i class="fas fa-flag" style="color:#facc15;"></i> अग्रणी दल</div>
+                    <div class="tv-val" id="tvLeadingParty" style="color:#facc15; font-size: 30px;">-</div>
+                    <div class="tv-sub">सर्वाधिक सीट बढ़त</div>
                 </div>
-            </div>
-
-            <!-- TV Live Party Tally Bar -->
-            <div style="background: rgba(255,255,255,0.05); padding: 18px 22px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-top: 18px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: white;">
-                    <div style="font-size: 16px; font-weight: 800;"><i class="fas fa-chart-simple" style="color:#38bdf8;"></i> दलगत परिणाम स्थिति (बहुमत लक्ष्य: 18 सीटें)</div>
-                    <div id="tvMajorityText" style="font-size: 13px; color: #facc15; font-weight: 700;">बहुमत के लिए 18 सीटें शेष</div>
-                </div>
-                <div class="majority-bar-track" style="height: 20px; border-radius: 12px;">
-                    <div class="majority-marker" style="top:-4px; bottom:-4px; width:4px;" title="बहुमत मार्क (18 सीटें)"></div>
-                    <div id="tvMajBarBjp" style="width: 0%; background: #f97316; height: 100%; transition: width 0.4s ease;"></div>
-                    <div id="tvMajBarInc" style="width: 0%; background: #0ea5e9; height: 100%; transition: width 0.4s ease;"></div>
-                    <div id="tvMajBarInd" style="width: 0%; background: #a855f7; height: 100%; transition: width 0.4s ease;"></div>
-                    <div id="tvMajBarAap" style="width: 0%; background: #eab308; height: 100%; transition: width 0.4s ease;"></div>
-                    <div id="tvMajBarOth" style="width: 0%; background: #64748b; height: 100%; transition: width 0.4s ease;"></div>
-                </div>
-                <!-- TV Party Count Pills -->
-                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 14px; flex-wrap: wrap;" id="tvPartyPillsContainer">
-                    <!-- Populated dynamically -->
+                <div class="tv-kpi-card tv-card-pink">
+                    <div class="tv-lbl"><i class="fas fa-venus-mars" style="color:#ec4899;"></i> विजेता लिंगवार (Gender)</div>
+                    <div class="tv-val" id="tvGenderVal" style="font-size: 28px; display: flex; justify-content: center; gap: 14px; align-items: center;">
+                        <span style="color:#60a5fa;" title="पुरुष"><i class="fas fa-mars"></i> <b><span id="tvMaleWon">0</span></b> <small style="font-size:13px;">पुरुष</small></span>
+                        <span style="color:#94a3b8; font-size:16px;">|</span>
+                        <span style="color:#f472b6;" title="महिला"><i class="fas fa-venus"></i> <b><span id="tvFemaleWon">0</span></b> <small style="font-size:13px;">महिला</small></span>
+                    </div>
+                    <div class="tv-sub">घोषित सीटों में प्रतिनिधित्व</div>
                 </div>
             </div>
 
-            <!-- TV Live Marquee Ticker -->
-            <div style="margin-top: 20px; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 12px;">
-                <span class="badge" style="background: #e11d48; color: white; font-weight: 800; font-size: 12px; padding: 4px 10px; white-space: nowrap;">
-                    <i class="fas fa-bullhorn"></i> ब्रेकिंग परिणाम
-                </span>
-                <marquee id="tvMarqueeText" style="color: white; font-size: 13.5px; font-weight: 600;" scrollamount="6">
+            <!-- TV Studio Party Scoreboard (5 Large TV Party Cards + Majority Bar) -->
+            <div class="tv-party-scoreboard-box">
+                <div class="tv-majority-top-row">
+                    <div class="tv-majority-title">
+                        <i class="fas fa-chart-column" style="color:#38bdf8;"></i> <b>दलवार परिणाम एवं रुझान (Party Scoreboard)</b>
+                        <span class="badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; font-size:12px; margin-left:8px;">कुल 35 सीटें</span>
+                    </div>
+                    <div id="tvMajorityText" class="tv-majority-status">
+                        बहुमत हेतु 18 सीटें आवश्यक
+                    </div>
+                </div>
+
+                <!-- Majority Meter Bar -->
+                <div class="tv-majority-bar-container">
+                    <div class="majority-bar-track" style="height: 24px; border-radius: 12px; position: relative;">
+                        <div class="majority-marker" style="top:-6px; bottom:-6px; width:5px; z-index:10; background:#facc15; box-shadow:0 0 10px #facc15;" title="बहुमत मार्क (18 सीटें)">
+                            <span class="tv-marker-tag">18 (बहुमत)</span>
+                        </div>
+                        <div id="tvMajBarBjp" style="width: 0%; background: linear-gradient(90deg, #f97316, #fb923c); height: 100%; transition: width 0.5s ease;"></div>
+                        <div id="tvMajBarInc" style="width: 0%; background: linear-gradient(90deg, #0284c7, #38bdf8); height: 100%; transition: width 0.5s ease;"></div>
+                        <div id="tvMajBarInd" style="width: 0%; background: linear-gradient(90deg, #9333ea, #c084fc); height: 100%; transition: width 0.5s ease;"></div>
+                        <div id="tvMajBarAap" style="width: 0%; background: linear-gradient(90deg, #ca8a04, #facc15); height: 100%; transition: width 0.5s ease;"></div>
+                        <div id="tvMajBarOth" style="width: 0%; background: linear-gradient(90deg, #475569, #94a3b8); height: 100%; transition: width 0.5s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- 5 Large TV Party Scoreboard Cards -->
+                <div class="tv-party-grid">
+                    <!-- BJP Card -->
+                    <div class="tv-party-card bjp">
+                        <div class="tv-party-header">
+                            <span class="tv-party-badge-chip" style="background:#ea580c; color:white;">BJP</span>
+                            <span class="tv-party-full-name">भाजपा</span>
+                        </div>
+                        <div class="tv-party-seats-val" id="tvPartyBjpSeats" style="color:#f97316;">0</div>
+                        <div class="tv-party-sub-stats">
+                            <span class="won-pill">जीते: <b id="tvPartyBjpWon">0</b></span>
+                            <span class="lead-pill">बढ़त: <b id="tvPartyBjpLead">0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- INC Card -->
+                    <div class="tv-party-card inc">
+                        <div class="tv-party-header">
+                            <span class="tv-party-badge-chip" style="background:#0284c7; color:white;">INC</span>
+                            <span class="tv-party-full-name">कांग्रेस</span>
+                        </div>
+                        <div class="tv-party-seats-val" id="tvPartyIncSeats" style="color:#38bdf8;">0</div>
+                        <div class="tv-party-sub-stats">
+                            <span class="won-pill">जीते: <b id="tvPartyIncWon">0</b></span>
+                            <span class="lead-pill">बढ़त: <b id="tvPartyIncLead">0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- IND Card -->
+                    <div class="tv-party-card ind">
+                        <div class="tv-party-header">
+                            <span class="tv-party-badge-chip" style="background:#9333ea; color:white;">IND</span>
+                            <span class="tv-party-full-name">निर्दलीय</span>
+                        </div>
+                        <div class="tv-party-seats-val" id="tvPartyIndSeats" style="color:#c084fc;">0</div>
+                        <div class="tv-party-sub-stats">
+                            <span class="won-pill">जीते: <b id="tvPartyIndWon">0</b></span>
+                            <span class="lead-pill">बढ़त: <b id="tvPartyIndLead">0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- AAP Card -->
+                    <div class="tv-party-card aap">
+                        <div class="tv-party-header">
+                            <span class="tv-party-badge-chip" style="background:#ca8a04; color:black;">AAP</span>
+                            <span class="tv-party-full-name">आम आदमी</span>
+                        </div>
+                        <div class="tv-party-seats-val" id="tvPartyAapSeats" style="color:#facc15;">0</div>
+                        <div class="tv-party-sub-stats">
+                            <span class="won-pill">जीते: <b id="tvPartyAapWon">0</b></span>
+                            <span class="lead-pill">बढ़त: <b id="tvPartyAapLead">0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- OTH Card -->
+                    <div class="tv-party-card oth">
+                        <div class="tv-party-header">
+                            <span class="tv-party-badge-chip" style="background:#475569; color:white;">OTH</span>
+                            <span class="tv-party-full-name">अन्य दल</span>
+                        </div>
+                        <div class="tv-party-seats-val" id="tvPartyOthSeats" style="color:#94a3b8;">0</div>
+                        <div class="tv-party-sub-stats">
+                            <span class="won-pill">जीते: <b id="tvPartyOthWon">0</b></span>
+                            <span class="lead-pill">बढ़त: <b id="tvPartyOthLead">0</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden fallback container for original tvPartyPillsContainer -->
+                <div id="tvPartyPillsContainer" style="display:none;"></div>
+            </div>
+
+            <!-- TV Live News Marquee Ticker -->
+            <div class="tv-ticker-strip">
+                <div class="tv-ticker-chip">
+                    <span class="live-pulse-dot" style="background:#fff; width:11px; height:11px; margin-right:8px;"></span>
+                    <i class="fas fa-bullhorn" style="font-size:17px;"></i> 🚨 ब्रेकिंग परिणाम
+                </div>
+                <marquee id="tvMarqueeText" class="tv-marquee-body" scrollamount="8" onmouseover="this.stop();" onmouseout="this.start();">
                     सुमेरपुर नगर पालिका चुनाव 2026 मतगणना एवं परिणाम लाइव कवरेज...
                 </marquee>
+            </div>
+
+
+
+            <!-- ================= NEW: 35-WARD VISUAL LIVE MATRIX ================= -->
+            <div class="tv-matrix-container">
+                <div class="tv-matrix-top-bar">
+                    <div class="tv-matrix-heading">
+                        <h3><i class="fas fa-th" style="color:#38bdf8;"></i> समस्त 35 वार्ड — लाइव परिणाम व बढ़त मैट्रिक्स (All 35 Wards Live Board)</h3>
+                        <small style="color:#94a3b8;">वार्ड पर क्लिक कर पूर्ण विवरण या प्ररूप 21 देखें</small>
+                    </div>
+                    <div class="tv-matrix-legend" id="tvMatrixStatusSummary">
+                        <span class="legend-item"><span class="legend-dot dot-green"></span> घोषित: <b id="matrixDecCount" style="color:#10b981;">0</b></span>
+                        <span class="legend-item"><span class="legend-dot dot-amber"></span> मतगणना जारी: <b id="matrixCountCount" style="color:#f59e0b;">0</b></span>
+                        <span class="legend-item"><span class="legend-dot dot-slate"></span> प्रतीक्षारत: <b id="matrixPendingCount" style="color:#94a3b8;">35</b></span>
+                    </div>
+                </div>
+
+                <!-- The 35 Ward Grid -->
+                <div class="tv-ward-grid-board" id="tvWardMatrixGrid">
+                    <!-- Populated dynamically with 35 interactive cards -->
+                </div>
             </div>
 
         </div>
@@ -726,39 +923,47 @@
             </button>
         </div>
 
-        <!-- Selector & Info Bar (Like Matdan Control Zone Select Bar) -->
-        <div class="entry-modal-selector-strip">
-            <div style="display: grid; grid-template-columns: 1.3fr 2.3fr 0.8fr; gap: 12px; align-items: end;">
+        <!-- Selector & Info Bar -->
+        <div class="entry-modal-selector-strip" style="padding: 16px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+            <div style="display: grid; grid-template-columns: 1.5fr 2fr 0.8fr; gap: 14px; align-items: end;">
                 <div>
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px;">
-                        <i class="fas fa-map-location-dot" style="color: var(--accent);"></i> 1. वार्ड चुनें (Select Ward):
+                    <label style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 4px;">
+                        <i class="fas fa-map-location-dot" style="color: #ff6b35;"></i> 1. वार्ड चुनें (Select Ward):
                     </label>
-                    <select id="countingWardSelect" onchange="onCountingWardSelected(this.value)" class="form-control" style="font-weight: bold; cursor: pointer;">
+                    <select id="countingWardSelect" onchange="onCountingWardSelected(this.value)" class="counting-ward-select" style="width: 100%;">
                         <!-- Populated dynamically with 1 to 35 -->
                     </select>
                 </div>
                 <div>
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px;">
-                        <i class="fas fa-layer-group" style="color: var(--info);"></i> 2. भाग / चरण चुनें (Select Part / Stage):
+                    <label style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 4px;">
+                        <i class="fas fa-layer-group" style="color: #0284c7;"></i> 2. मतदान केंद्र संरचना:
                     </label>
-                    <select id="countingPartSelect" onchange="switchCountingPart(parseInt(this.value))" class="form-control" style="font-weight: bold; border-color: var(--info); background: #f0f9ff; cursor: pointer;">
-                        <!-- Populated dynamically -->
-                    </select>
+                    <div id="cModalWardStructurePill" class="counting-booth-pill">
+                        <i class="fas fa-info-circle"></i> <span id="cModalStructureText">वार्ड की प्रविष्टि लोड हो रही है...</span>
+                    </div>
                 </div>
                 <div>
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-dark); display: block; margin-bottom: 4px;">
-                        <i class="fas fa-hashtag"></i> टेबल सं.:
+                    <label style="font-size: 11.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 4px;">
+                        <i class="fas fa-hashtag" style="color: #8b5cf6;"></i> 3. टेबल सं.:
                     </label>
-                    <input type="number" id="countingTableNo" class="form-control" style="text-align: center; font-weight: bold;" value="1" min="1" max="15">
+                    <input type="number" id="countingTableNo" class="counting-table-input" style="width: 100%;" value="1" min="1" max="15" onchange="if(countingState) countingState.table_no = this.value">
                 </div>
             </div>
 
-            <!-- Ward Info Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12.5px;">
-                <div><b>कुल मतदाता:</b> <span id="cModalElectors" style="font-weight: 700; color: var(--primary);">0</span></div>
-                <div><b>11-09 पोल लक्ष्य:</b> <span id="cModalPolled" style="font-weight: 700; color: var(--info);">0 मत</span></div>
-                <div><b>वार्ड स्थिति:</b> <span id="cModalStatus" style="font-weight: 700;">-</span></div>
-                <div id="cModalQuickBadge" style="text-align: right;"></div>
+            <!-- Ward Info Modern Grid -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 12.5px;">
+                <div style="background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <span style="color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase;">कुल पंजीकृत:</span> 
+                    <b id="cModalElectors" style="color: #1e3a8a; font-size: 14px; margin-left: 4px;">0</b>
+                </div>
+                <div style="background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <span style="color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase;">11-09 पोल लक्ष्य:</span> 
+                    <b id="cModalPolled" style="color: #059669; font-size: 14px; margin-left: 4px;">0 मत</b>
+                </div>
+                <div style="background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase;">स्थिति:</span> 
+                    <span id="cModalStatus" style="font-weight: 800; font-size: 12px;">-</span>
+                </div>
             </div>
         </div>
 
@@ -783,26 +988,40 @@
     </div>
 </div>
 
-<!-- ================= FORM 21 CERTIFICATE MODAL ================= -->
-<div id="form21Modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); z-index: 10000; justify-content: center; align-items: center;">
-    <div class="modal-box" style="background: white; border-radius: 8px; width: 750px; max-width: 95%; max-height: 92vh; overflow-y: auto; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
-            <span style="font-weight: 800; font-size: 15px; color: var(--primary);">
-                <i class="fas fa-award" style="color:#eab308;"></i> शासकीय प्ररूप 21 — निर्वाचन का प्रमाण-पत्र
-            </span>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="printForm21Certificate()">
-                    <i class="fas fa-print"></i> मुद्रित करें (Print)
+<!-- ================= FORM 21 (अन्तिम परिणाम पत्र) MODAL ================= -->
+<div id="form21Modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(4px); z-index: 10000; justify-content: center; align-items: center; padding: 16px;">
+    <div class="modal-box" style="background: white; border-radius: 12px; width: 920px; max-width: 96%; max-height: 94vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); overflow: hidden;">
+        
+        <!-- Modal Top Control Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #0f172a; color: white; border-bottom: 1px solid #334155; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="font-weight: 800; font-size: 15px; color: #facc15; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-file-contract"></i> प्ररूप — 21 (अन्तिम परिणाम पत्र)
+                </span>
+                <select id="modalForm21WardSelect" class="ward-select-box" style="padding: 5px 10px; font-size: 12.5px; font-weight: 700; border-radius: 6px; border: 1px solid #475569; background: #ffffff; color: #0f172a;" onchange="onModalForm21WardChanged(this.value)">
+                    <option value="ALL">📋 समस्त 35 वार्ड (एक साथ संयुक्त PDF)</option>
+                    <!-- Populated dynamically 1 to 35 -->
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <a id="modalForm21ExternalLink" href="/form21?ward=ALL" target="_blank" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; text-decoration: none; color: white; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;" title="अलग पूर्ण टैब में खोलें">
+                    <i class="fas fa-arrow-up-right-from-square"></i> अलग टैब
+                </a>
+                <button class="btn-primary" style="padding: 6px 14px; font-size: 12.5px; background: linear-gradient(135deg, #e11d48 0%, #be123c 100%); border: none; border-radius: 6px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="printForm21Certificate()">
+                    <i class="fas fa-print"></i> प्रिंट / PDF सेव करें
                 </button>
-                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="closeForm21Certificate()">
-                    <i class="fas fa-times"></i> बंद करें
+                <button class="btn-secondary" style="padding: 6px 10px; font-size: 13px; background: rgba(255,255,255,0.15); border: none; color: white; border-radius: 6px; cursor: pointer;" onclick="closeForm21Certificate()">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
         </div>
 
-        <div id="form21PrintArea">
+        <!-- Scrollable Modal Sheet Container -->
+        <div id="form21PrintArea" style="flex: 1; overflow-y: auto; padding: 24px; background: #f8fafc;">
             <!-- Populated dynamically by results.js -->
         </div>
+
     </div>
 </div>
 

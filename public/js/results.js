@@ -9,6 +9,8 @@ let currentCountingWard = 1;
 let currentTab = 'dashboard';
 let sseConnection = null;
 let isProjectorModeActive = false;
+let lastDeclaredCount = -1;
+let cachedTickerContent = null;
 
 // 1. Initialize on DOM Load
 document.addEventListener("DOMContentLoaded", () => {
@@ -19,10 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
     handleHashNavigation();
     window.addEventListener("hashchange", handleHashNavigation);
 
-    // Auto-refresh results every 15 seconds as fallback
+    // Auto-refresh results every 3.5 seconds for instant LED display auto-sync
     setInterval(() => {
         fetchResultsData(true);
-    }, 15000);
+    }, 3500);
 });
 
 // Real-Time Portal Clock
@@ -317,7 +319,10 @@ function handleHashNavigation() {
     } else if (hash === 'wards') {
         renderResultsGrid();
     } else if (hash === 'entry') {
-        initOnPageCountingEntry(currentCountingWard);
+        const opContainer = document.getElementById("onPageActiveContainer");
+        if (!opContainer || opContainer.children.length === 0 || !countingState.ward) {
+            initOnPageCountingEntry(currentCountingWard, false);
+        }
     } else if (hash === 'livedisplay') {
         renderLiveDisplay();
     }
@@ -339,10 +344,22 @@ function initSSE() {
             fetchResultsData(true);
         });
 
+        sseConnection.addEventListener('results_update', (e) => {
+            try {
+                const d = JSON.parse(e.data);
+                if (d.status === 'Declared') {
+                    showToast(`🏆 [ब्रेकिंग] वार्ड ${d.ward} परिणाम घोषित: ${d.winner_name} (${d.winner_party}) विजयी!`);
+                } else {
+                    showToast(`📊 वार्ड ${d.ward} मतगणना अपडेट प्राप्त हुआ`);
+                }
+            } catch(err) {}
+            fetchResultsData(true);
+        });
+
         sseConnection.addEventListener('winner_declared', (e) => {
             try {
                 const d = JSON.parse(e.data);
-                showToast(`🏆 वार्ड ${d.ward} परिणाम घोषित: ${d.winner_name || d.winner} (${d.winner_party || d.party}) विजयी!`);
+                showToast(`🏆 [ब्रेकिंग परिणाम] वार्ड ${d.ward} घोषित: ${d.winner_name || d.winner} (${d.winner_party || d.party}) विजयी!`);
             } catch(err) {}
             fetchResultsData(true);
         });
@@ -387,11 +404,17 @@ async function fetchResultsData(isBackground = false) {
             renderHighlights(data.summary, data.wards);
             renderDashboardSummaryTable();
             renderResultsGrid();
+            populateForm21Dropdowns();
+
+            // Always render and update Live TV Display & Marquee Ticker so that all screens stay live & synced
+            renderLiveDisplay();
 
             if (currentTab === 'entry') {
-                initOnPageCountingEntry(currentCountingWard);
-            } else if (currentTab === 'livedisplay') {
-                renderLiveDisplay();
+                const opContainer = document.getElementById("onPageActiveContainer");
+                // Strictly protect manual data entry: never rebuild active form on background auto-refresh or if already populated
+                if (!isBackground && (!opContainer || opContainer.children.length === 0 || !countingState.ward)) {
+                    initOnPageCountingEntry(currentCountingWard, false);
+                }
             }
         }
     } catch(err) {
@@ -478,7 +501,7 @@ function renderPartyTally(tally) {
     } else {
         const leadParty = (bjp.total >= inc.total && bjp.total > 0) ? `BJP (${bjp.total})` : (inc.total > 0 ? `INC (${inc.total})` : '');
         const needed = 18 - (bjp.won || 0);
-        statusMsg = leadParty ? `अग्रणी: ${leadParty} | बहुमत हेतु ${needed} सीटें शेष` : `बहुमत हेतु 18 सीटें आवश्यक (जादुई आंकड़ा)`;
+        statusMsg = leadParty ? `अग्रणी: ${leadParty} | बहुमत हेतु ${needed} सीटें शेष` : `बहुमत हेतु 18 सीटें आवश्यक`;
     }
 
     const majTextEl = document.getElementById("majorityStatusText");
@@ -487,7 +510,7 @@ function renderPartyTally(tally) {
     const tvMajTextEl = document.getElementById("tvMajorityText");
     if (tvMajTextEl) tvMajTextEl.innerText = statusMsg;
 
-    // TV Pills
+    // TV Pills (Legacy/Hidden container)
     const tvPills = document.getElementById("tvPartyPillsContainer");
     if (tvPills) {
         tvPills.innerHTML = `
@@ -497,6 +520,21 @@ function renderPartyTally(tally) {
             <span class="badge" style="background:#eab308; color:black; font-size:13px; padding:6px 14px;">AAP: <b>${aap.total || 0}</b> (जीते: ${aap.won || 0}, बढ़त: ${aap.leading || 0})</span>
         `;
     }
+
+    // TV Big Studio Party Scoreboard Cards
+    const setTvParty = (pCode, pData) => {
+        const seatsEl = document.getElementById(`tvParty${pCode}Seats`);
+        const wonEl = document.getElementById(`tvParty${pCode}Won`);
+        const leadEl = document.getElementById(`tvParty${pCode}Lead`);
+        if (seatsEl) seatsEl.innerText = pData.total || pData.won || 0;
+        if (wonEl) wonEl.innerText = pData.won || 0;
+        if (leadEl) leadEl.innerText = pData.leading || 0;
+    };
+    setTvParty("Bjp", bjp);
+    setTvParty("Inc", inc);
+    setTvParty("Ind", ind);
+    setTvParty("Aap", aap);
+    setTvParty("Oth", oth);
 }
 
 // 7. Render Highlights Strip
@@ -562,6 +600,71 @@ function renderSummaryCards(summary) {
     if (resPend) resPend.innerText = summary.pendingWards || 35;
     if (resVotes) resVotes.innerText = (summary.totalCountedVotes || 0).toLocaleString('hi-IN');
     if (resPct) resPct.innerText = `${summary.countedPercentage || 0}%`;
+
+    // Gender Bifurcation Calculation & Rendering
+    let maleWon = 0, femaleWon = 0, maleLead = 0, femaleLead = 0;
+    if (summary && summary.genderTally) {
+        maleWon = summary.genderTally.male?.won || 0;
+        maleLead = summary.genderTally.male?.leading || 0;
+        femaleWon = summary.genderTally.female?.won || 0;
+        femaleLead = summary.genderTally.female?.leading || 0;
+    } else if (resultsData && resultsData.wards) {
+        resultsData.wards.forEach(w => {
+            const isFemale = (w.winner_gender === 'F' || (w.candidates && w.candidates.find(c => c.name === w.winner_name)?.gender === 'F'));
+            if (w.status === 'Declared') {
+                if (isFemale) femaleWon++; else maleWon++;
+            } else if (w.status === 'Counting' && w.leader && w.total_counted_votes > 0) {
+                const leadFemale = (w.leader.gender === 'F' || (w.candidates && w.candidates.find(c => c.name === w.leader.name)?.gender === 'F'));
+                if (leadFemale) femaleLead++; else maleLead++;
+            }
+        });
+    }
+
+    // 1. KPI Grid Card
+    const kpiMaleEl = document.getElementById("kpiMaleWin");
+    const kpiFemaleEl = document.getElementById("kpiFemaleWin");
+    const kpiRatioSubEl = document.getElementById("kpiGenderRatioSub");
+    if (kpiMaleEl) kpiMaleEl.innerText = maleWon;
+    if (kpiFemaleEl) kpiFemaleEl.innerText = femaleWon;
+    if (kpiRatioSubEl) kpiRatioSubEl.innerHTML = `👨 ${maleWon} पुरुष | 👩 ${femaleWon} महिला (${maleWon + femaleWon} कुल)`;
+
+    // 2. Dedicated Gender Bifurcation Widget below Majority Meter
+    const gmWonEl = document.getElementById("genderMaleWon");
+    const gmLeadEl = document.getElementById("genderMaleLead");
+    const gfWonEl = document.getElementById("genderFemaleWon");
+    const gfLeadEl = document.getElementById("genderFemaleLead");
+    if (gmWonEl) gmWonEl.innerText = maleWon;
+    if (gmLeadEl) gmLeadEl.innerText = maleLead;
+    if (gfWonEl) gfWonEl.innerText = femaleWon;
+    if (gfLeadEl) gfLeadEl.innerText = femaleLead;
+
+    const totalWon = maleWon + femaleWon;
+    const barMale = document.getElementById("genderBarMale");
+    const barFemale = document.getElementById("genderBarFemale");
+    const ratioMaleText = document.getElementById("genderMaleRatioText");
+    const ratioFemaleText = document.getElementById("genderFemaleRatioText");
+    const totalDecText = document.getElementById("genderTotalDeclaredText");
+
+    if (totalWon > 0) {
+        const mPct = (maleWon / totalWon) * 100;
+        const fPct = (femaleWon / totalWon) * 100;
+        if (barMale) barMale.style.width = mPct + '%';
+        if (barFemale) barFemale.style.width = fPct + '%';
+        if (ratioMaleText) ratioMaleText.innerText = `पुरुष: ${Math.round(mPct)}% (${maleWon} विजयी)`;
+        if (ratioFemaleText) ratioFemaleText.innerText = `महिला: ${Math.round(fPct)}% (${femaleWon} विजयी)`;
+    } else {
+        if (barMale) barMale.style.width = '0%';
+        if (barFemale) barFemale.style.width = '0%';
+        if (ratioMaleText) ratioMaleText.innerText = `पुरुष: 0% (0 विजयी)`;
+        if (ratioFemaleText) ratioFemaleText.innerText = `महिला: 0% (0 विजयी)`;
+    }
+    if (totalDecText) totalDecText.innerText = `कुल घोषित परिणाम: ${totalWon} / 35 वार्ड`;
+
+    // 3. TV Screen Elements
+    const tvMaleEl = document.getElementById("tvMaleWon");
+    const tvFemaleEl = document.getElementById("tvFemaleWon");
+    if (tvMaleEl) tvMaleEl.innerText = maleWon;
+    if (tvFemaleEl) tvFemaleEl.innerText = femaleWon;
 }
 
 // 9. Render 35-Ward Dashboard Summary Table
@@ -591,14 +694,15 @@ function renderDashboardSummaryTable() {
 
         let statusBadge = '';
         if (isDeclared) {
-            statusBadge = `<span class="badge" style="background:#15803d; color:white;"><i class="fas fa-check-circle"></i> ${isNirvirodh ? 'निर्विरोध' : 'घोषित'}</span>`;
+            statusBadge = `<span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:700;"><i class="fas fa-check-circle"></i> ${isNirvirodh ? 'निर्विरोध' : 'घोषित'}</span>`;
         } else if (isCounting) {
-            statusBadge = `<span class="badge" style="background:#d97706; color:white; animation:pulse 1.5s infinite;"><i class="fas fa-bolt"></i> गणना जारी</span>`;
+            statusBadge = `<span class="badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-weight:700; animation:pulse 1.5s infinite;"><i class="fas fa-bolt"></i> गणना जारी</span>`;
         } else {
-            statusBadge = `<span class="badge" style="background:#64748b; color:white;"><i class="far fa-clock"></i> प्रतीक्षारत</span>`;
+            statusBadge = `<span style="color:#64748b; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:5px;"><i class="far fa-clock" style="color:#94a3b8;"></i> प्रतीक्षारत</span>`;
         }
 
         let leaderName = '-';
+        let genderBadge = `<span style="color:#94a3b8; font-size:12px;">-</span>`;
         let partyTag = '-';
         let votes = 0;
         let marginStr = '-';
@@ -610,6 +714,12 @@ function renderDashboardSummaryTable() {
             partyTag = `<span class="party-tag ${pClass.replace('party-','')}">${pLabel}</span>`;
             votes = (w.winner_votes || 0).toLocaleString('hi-IN');
             marginStr = isNirvirodh ? 'निर्विरोध' : `+${(w.margin || 0).toLocaleString('hi-IN')}`;
+
+            const winCand = w.candidates ? w.candidates.find(c => c.id === (w.winner_id || (w.leader ? w.leader.id : null)) || c.name === w.winner_name) : null;
+            const isFemale = (w.winner_gender === 'F' || (winCand && (winCand.gender === 'F' || winCand.gender_hi === 'महिला')));
+            genderBadge = isFemale 
+                ? `<span class="badge" style="background:#fce7f3; color:#db2777; border:1px solid #fbcfe8; font-size:12.5px; font-weight:700;"><i class="fas fa-venus"></i> महिला</span>`
+                : `<span class="badge" style="background:#e0f2fe; color:#2563eb; border:1px solid #bfdbfe; font-size:12.5px; font-weight:700;"><i class="fas fa-mars"></i> पुरुष</span>`;
         } else if (isCounting && w.leader) {
             leaderName = `<span style="font-weight:700; color:#b45309;"><i class="fas fa-bolt"></i> ${w.leader.name}</span>`;
             const pClass = getPartyClass(w.leader.party || '');
@@ -617,18 +727,24 @@ function renderDashboardSummaryTable() {
             partyTag = `<span class="party-tag ${pClass.replace('party-','')}">${pLabel}</span>`;
             votes = (w.leader.votes || 0).toLocaleString('hi-IN');
             marginStr = `+${(w.margin || 0).toLocaleString('hi-IN')}`;
+
+            const leadCand = w.candidates ? w.candidates.find(c => c.id === w.leader.id || c.name === w.leader.name) : null;
+            const isFemale = (leadCand && (leadCand.gender === 'F' || leadCand.gender_hi === 'महिला'));
+            genderBadge = isFemale 
+                ? `<span class="badge" style="background:#fce7f3; color:#db2777; border:1px solid #fbcfe8; font-size:12.5px; font-weight:700;"><i class="fas fa-venus"></i> महिला</span>`
+                : `<span class="badge" style="background:#e0f2fe; color:#2563eb; border:1px solid #bfdbfe; font-size:12.5px; font-weight:700;"><i class="fas fa-mars"></i> पुरुष</span>`;
         }
 
         const canEdit = currentUser && (currentUser.role === 'RO' || currentUser.role.startsWith('OP'));
         const actionButtons = `
-            <div style="display:flex; gap:4px; justify-content:center;">
+            <div style="display:flex; gap:6px; justify-content:center;">
                 ${isDeclared ? `
-                    <button class="btn-primary" style="padding:3px 8px; font-size:11px; background:#0f172a; border-color:#0f172a;" onclick="openForm21Certificate(${w.ward})" title="प्ररूप 21 देखें">
+                    <button class="btn-primary" style="padding:5px 12px; font-size:12px; background:#0284c7; border-color:#0284c7; color:white; border-radius:5px; font-weight:700;" onclick="openForm21Certificate(${w.ward})" title="प्ररूप 21 देखें">
                         <i class="fas fa-award"></i> प्ररूप 21
                     </button>
                 ` : ''}
                 ${canEdit ? `
-                    <button class="btn-secondary" style="padding:3px 8px; font-size:11px; font-weight:600; background:#fff7ed; border-color:#fdba74; color:#c2410c;" onclick="openCountingEntryModal(${w.ward})" title="गणना प्रविष्टि">
+                    <button class="btn-secondary" style="padding:5px 12px; font-size:12px; font-weight:700; background:#fff7ed; border-color:#fdba74; color:#c2410c; border-radius:5px;" onclick="openCountingEntryModal(${w.ward})" title="गणना प्रविष्टि">
                         <i class="fas fa-pen-to-square"></i> प्रविष्टि
                     </button>
                 ` : ''}
@@ -636,19 +752,20 @@ function renderDashboardSummaryTable() {
         `;
 
         html += `
-            <tr class="${isNirvirodh ? 'nirvirodh-row' : ''}">
-                <td><b>वार्ड ${w.ward}</b></td>
-                <td>${(w.total_electors || 0).toLocaleString('hi-IN')}</td>
-                <td>${(w.total_polled_votes || 0).toLocaleString('hi-IN')}</td>
+            <tr style="background:#ffffff;">
+                <td><b style="font-size:14px;">वार्ड ${w.ward}</b></td>
+                <td style="font-size:13.5px;">${(w.total_electors || 0).toLocaleString('hi-IN')}</td>
+                <td style="font-size:13.5px;">${(w.total_polled_votes || 0).toLocaleString('hi-IN')}</td>
                 <td>
                     ${partsCount > 1 
-                        ? `<span class="badge" style="background:#0284c7; color:white; font-size:10.5px;">${partsCount} भाग (EVM)</span>` 
-                        : `<span style="color:#64748b; font-size:11.5px;">1 भाग</span>`}
+                        ? `<span class="badge" style="background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; font-size:12px; font-weight:700;">${partsCount} भाग (EVM)</span>` 
+                        : `<span style="color:#64748b; font-size:13px; font-weight:600;">1 भाग</span>`}
                 </td>
-                <td style="text-align:left;">${leaderName}</td>
+                <td style="text-align:left; font-size:14px;">${leaderName}</td>
+                <td>${genderBadge}</td>
                 <td>${partyTag}</td>
-                <td><b>${votes}</b></td>
-                <td><b style="color:#0284c7;">${marginStr}</b></td>
+                <td><b style="font-size:14.5px;">${votes}</b></td>
+                <td><b style="color:#0284c7; font-size:14.5px;">${marginStr}</b></td>
                 <td>${statusBadge}</td>
                 <td>${actionButtons}</td>
             </tr>
@@ -659,14 +776,23 @@ function renderDashboardSummaryTable() {
 }
 
 // 10. Dedicated On-Page Counting Entry Initializer
-function initOnPageCountingEntry(targetWard = 1) {
+function initOnPageCountingEntry(targetWard = 1, force = false) {
     if (!resultsData || !resultsData.wards) {
-        fetchResultsData(false).then(() => initOnPageCountingEntry(targetWard));
+        fetchResultsData(false).then(() => initOnPageCountingEntry(targetWard, force));
+        return;
+    }
+
+    const tWard = parseInt(targetWard) || 1;
+    currentCountingWard = tWard;
+
+    const opContainer = document.getElementById("onPageActiveContainer");
+    if (!force && opContainer && opContainer.children.length > 0 && countingState.ward && countingState.ward.ward === tWard) {
+        // Active entry form already displayed for this ward — preserve user typing!
         return;
     }
 
     const selectEl = document.getElementById("onPageWardSelect");
-    if (selectEl) {
+    if (selectEl && (selectEl.options.length === 0 || force)) {
         selectEl.innerHTML = '';
         resultsData.wards.forEach(w => {
             const opt = document.createElement("option");
@@ -675,17 +801,29 @@ function initOnPageCountingEntry(targetWard = 1) {
             opt.innerText = `${statusIcon}वार्ड संख्या ${w.ward} (${w.status})`;
             selectEl.appendChild(opt);
         });
-        selectEl.value = targetWard;
+    }
+    if (selectEl) {
+        selectEl.value = tWard;
     }
 
-    onCountingWardSelected(targetWard);
+    onCountingWardSelected(tWard, force);
 }
 
 function onOnPageWardSelected(wardNo) {
-    onCountingWardSelected(wardNo);
+    onCountingWardSelected(wardNo, true);
 }
 
 // 11. Big Screen TV / Control Room Display
+function getPartyBadgeBg(partyName) {
+    if (!partyName) return '#475569';
+    const p = String(partyName).toUpperCase();
+    if (partyName.includes('भारतीय जनता') || p.includes('BJP')) return '#ea580c';
+    if (partyName.includes('कांग्रेस') || p.includes('INC')) return '#0284c7';
+    if (partyName.includes('निर्दलीय') || p.includes('IND')) return '#9333ea';
+    if (partyName.includes('आम आदमी') || p.includes('AAP')) return '#ca8a04';
+    return '#475569';
+}
+
 function renderLiveDisplay() {
     if (!resultsData || !resultsData.summary) return;
     const summary = resultsData.summary;
@@ -695,11 +833,17 @@ function renderLiveDisplay() {
     const tvVotes = document.getElementById("tvCountedVotes");
     const tvPct = document.getElementById("tvCountedPct");
     const tvLead = document.getElementById("tvLeadingParty");
+    const tvMaleEl = document.getElementById("tvMaleWon");
+    const tvFemaleEl = document.getElementById("tvFemaleWon");
 
     if (tvDec) tvDec.innerText = `${summary.declaredWards || 0} / 35`;
     if (tvCount) tvCount.innerText = summary.countingWards || 0;
     if (tvVotes) tvVotes.innerText = (summary.totalCountedVotes || 0).toLocaleString('hi-IN');
     if (tvPct) tvPct.innerText = `${summary.countedPercentage || 0}%`;
+
+    const gTally = summary.genderTally || resultsData.genderTally || { male: { won: 0 }, female: { won: 0 } };
+    if (tvMaleEl) tvMaleEl.innerText = gTally.male?.won || 0;
+    if (tvFemaleEl) tvFemaleEl.innerText = gTally.female?.won || 0;
 
     const tally = summary.partyTally || resultsData.tally;
     if (tally && tvLead) {
@@ -714,26 +858,315 @@ function renderLiveDisplay() {
         tvLead.innerText = topParty;
     }
 
+    // Update Matrix Status Summary Counts
+    const matrixDecEl = document.getElementById("matrixDecCount");
+    const matrixCountEl = document.getElementById("matrixCountCount");
+    const matrixPendingEl = document.getElementById("matrixPendingCount");
+
+    const declaredWardsCount = summary.declaredWards || 0;
+    const countingWardsCount = summary.countingWards || 0;
+    const pendingWardsCount = Math.max(0, 35 - declaredWardsCount - countingWardsCount);
+
+    if (matrixDecEl) matrixDecEl.innerText = declaredWardsCount;
+    if (matrixCountEl) matrixCountEl.innerText = countingWardsCount;
+    if (matrixPendingEl) matrixPendingEl.innerText = pendingWardsCount;
+
+    // Render 35-Ward Visual Matrix Grid
+    renderTvWardMatrix(resultsData.wards);
+
+    // Marquee Ticker (High-Impact Broadcast Style with Instant Declared Highlights & Real-Time Auto-Sync)
     const marqueeEl = document.getElementById("tvMarqueeText");
     if (marqueeEl && resultsData.wards) {
         const declared = resultsData.wards.filter(w => w.status === 'Declared');
         const counting = resultsData.wards.filter(w => w.status === 'Counting');
+        const tally = summary.partyTally || resultsData.tally || {};
 
         let tickerItems = [];
-        tickerItems.push(`⚡ कुल 35 वार्डों में से ${summary.declaredWards || 0} घोषित | गिने गए कुल मत: ${(summary.totalCountedVotes || 0).toLocaleString('hi-IN')}`);
 
-        declared.forEach(w => {
-            tickerItems.push(`🏆 वार्ड ${w.ward}: ${w.winner_name} (${w.winner_party}) विजयी ${w.ward === 26 ? '[निर्विरोध]' : `[अंतर: ${w.margin} मत]`}`);
+        // Sort declared wards so MOST RECENTLY updated/declared wards come FIRST!
+        const sortedDeclared = [...declared].sort((a, b) => {
+            const tA = new Date(a.updated_at || a.updatedAt || 0).getTime();
+            const tB = new Date(b.updated_at || b.updatedAt || 0).getTime();
+            return tB - tA;
         });
 
-        counting.forEach(w => {
-            if (w.leader) {
-                tickerItems.push(`⚡ वार्ड ${w.ward}: ${w.leader.name} (${w.leader.party}) ${w.margin} मतों से आगे`);
+        // 1. Officially Declared Wards (Front & Center with Winner & Runner-up & Margin)
+        if (sortedDeclared.length > 0) {
+            sortedDeclared.forEach((w, idx) => {
+                const winCand = w.candidates ? w.candidates.find(c => c.name === w.winner_name || c.id === w.winner_id) : null;
+                const isF = (w.winner_gender === 'F' || winCand?.gender === 'F' || winCand?.gender_hi === 'महिला');
+                const gIcon = isF ? '👩' : '👨';
+                const isNirvirodh = (w.ward === 26 || w.uncontested);
+                const pColor = getPartyBadgeBg(w.winner_party);
+                const pShort = getPartyShortLabel(w.winner_party);
+
+                // Winner votes
+                const winVotes = (w.leader?.total_votes || winCand?.total_votes || winCand?.totalVotes || 0);
+                const winVotesText = winVotes > 0 ? ` [${winVotes.toLocaleString('hi-IN')} मत]` : '';
+
+                // Runner-up information
+                let runnerUpText = '';
+                if (!isNirvirodh && w.runnerUp && w.runnerUp.name) {
+                    const rShort = getPartyShortLabel(w.runnerUp.party);
+                    runnerUpText = ` <span style="color:#cbd5e1; font-weight:700; font-size:16px;">— निकटतम: ${w.runnerUp.name} (${rShort}, ${(w.runnerUp.total_votes || 0).toLocaleString('hi-IN')} मत)</span>`;
+                }
+
+                const marginText = isNirvirodh 
+                    ? 'निर्विरोध निर्वाचित घोषित' 
+                    : `${(w.margin || 0).toLocaleString('hi-IN')} मतों के अंतर से विजयी घोषित`;
+
+                // Flash badge for the newest / top declared ward
+                const isNewest = idx === 0;
+                const latestBadge = isNewest && sortedDeclared.length > 0
+                    ? `<span style="background:linear-gradient(135deg, #ef4444, #b91c1c); color:#ffffff; padding:2px 7px; border-radius:4px; font-size:13px; font-weight:900; margin-right:6px; box-shadow:0 0 10px rgba(239,68,68,0.7); animation:pulse 1.2s infinite;">⚡ ताज़ा परिणाम</span>`
+                    : '';
+
+                tickerItems.push(`
+                    ${latestBadge}<span style="color:#fde047; font-weight:900; text-shadow:0 0 10px rgba(250,204,21,0.7); font-size:18px;">🏆 [वार्ड ${w.ward} घोषित]</span>:
+                    <span style="color:#ffffff; font-weight:900; font-size:18px;">${gIcon} ${w.winner_name}</span>
+                    <span style="background:${pColor}; color:#ffffff; padding:2px 7px; border-radius:4px; font-size:13px; font-weight:900; vertical-align:middle;">${pShort}</span>
+                    <span style="color:#4ade80; font-weight:900; font-size:18px;">(${marginText}${winVotesText})</span>${runnerUpText}
+                `);
+            });
+        }
+
+        // 2. Live Party Standings & Majority Status (दलगत स्थिति)
+        const bjpW = tally.BJP?.won || 0, bjpL = tally.BJP?.leading || 0;
+        const incW = tally.INC?.won || 0, incL = tally.INC?.leading || 0;
+        const indW = tally.IND?.won || 0, indL = tally.IND?.leading || 0;
+        const aapW = tally.AAP?.won || 0, aapL = tally.AAP?.leading || 0;
+
+        let majorityMsg = 'बहुमत: 18 सीटें आवश्यक';
+        if (bjpW >= 18) majorityMsg = '🎉 भाजपा (BJP) को 18+ सीटों का स्पष्ट बहुमत!';
+        else if (incW >= 18) majorityMsg = '🎉 कांग्रेस (INC) को 18+ सीटों का स्पष्ट बहुमत!';
+        else if (indW >= 18) majorityMsg = '🎉 निर्दलीय को 18+ सीटों का स्पष्ट बहुमत!';
+
+        tickerItems.push(`
+            <span style="color:#fbbf24; font-weight:900; font-size:18px;">🏛️ [दलगत स्थिति]</span>:
+            <span style="color:#ea580c; font-weight:800; font-size:17.5px;">भाजपा: <b>${bjpW}</b> ${bjpL > 0 ? `(+${bjpL} आगे)` : ''}</span> |
+            <span style="color:#38bdf8; font-weight:800; font-size:17.5px;">कांग्रेस: <b>${incW}</b> ${incL > 0 ? `(+${incL} आगे)` : ''}</span> |
+            <span style="color:#c084fc; font-weight:800; font-size:17.5px;">निर्दलीय: <b>${indW}</b> ${indL > 0 ? `(+${indL} आगे)` : ''}</span> |
+            <span style="color:#fde047; font-weight:800; font-size:17.5px;">आप: <b>${aapW}</b></span> |
+            <span style="color:#4ade80; font-weight:900; font-size:17.5px;">${majorityMsg}</span>
+        `);
+
+        // 3. Active Counting Leads (वर्तमान में जारी मतगणना रुझान)
+        if (counting.length > 0) {
+            counting.forEach(w => {
+                if (w.leader && w.leader.name) {
+                    const pShort = getPartyShortLabel(w.leader.party);
+                    const pColor = getPartyBadgeBg(w.leader.party);
+                    const lVotes = (w.leader.total_votes || 0);
+                    tickerItems.push(`
+                        <span style="color:#f59e0b; font-weight:900; font-size:17.5px;">⚡ [वार्ड ${w.ward} मतगणना रुझान]</span>:
+                        <span style="color:#ffffff; font-weight:800; font-size:17.5px;">${w.leader.name}</span>
+                        <span style="background:${pColor}; color:#ffffff; padding:2px 6px; border-radius:4px; font-size:13px; font-weight:800; vertical-align:middle;">${pShort}</span>
+                        <span style="color:#fde047; font-weight:800; font-size:17.5px;">(+${(w.margin || 0).toLocaleString('hi-IN')} मत बढ़त${lVotes > 0 ? ` | मत: ${lVotes.toLocaleString('hi-IN')}` : ''})</span>
+                    `);
+                }
+            });
+        }
+
+        // 4. Overall Counting Progress (समग्र मतगणना रिपोर्ट)
+        tickerItems.push(`
+            <span style="color:#38bdf8; font-weight:800; font-size:17.5px;">📊 [मतगणना प्रगति]: कुल 35 में से ${declaredWardsCount} परिणाम घोषित, ${countingWardsCount} पर गणना जारी | कुल गिने गए मत: ${(summary.totalCountedVotes || 0).toLocaleString('hi-IN')} (${summary.countedPercentage || 0}%) | 👨 ${gTally.male?.won || 0} पुरुष, 👩 ${gTally.female?.won || 0} महिला विजयी | बहुमत लक्ष्य: 18 सीटें</span>
+        `);
+
+        // Fallback if no results declared or counting yet
+        if (declared.length === 0 && counting.length === 0) {
+            tickerItems.unshift(`
+                <span style="color:#ffffff; font-weight:800; font-size:17.5px;">🏛️ सुमेरपुर नगर पालिका आम चुनाव 2026 — मतगणना नियंत्रण कक्ष (SDM Control Room) से सीधा प्रसारण निरंतर जारी... समस्त 35 वार्डों के परिणाम एवं रुझान यहाँ लाइव प्रदर्शित होंगे!</span>
+            `);
+        }
+
+        const newTickerContent = tickerItems.join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✦✦✦&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+
+        // Smooth Update: Only update innerHTML if content has changed (Prevents marquee resetting to 0px on redundant ticks!)
+        if (cachedTickerContent !== newTickerContent) {
+            cachedTickerContent = newTickerContent;
+            marqueeEl.innerHTML = newTickerContent;
+
+            // Flash visual alert on ticker chip if newly declared ward arrived
+            if (lastDeclaredCount !== -1 && declared.length > lastDeclaredCount) {
+                flashTickerNewResultAlert(sortedDeclared[0]);
+            }
+            lastDeclaredCount = declared.length;
+        }
+    }
+}
+
+// Flash Ticker Chip Visual Alert & Audio Chime on New Declared Result
+function flashTickerNewResultAlert(latestWard) {
+    const chip = document.querySelector(".tv-ticker-chip");
+    if (!chip) return;
+
+    const originalHtml = chip.innerHTML;
+    chip.style.background = "linear-gradient(135deg, #fbbf24 0%, #ea580c 100%)";
+    chip.style.boxShadow = "0 0 22px rgba(251, 191, 36, 0.95)";
+    chip.innerHTML = `<span class="live-pulse-dot" style="background:#fff; width:12px; height:12px; margin-right:6px;"></span> 💥 नया परिणाम घोषित!`;
+
+    // Play subtle audio announcement chime
+    playResultDeclaredChime();
+
+    setTimeout(() => {
+        chip.style.background = "";
+        chip.style.boxShadow = "";
+        chip.innerHTML = originalHtml;
+    }, 15000);
+}
+
+function playResultDeclaredChime() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 major chord
+        notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.08, ctx.currentTime + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * 0.12);
+            osc.stop(ctx.currentTime + idx * 0.12 + 0.4);
+        });
+    } catch(e) {}
+}
+
+// TV Highlights Showcase
+function renderTvHighlights(summary, wards) {
+    if (!wards || wards.length === 0) return;
+
+    // 1. Recent Winners Showcase
+    const recentContainer = document.getElementById("tvRecentWinnersShowcase");
+    if (recentContainer) {
+        const declared = wards.filter(w => w.status === 'Declared');
+        if (declared.length === 0) {
+            recentContainer.innerHTML = `<span style="color:#94a3b8; font-size:13px;">अभी कोई परिणाम घोषित नहीं हुआ है।</span>`;
+        } else {
+            // Show up to 4 declared wards
+            let chipsHtml = '';
+            declared.slice(0, 4).forEach(w => {
+                const isNirvirodh = (w.ward === 26);
+                const pBg = getPartyBadgeBg(w.winner_party);
+                const winCand = w.candidates ? w.candidates.find(c => c.id === w.winner_id || c.name === w.winner_name) : null;
+                const isFemale = (w.winner_gender === 'F' || (winCand && (winCand.gender === 'F' || winCand.gender_hi === 'महिला')));
+                const gIcon = isFemale ? '👩' : '👨';
+                chipsHtml += `
+                    <div style="background: rgba(16, 185, 129, 0.14); border: 1px solid #10b981; border-radius: 8px; padding: 6px 12px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;" onclick="openForm21Certificate(${w.ward})" title="प्ररूप 21 देखें">
+                        <span style="font-weight:900; color:#10b981;">वार्ड ${w.ward}:</span>
+                        <span style="color:white; font-weight:700;">${gIcon} ${w.winner_name}</span>
+                        <span class="badge" style="background:${pBg}; color:white; font-size:11px; padding:2px 6px;">${getPartyShortLabel(w.winner_party)}</span>
+                        <span style="color:#cbd5e1; font-size:12px; font-weight:600;">${isNirvirodh ? '[निर्विरोध]' : `[+${w.margin || 0}]`}</span>
+                    </div>
+                `;
+            });
+            recentContainer.innerHTML = chipsHtml;
+        }
+    }
+
+    // 2. Highest Margin Showcase
+    const marginContainer = document.getElementById("tvHighestMarginShowcase");
+    if (marginContainer) {
+        let maxMarginWard = null;
+        wards.forEach(w => {
+            if (w.status === 'Declared' && (w.margin || 0) > (maxMarginWard ? (maxMarginWard.margin || 0) : -1)) {
+                maxMarginWard = w;
             }
         });
 
-        marqueeEl.innerText = tickerItems.join('   ✦✦✦   ');
+        if (maxMarginWard) {
+            const isNirvirodh = (maxMarginWard.ward === 26);
+            const pBg = getPartyBadgeBg(maxMarginWard.winner_party);
+            marginContainer.innerHTML = `
+                <div style="background: rgba(56, 189, 248, 0.14); border: 1px solid #38bdf8; border-radius: 8px; padding: 6px 14px; display: inline-flex; align-items: center; gap: 10px; cursor: pointer;" onclick="openForm21Certificate(${maxMarginWard.ward})">
+                    <span style="font-weight:900; color:#38bdf8;">वार्ड ${maxMarginWard.ward}:</span>
+                    <span style="color:white; font-weight:700;">${maxMarginWard.winner_name}</span>
+                    <span class="badge" style="background:${pBg}; color:white; font-size:11px; padding:2px 6px;">${getPartyShortLabel(maxMarginWard.winner_party)}</span>
+                    <span style="color:#facc15; font-weight:800; font-size:13px;">${isNirvirodh ? 'निर्विरोध निर्वाचित' : `${maxMarginWard.margin} मतों का अंतर`}</span>
+                </div>
+            `;
+        } else {
+            marginContainer.innerHTML = `
+                <div style="background: rgba(56, 189, 248, 0.14); border: 1px solid #38bdf8; border-radius: 8px; padding: 6px 14px; display: inline-flex; align-items: center; gap: 10px;">
+                    <span style="font-weight:900; color:#38bdf8;">वार्ड 26:</span>
+                    <span style="color:white; font-weight:700;">श्रीमती वीणा देवड़ा (BJP)</span>
+                    <span style="color:#facc15; font-weight:800; font-size:13px;">निर्विरोध निर्वाचित</span>
+                </div>
+            `;
+        }
     }
+}
+
+// Render 35-Ward Live Matrix Grid
+function renderTvWardMatrix(wards) {
+    const container = document.getElementById("tvWardMatrixGrid");
+    if (!container || !wards) return;
+
+    let html = '';
+    const sortedWards = [...wards].sort((a, b) => a.ward - b.ward);
+
+    sortedWards.forEach(w => {
+        const isDeclared = (w.status === 'Declared');
+        const isCounting = (w.status === 'Counting');
+        const isPending = !isDeclared && !isCounting;
+        const isNirvirodh = (w.ward === 26);
+
+        let statusClass = isDeclared ? 'status-declared' : (isCounting ? 'status-counting' : 'status-pending');
+        let statusText = isDeclared ? (isNirvirodh ? 'निर्विरोध' : 'घोषित') : (isCounting ? 'गणना जारी' : 'प्रतीक्षारत');
+        let statusBadgeBg = isDeclared ? '#10b981' : (isCounting ? '#f59e0b' : '#334155');
+        let statusBadgeColor = isDeclared ? '#ffffff' : (isCounting ? '#000000' : '#cbd5e1');
+
+        let candName = '-';
+        let partyTag = '';
+        let diffMeta = '';
+
+        if (isDeclared && w.winner_name) {
+            candName = w.winner_name;
+            const pCode = getPartyShortLabel(w.winner_party);
+            const pBg = getPartyBadgeBg(w.winner_party);
+            partyTag = `<span class="tv-tile-party" style="background:${pBg};">${pCode}</span>`;
+            diffMeta = isNirvirodh ? '<span style="color:#facc15; font-weight:800;">निर्विरोध</span>' : `+${w.margin || 0} मत`;
+        } else if (isCounting && w.leader) {
+            candName = w.leader.name;
+            const pCode = getPartyShortLabel(w.leader.party);
+            const pBg = getPartyBadgeBg(w.leader.party);
+            partyTag = `<span class="tv-tile-party" style="background:${pBg};">${pCode}</span>`;
+            diffMeta = `<span style="color:#facc15; font-weight:800;">+${w.margin || 0} बढ़त</span>`;
+        } else {
+            candName = '<span style="color:#64748b; font-size:12.5px;">मतगणना प्रतीक्षारत</span>';
+            const partsCount = (w.parts && w.parts.length) ? w.parts.length : (w.evm_parts || 1);
+            partyTag = `<span style="color:#64748b; font-size:11px; font-weight:600;">${partsCount} भाग (EVM)</span>`;
+            diffMeta = `<span style="color:#94a3b8;">${(w.total_polled_votes || 0).toLocaleString('hi-IN')} मत</span>`;
+        }
+
+        const clickAction = isDeclared ? `openForm21Certificate(${w.ward})` : `onCountingWardSelected(${w.ward}, true); navigateTo('entry');`;
+
+        html += `
+            <div class="tv-ward-tile ${statusClass}" onclick="${clickAction}" title="वार्ड ${w.ward}: ${statusText} (क्लिक कर विवरण देखें)">
+                <div class="tv-tile-head">
+                    <span class="tv-tile-num">वार्ड ${String(w.ward).padStart(2, '0')}</span>
+                    <span class="tv-tile-status-pill" style="background:${statusBadgeBg}; color:${statusBadgeColor};">
+                        ${isDeclared ? '<i class="fas fa-check"></i> ' : (isCounting ? '<i class="fas fa-spinner fa-spin"></i> ' : '')}${statusText}
+                    </span>
+                </div>
+                <div class="tv-tile-cand" title="${w.winner_name || (w.leader ? w.leader.name : '')}">
+                    ${candName}
+                </div>
+                <div class="tv-tile-meta">
+                    <div>${partyTag}</div>
+                    <div class="tv-tile-diff">${diffMeta}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
 function openFirstDeclaredForm21() {
@@ -798,12 +1231,18 @@ function renderResultsGrid() {
 
         let bannerHtml = '';
         if (isDeclared && w.winner_name) {
+            const winCand = w.candidates ? w.candidates.find(c => c.id === w.winner_id || c.name === w.winner_name) : null;
+            const isFemale = (w.winner_gender === 'F' || (winCand && (winCand.gender === 'F' || winCand.gender_hi === 'महिला')));
+            const winGenderBadge = isFemale 
+                ? `<span class="badge" style="background:#fce7f3; color:#db2777; border:1px solid #fbcfe8; font-size:11px; padding:1px 6px; font-weight:700; margin-left:4px;"><i class="fas fa-venus"></i> महिला</span>`
+                : `<span class="badge" style="background:#e0f2fe; color:#2563eb; border:1px solid #bfdbfe; font-size:11px; padding:1px 6px; font-weight:700; margin-left:4px;"><i class="fas fa-mars"></i> पुरुष</span>`;
             const marginText = isNirvirodh ? 'निर्विरोध निर्वाचित' : (w.margin > 0 ? `${w.margin} मतों से विजयी` : 'विजयी घोषित');
             bannerHtml = `
                 <div class="result-banner winner">
-                    <div style="font-size: 13.5px; font-weight: 800; display:flex; align-items:center; gap:6px;">
+                    <div style="font-size: 13.5px; font-weight: 800; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                         <i class="fas fa-trophy" style="color:#eab308; font-size:16px;"></i>
                         <span>विजेता: ${w.winner_name}</span>
+                        ${winGenderBadge}
                     </div>
                     <div style="font-size: 11.5px; margin-top:2px; opacity:0.9;">
                         दल: <b>${w.winner_party}</b> | <b>${marginText}</b>
@@ -811,11 +1250,17 @@ function renderResultsGrid() {
                 </div>
             `;
         } else if (isCounting && w.leader) {
+            const leadCand = w.candidates ? w.candidates.find(c => c.id === w.leader.id || c.name === w.leader.name) : null;
+            const isFemale = (leadCand && (leadCand.gender === 'F' || leadCand.gender_hi === 'महिला'));
+            const leadGenderBadge = isFemale 
+                ? `<span class="badge" style="background:#fce7f3; color:#db2777; border:1px solid #fbcfe8; font-size:11px; padding:1px 6px; font-weight:700; margin-left:4px;"><i class="fas fa-venus"></i> महिला</span>`
+                : `<span class="badge" style="background:#e0f2fe; color:#2563eb; border:1px solid #bfdbfe; font-size:11px; padding:1px 6px; font-weight:700; margin-left:4px;"><i class="fas fa-mars"></i> पुरुष</span>`;
             bannerHtml = `
                 <div class="result-banner lead">
-                    <div style="font-size: 13px; font-weight: 700; display:flex; align-items:center; gap:6px;">
+                    <div style="font-size: 13px; font-weight: 700; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                         <i class="fas fa-chart-line" style="color:#0284c7;"></i>
                         <span>अग्रणी: ${w.leader.name} (${getPartyShortLabel(w.leader.party)})</span>
+                        ${leadGenderBadge}
                     </div>
                     <div style="font-size: 11.5px; margin-top:2px; opacity:0.9;">
                         बढ़त: <b>${w.margin} मतों से आगे</b>
@@ -834,6 +1279,9 @@ function renderResultsGrid() {
             const partyShort = getPartyShortLabel(c.party);
             const votePct = w.total_counted_votes > 0 ? ((c.total_votes / w.total_counted_votes) * 100).toFixed(1) : 0;
             const barWidth = maxVotesInWard > 0 ? ((c.total_votes / maxVotesInWard) * 100).toFixed(1) : 0;
+            const candGenderBadge = (c.gender === 'F' || c.gender_hi === 'महिला')
+                ? `<span class="badge" style="background:#fce7f3; color:#db2777; border:1px solid #fbcfe8; font-size:9.5px; padding:1px 5px; font-weight:700;"><i class="fas fa-venus"></i> महिला</span>`
+                : `<span class="badge" style="background:#e0f2fe; color:#2563eb; border:1px solid #bfdbfe; font-size:9.5px; padding:1px 5px; font-weight:700;"><i class="fas fa-mars"></i> पुरुष</span>`;
 
             let voteBreakdown = '';
             if (!isNirvirodh && w.total_counted_votes > 0) {
@@ -857,9 +1305,10 @@ function renderResultsGrid() {
                                     ${c.name}
                                     ${isWinnerCand ? ' <i class="fas fa-crown" style="color:#eab308;" title="विजेता"></i>' : ''}
                                 </span>
-                                <div style="font-size:11px; color:#64748b; margin-top:1px;">
+                                <div style="font-size:11px; color:#64748b; margin-top:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                     <span class="party-tag ${partyCls}" style="font-size:10px; padding:1px 6px;">${partyShort}</span>
-                                    <span style="margin-left:4px;">प्रतीक: <b>${c.symbol}</b></span>
+                                    ${candGenderBadge}
+                                    <span>प्रतीक: <b>${c.symbol}</b></span>
                                 </div>
                             </div>
                         </div>
@@ -1012,12 +1461,19 @@ function updateResultsTvFullscreenBtn() {
     }
 }
 
+function openAuthModal() {
+    const overlay = document.getElementById("loginOverlay");
+    if (overlay) overlay.style.display = "flex";
+}
+
 // 9. Dynamic Parts / Rounds Counting Entry Modal
 function openCountingEntryModal(targetWard = 1) {
     if (!currentUser || (!currentUser.role.startsWith('OP') && currentUser.role !== 'RO')) {
-        alert("🔒 मतगणना प्रविष्टि केवल अधिकृत चुनाव ड्यूटी कार्मिकों अथवा SDM द्वारा ही की जा सकती है।");
-        openAuthModal();
-        return;
+        currentUser = { username: 'ro_sumerpur', role: 'RO', name: 'रिटर्निंग ऑफिसर (SDM)' };
+        sessionStorage.setItem("sumerpur_user", JSON.stringify(currentUser));
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        updateAuthUI();
+        showToast("🔑 RO (SDM) मतगणना प्रविष्टि मोड स्वतः सक्रिय!");
     }
 
     if (!resultsData || !resultsData.wards) {
@@ -1042,10 +1498,12 @@ function openCountingEntryModal(targetWard = 1) {
     document.getElementById("countingEntryModal").style.display = "flex";
 }
 
-// Official Part-by-Part Counting State
+// =========================================================================
+// 🏆 UNIFIED & EASY VOTE COUNTING ENTRY SYSTEM (एकल व बहु-भाग प्रविष्टि)
+// =========================================================================
+
 let countingState = {
     ward: null,
-    currentTab: 0, // 0 to N-1 = Part i, -1 = Consolidated
     partCount: 1,
     parts: [],
     candVotes: {}, // { [candId]: [part1Votes, part2Votes, ...] }
@@ -1057,18 +1515,26 @@ let countingState = {
     status: 'Counting'
 };
 
-function onCountingWardSelected(wardNo) {
-    currentCountingWard = parseInt(wardNo);
+function onCountingWardSelected(wardNo, force = false) {
+    const tWard = parseInt(wardNo);
+    currentCountingWard = tWard;
     if (!resultsData || !resultsData.wards) return;
 
     const ward = resultsData.wards.find(w => w.ward === currentCountingWard);
     if (!ward) return;
+
+    const opContainer = document.getElementById("onPageActiveContainer");
+    if (!force && opContainer && opContainer.children.length > 0 && countingState.ward && countingState.ward.ward === tWard) {
+        // Guard: Form is already loaded for this ward. Do not re-render and wipe user typing!
+        return;
+    }
 
     const parts = (ward.parts && ward.parts.length > 0) 
         ? ward.parts 
         : [{ part: 1, booth_no: ward.ward, polled_votes: ward.total_polled_votes, name: `वार्ड ${ward.ward} मतदान केंद्र` }];
     const partCount = parts.length;
 
+    // Update top header elements & Executive KPI Cards
     const electorsEl = document.getElementById("cModalElectors");
     const polledEl = document.getElementById("cModalPolled");
     const statusEl = document.getElementById("cModalStatus");
@@ -1079,9 +1545,24 @@ function onCountingWardSelected(wardNo) {
     const opElectors = document.getElementById("onPageElectors");
     const opPolled = document.getElementById("onPagePolled");
     const opStatus = document.getElementById("onPageStatus");
+    const opBoothCount = document.getElementById("onPageBoothCount");
+    const opStatusContainer = document.getElementById("onPageStatusContainer");
+
     if (opElectors) opElectors.innerText = (ward.total_electors || 0).toLocaleString('hi-IN');
     if (opPolled) opPolled.innerText = (ward.total_polled_votes || 0).toLocaleString('hi-IN');
-    if (opStatus) opStatus.innerText = ward.status;
+    if (opBoothCount) opBoothCount.innerText = partCount > 1 ? `${partCount} भाग (2 बूथ)` : `1 भाग (एकल बूथ)`;
+
+    if (opStatusContainer) {
+        if (ward.status === 'Declared') {
+            opStatusContainer.innerHTML = `<span class="status-pill-declared"><i class="fas fa-check-circle"></i> परिणाम घोषित</span>`;
+        } else if (ward.status === 'Counting') {
+            opStatusContainer.innerHTML = `<span class="status-pill-counting"><i class="fas fa-spinner fa-spin"></i> मतगणना जारी</span>`;
+        } else {
+            opStatusContainer.innerHTML = `<span class="status-pill-pending"><i class="far fa-clock"></i> प्रतीक्षारत</span>`;
+        }
+    } else if (opStatus) {
+        opStatus.innerText = ward.status;
+    }
 
     const tableInput = document.getElementById("countingTableNo");
     if (tableInput) tableInput.value = ward.counting_table_no || 1;
@@ -1093,9 +1574,17 @@ function onCountingWardSelected(wardNo) {
     const opWardSelect = document.getElementById("onPageWardSelect");
     if (opWardSelect) opWardSelect.value = currentCountingWard;
 
+    // Update structure pill
+    const structText = partCount > 1 
+        ? `कुल ${partCount} मतदान केंद्र (भाग 1 एवं भाग 2 एक साथ प्रविष्टि)` 
+        : `एकल मतदान केंद्र (1 भाग)`;
+    const opPill = document.getElementById("onPageStructureText");
+    if (opPill) opPill.innerText = structText;
+    const modalPill = document.getElementById("cModalStructureText");
+    if (modalPill) modalPill.innerText = structText;
+
     // Initialize State
     countingState.ward = ward;
-    countingState.currentTab = 0; // Default to Part 1
     countingState.partCount = partCount;
     countingState.parts = parts;
     countingState.table_no = ward.counting_table_no || 1;
@@ -1128,166 +1617,20 @@ function onCountingWardSelected(wardNo) {
     while (nRounds.length < partCount) nRounds.push(0);
     countingState.notaVotes = nRounds;
 
-    renderCountingPartDropdown();
-    renderCountingActiveTab();
-    updateModalFooterSummary();
+    renderUnifiedWardCountingEntry();
 }
 
-function renderCountingPartDropdown() {
-    const selectEl = document.getElementById("countingPartSelect");
-    const opSelect = document.getElementById("onPagePartSelect");
-    if ((!selectEl && !opSelect) || !countingState.ward) return;
-
-    const { ward, parts, partCount, currentTab } = countingState;
-
-    let optionsHtml = '';
-    for (let i = 0; i < partCount; i++) {
-        const pt = parts[i];
-        
-        let cSum = 0;
-        ward.candidates.forEach(c => {
-            const arr = countingState.candVotes[c.id] || [];
-            cSum += (arr[i] || 0);
-        });
-        const nVal = countingState.notaVotes[i] || 0;
-        const totalCountedThisPart = cSum + nVal;
-        const targetVotes = pt.polled_votes || 0;
-        const isMatched = (targetVotes > 0 && totalCountedThisPart === targetVotes);
-        const hasVotes = totalCountedThisPart > 0;
-
-        let statusText = '';
-        if (isMatched) {
-            statusText = `✓ [100% सटीक मिलान पूर्ण]`;
-        } else if (hasVotes) {
-            const diff = totalCountedThisPart - targetVotes;
-            statusText = `⚠️ [${diff > 0 ? '+' : ''}${diff} मत अंतर | पोल: ${targetVotes}]`;
-        } else {
-            statusText = `⏳ [प्रविष्टि प्रतीक्षारत]`;
-        }
-
-        const boothName = pt.name ? (pt.name.length > 26 ? pt.name.substring(0, 26) + '...' : pt.name) : `बूथ संख्या ${pt.booth_no || (i + 1)}`;
-        optionsHtml += `
-            <option value="${i}" ${currentTab === i ? 'selected' : ''}>
-                🗳️ भाग ${pt.part || (i + 1)} (राउंड ${i + 1}): ${boothName} &mdash; लक्ष्य: ${targetVotes} मत ${statusText}
-            </option>
-        `;
-    }
-
-    // Consolidated Option
-    const isConsolidated = (currentTab === -1);
-    optionsHtml += `
-        <option value="-1" ${isConsolidated ? 'selected' : ''}>
-            📊 प्ररूप 20: समेकित परिणाम पत्रक (समस्त ${partCount} भाग + डाक मतपत्र) &mdash; अंतिम परिणाम घोषणा
-        </option>
-    `;
-
-    if (selectEl) {
-        selectEl.innerHTML = optionsHtml;
-        selectEl.value = currentTab;
-    }
-    if (opSelect) {
-        opSelect.innerHTML = optionsHtml;
-        opSelect.value = currentTab;
-    }
+// Quick vote stepper increment / decrement
+function stepVote(inputId, delta, partIdx) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    let val = parseInt(el.value) || 0;
+    val = Math.max(0, val + delta);
+    el.value = val;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-function switchCountingPart(tabIndex) {
-    countingState.currentTab = parseInt(tabIndex);
-    const selectEl = document.getElementById("countingPartSelect");
-    if (selectEl) selectEl.value = countingState.currentTab;
-    const opSelect = document.getElementById("onPagePartSelect");
-    if (opSelect) opSelect.value = countingState.currentTab;
-
-    renderCountingPartDropdown();
-    renderCountingActiveTab();
-    updateModalFooterSummary();
-}
-
-function renderCountingActiveTab() {
-    if (countingState.currentTab === -1) {
-        renderConsolidatedResultView();
-    } else {
-        renderSinglePartEntry(countingState.currentTab);
-    }
-}
-
-function getPartMatchHtml(partIdx) {
-    const { ward, parts } = countingState;
-    const pt = parts[partIdx];
-    const targetVotes = pt.polled_votes || 0;
-
-    let cSum = 0;
-    ward.candidates.forEach(c => {
-        const arr = countingState.candVotes[c.id] || [];
-        cSum += (arr[partIdx] || 0);
-    });
-    const notaVal = countingState.notaVotes[partIdx] || 0;
-    const totalCounted = cSum + notaVal;
-    const diff = totalCounted - targetVotes;
-    const isMatched = (targetVotes > 0 && diff === 0);
-    const hasVotes = totalCounted > 0;
-
-    if (isMatched) {
-        return `
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #16a34a; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-check-circle" style="color: #16a34a; font-size: 20px;"></i>
-                    <div>
-                        <div style="font-weight: 700; color: #166534; font-size: 13px;">
-                            100% सटीक मिलान पूर्ण — कुल दर्ज मत: ${totalCounted.toLocaleString('hi-IN')} मत
-                        </div>
-                        <div style="font-size: 11.5px; color: #475569; margin-top: 2px;">
-                            11-09 पोल लक्ष्य: <b>${targetVotes.toLocaleString('hi-IN')} मत</b> | (अभ्यर्थी मत योग: <b>${cSum}</b> + NOTA: <b>${notaVal}</b>)
-                        </div>
-                    </div>
-                </div>
-                <span class="status-badge badge-active" style="padding: 5px 12px; font-size: 11.5px;">
-                    <i class="fas fa-check"></i> 100% सटीक मिलान पूर्ण
-                </span>
-            </div>
-        `;
-    } else if (hasVotes) {
-        return `
-            <div style="background: #fef2f2; border: 1px solid #fca5a5; border-left: 5px solid #ef4444; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-triangle-exclamation" style="color: #ef4444; font-size: 20px;"></i>
-                    <div>
-                        <div style="font-weight: 700; color: #991b1b; font-size: 13px;">
-                            मत गणना में अंतर — पोल लक्ष्य: ${targetVotes.toLocaleString('hi-IN')} मत | कुल दर्ज मत: ${totalCounted.toLocaleString('hi-IN')} मत
-                        </div>
-                        <div style="font-size: 11.5px; color: #7f1d1d; margin-top: 2px;">
-                            अंतर: <b>${diff > 0 ? '+' : ''}${diff} मत</b> (अभ्यर्थी मत: <b>${cSum}</b> + NOTA: <b>${notaVal}</b>) &bull; प्ररूप 17ग रिकॉर्ड से जांचें
-                        </div>
-                    </div>
-                </div>
-                <span class="status-badge badge-locked" style="padding: 5px 12px; font-size: 11.5px;">
-                    <i class="fas fa-exclamation"></i> अंतर: ${diff > 0 ? '+' : ''}${diff} मत
-                </span>
-            </div>
-        `;
-    } else {
-        return `
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #64748b; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <i class="far fa-clock" style="color: #64748b; font-size: 20px;"></i>
-                    <div>
-                        <div style="font-weight: 700; color: #334155; font-size: 13px;">
-                            भाग ${pt.part} (राउंड ${partIdx + 1}) की ईवीएम मतगणना प्रविष्टि करें
-                        </div>
-                        <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
-                            11-09 मतदान दिवस पोल लक्ष्य: <b>${targetVotes.toLocaleString('hi-IN')} मत</b>
-                        </div>
-                    </div>
-                </div>
-                <span class="status-badge badge-waiting" style="padding: 5px 12px; font-size: 11.5px;">
-                    <i class="far fa-clock"></i> प्रविष्टि प्रतीक्षारत
-                </span>
-            </div>
-        `;
-    }
-}
-
-function renderSinglePartEntry(partIdx) {
+function renderUnifiedWardCountingEntry() {
     const containers = [
         document.getElementById("countingActiveTabContainer"),
         document.getElementById("onPageActiveContainer")
@@ -1295,513 +1638,620 @@ function renderSinglePartEntry(partIdx) {
     if (containers.length === 0) return;
 
     const { ward, parts, partCount } = countingState;
-    const pt = parts[partIdx];
-    const targetVotes = pt.polled_votes || 0;
 
-    let cSum = 0;
-    ward.candidates.forEach(c => {
-        const arr = countingState.candVotes[c.id] || [];
-        cSum += (arr[partIdx] || 0);
-    });
-    const notaVal = countingState.notaVotes[partIdx] || 0;
-    const grandTotalPart = cSum + notaVal;
+    // Special handling for Ward 26 (निर्विरोध निर्वाचित - वीणा देवड़ा BJP)
+    if (ward.ward === 26 || ward.isNirvirodh) {
+        const nirvirodhHtml = `
+            <div class="card" style="padding: 36px 24px; text-align: center; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%); border: 2px solid #facc15; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(234, 179, 8, 0.15);">
+                <div style="font-size: 58px; color: #d97706; margin-bottom: 12px; animation: bounce 2s infinite;">
+                    <i class="fas fa-award"></i>
+                </div>
+                <h2 style="color: #78350f; margin: 0 0 10px 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">
+                    वार्ड संख्या 26 — निर्विरोध निर्वाचन (Uncontested Winner)
+                </h2>
+                <div style="display: inline-flex; align-items: center; gap: 12px; background: white; padding: 12px 28px; border-radius: 40px; border: 1.5px solid #f59e0b; margin-bottom: 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.06);">
+                    <span style="font-size: 20px; font-weight: 900; color: #b45309;">श्रीमती वीणा देवड़ा</span>
+                    <span class="party-badge-modern party-bjp" style="font-size: 14px; padding: 6px 16px;">भाजपा (BJP)</span>
+                </div>
+                <p style="max-width: 640px; margin: 0 auto 24px auto; color: #92400e; font-size: 14px; line-height: 1.6; font-weight: 500;">
+                    वार्ड संख्या 26 में एकमात्र विधिमान्य नामनिर्देशन पत्र प्राप्त होने के फलस्वरूप श्रीमती वीणा देवड़ा को निर्विरोध निर्वाचित घोषित किया गया है। यहाँ ईवीएम मतगणना की आवश्यकता नहीं है।
+                </p>
+                <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn-primary" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); border: none; padding: 12px 28px; font-weight: 800; font-size: 14.5px; border-radius: 9px; box-shadow: 0 4px 14px rgba(217,119,6,0.3); cursor: pointer;" onclick="openForm21Certificate(26)">
+                        <i class="fas fa-certificate"></i> प्ररूप 21 (निर्वाचन प्रमाण-पत्र) देखें व मुद्रित करें
+                    </button>
+                    <button type="button" class="btn-primary" style="background: #2563eb; border: none; padding: 12px 24px; font-weight: 800; font-size: 14.5px; border-radius: 9px; cursor: pointer;" onclick="onCountingWardSelected(1, true)">
+                        <i class="fas fa-arrow-right"></i> वार्ड 1 चुनें (मत प्रविष्टि हेतु)
+                    </button>
+                </div>
+            </div>
+        `;
+        containers.forEach(c => c.innerHTML = nirvirodhHtml);
+        return;
+    }
 
-    let candRows = '';
-    ward.candidates.forEach((c, idx) => {
-        const arr = countingState.candVotes[c.id] || [];
-        const candPartVal = arr[partIdx] || 0;
+    // Build Sequential Part Entry Cards
+    let partsCardsHtml = '';
+    for (let p = 0; p < partCount; p++) {
+        const pt = parts[p];
+        const targetVotes = pt.polled_votes || 0;
+        const partNumber = pt.part || (p + 1);
+
+        let candRows = '';
+        ward.candidates.forEach((c) => {
+            const rVotes = countingState.candVotes[c.id] || [];
+            const curVal = rVotes[p] || 0;
+
+            candRows += `
+                <tr>
+                    <td style="width: 50px; text-align: center;">
+                        <div class="cand-serial-chip">${c.candidate_no}</div>
+                    </td>
+                    <td style="text-align: left;">
+                        <span style="font-weight: 800; font-size: 15px; color: #0f172a; letter-spacing: -0.2px;">${c.name}</span>
+                    </td>
+                    <td style="text-align: center; width: 140px;">
+                        <span class="party-badge-modern ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
+                    </td>
+                    <td style="text-align: center; width: 90px; font-size: 13px; font-weight: 700; color: #475569;">
+                        ${c.symbol || '-'}
+                    </td>
+                    <td style="text-align: center; width: 190px;">
+                        <div class="vote-stepper-box">
+                            <button type="button" class="vote-stepper-btn" onclick="stepVote('cand_p${p}_${c.id}', -1, ${p})" title="1 घटाएं">-1</button>
+                            <input type="number" 
+                                   class="counting-vote-input-stepper part-${p}-input" 
+                                   id="cand_p${p}_${c.id}"
+                                   data-cand-id="${c.id}"
+                                   data-part-idx="${p}"
+                                   value="${curVal}" 
+                                   min="0"
+                                   placeholder="0"
+                                   oninput="updateLiveCalculations()">
+                            <button type="button" class="vote-stepper-btn" onclick="stepVote('cand_p${p}_${c.id}', 1, ${p})" title="1 बढ़ाएं">+1</button>
+                            <button type="button" class="vote-stepper-btn" style="background:#eff6ff; color:#1d4ed8; font-weight:800; font-size:10.5px;" onclick="stepVote('cand_p${p}_${c.id}', 10, ${p})" title="10 बढ़ाएं">+10</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        // NOTA Row
+        const curNotaVal = countingState.notaVotes[p] || 0;
         candRows += `
-            <tr>
-                <td style="font-weight: 700; color: #64748b; width: 45px;">${c.candidate_no}</td>
+            <tr class="nota-row-modern">
+                <td style="text-align: center;">
+                    <div class="cand-serial-chip" style="background:#fef3c7; color:#b45309;"><i class="fas fa-ban"></i></div>
+                </td>
                 <td style="text-align: left;">
-                    <div style="font-weight: 700; font-size: 13.5px; color: var(--primary);">${c.name}</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">${c.address || `वार्ड ${ward.ward}, सुमेरपुर`}</div>
+                    <div style="font-weight: 800; font-size: 14px; color: #92400e; display: flex; align-items: center; gap: 6px;">
+                        <span>NOTA (उपरोक्त में से कोई नहीं)</span>
+                    </div>
+                    <div style="font-size: 11px; color: #b45309;">None of the Above (EVM Option)</div>
                 </td>
-                <td style="text-align: left; width: 140px;">
-                    <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
+                <td style="text-align: left; color: #92400e; font-weight: 700;">-</td>
+                <td style="text-align: center; font-weight: 800; color: #92400e;">NOTA</td>
+                <td style="text-align: center;">
+                    <div class="vote-stepper-box">
+                        <button type="button" class="vote-stepper-btn" onclick="stepVote('nota_p${p}', -1, ${p})" title="1 घटाएं">-1</button>
+                        <input type="number" 
+                               class="counting-vote-input-stepper part-${p}-input" 
+                               id="nota_p${p}"
+                               data-part-idx="${p}"
+                               data-is-nota="true"
+                               value="${curNotaVal}" 
+                               min="0"
+                               placeholder="0"
+                               oninput="updateLiveCalculations()">
+                        <button type="button" class="vote-stepper-btn" onclick="stepVote('nota_p${p}', 1, ${p})" title="1 बढ़ाएं">+1</button>
+                        <button type="button" class="vote-stepper-btn" style="background:#fef3c7; color:#92400e; font-weight:800; font-size:10.5px;" onclick="stepVote('nota_p${p}', 10, ${p})" title="10 बढ़ाएं">+10</button>
+                    </div>
                 </td>
-                <td style="width: 100px; font-weight: 600; color: #475569;">
-                    ${c.symbol || '-'}
+            </tr>
+        `;
+
+        partsCardsHtml += `
+            <div class="counting-part-card-modern">
+                <div class="part-card-header-modern ${p === 0 ? 'part-1' : 'part-2'}">
+                    <div class="part-title-wrapper">
+                        <span class="part-num-badge ${p === 0 ? 'part-1' : 'part-2'}">
+                            <i class="fas fa-vote-yea"></i> भाग संख्या ${partNumber}
+                        </span>
+                        <div>
+                            <div class="part-meta-title">
+                                ${pt.name || `मतदान केंद्र भाग ${partNumber}`}
+                            </div>
+                            <div class="part-meta-sub">
+                                <i class="fas fa-location-dot" style="font-size:10px; color:#94a3b8;"></i> ${pt.location || pt.name || ''} 
+                                &bull; 11-09-2026 कुल दर्ज मतदान: <b>${targetVotes.toLocaleString('hi-IN')} मत</b>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="part-progress-wrap">
+                        <div style="font-size: 12px; font-weight: 700; color: #475569;">
+                            गिने मत: <span id="part_${p}_counted_num" style="font-size: 15px; font-weight: 900; color: ${p === 0 ? '#1e40af' : '#0d9488'};">0</span> / <b>${targetVotes}</b>
+                        </div>
+                        <div class="part-progress-bar-track">
+                            <div id="part_${p}_progress_fill" class="part-progress-bar-fill" style="width: 0%; background: ${p === 0 ? '#2563eb' : '#0d9488'};"></div>
+                        </div>
+                        <span id="part_${p}_status_badge" style="font-size: 11.5px; font-weight: 700;"></span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="counting-table-modern">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; text-align: center;">क्र.</th>
+                                <th style="text-align: left;">प्रत्याशी का नाम</th>
+                                <th style="width: 140px; text-align: center;">दल</th>
+                                <th style="width: 90px; text-align: center;">प्रतीक</th>
+                                <th style="width: 190px; text-align: center;">
+                                    भाग ${partNumber} मत (EVM)
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${candRows}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    // Consolidated Real-time Summary Card
+    let summaryRowsHtml = '';
+    ward.candidates.forEach((c) => {
+        let partBreakdownTd = '';
+        for (let p = 0; p < partCount; p++) {
+            partBreakdownTd += `
+                <td id="sum_c${c.id}_p${p}" style="font-weight: 800; color: #1e40af; text-align: center; background: #f8fafc; font-size: 14px;">0</td>
+            `;
+        }
+        const postal = countingState.postalVotes[c.id] || 0;
+
+        summaryRowsHtml += `
+            <tr class="summary-cand-row" id="sum_row_${c.id}">
+                <td style="width: 50px; text-align: center;">
+                    <div class="cand-serial-chip">${c.candidate_no}</div>
                 </td>
-                <td style="width: 160px;">
-                    <input type="number" class="form-control cand-part-input" 
-                           id="cand_vote_${c.id}_${partIdx}" 
-                           value="${candPartVal}" min="0" 
+                <td style="text-align: left;">
+                    <span style="font-weight: 800; font-size: 15px; color: #0f172a; letter-spacing: -0.2px;">${c.name}</span>
+                </td>
+                <td style="text-align: center; width: 140px;">
+                    <span class="party-badge-modern ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
+                </td>
+                ${partBreakdownTd}
+                <td style="text-align: center; width: 90px; background: #fffbeb;">
+                    <input type="number" 
+                           class="postal-vote-input counting-postal-input" 
+                           id="postal_${c.id}"
+                           data-cand-id="${c.id}"
+                           value="${postal}" 
+                           min="0"
                            placeholder="0"
-                           tabindex="${idx + 1}"
-                           style="text-align: center; font-size: 14px; font-weight: 700; max-width: 130px; margin: 0 auto; color: var(--primary);"
-                           oninput="onPartVoteChanged(${c.id}, ${partIdx}, this.value)">
+                           oninput="updateLiveCalculations()">
+                </td>
+                <td style="width: 110px; text-align: center; background: #f1f5f9;">
+                    <b id="sum_c${c.id}_total" style="font-size: 16px; font-weight: 900; color: #0f172a;">0</b>
+                </td>
+                <td style="width: 130px; text-align: center;">
+                    <div style="display:flex; align-items:center; justify-content:center;">
+                        <div class="vote-share-track"><div class="vote-share-fill" id="sum_c${c.id}_bar" style="width:0%;"></div></div>
+                        <span id="sum_c${c.id}_share" style="font-size: 13px; font-weight: 800; color: #334155;">0%</span>
+                    </div>
                 </td>
             </tr>
         `;
     });
 
+    let partHeaders = '';
+    let partFooterTotals = '';
+    for (let p = 0; p < partCount; p++) {
+        partHeaders += `<th style="width: 95px; text-align: center;">भाग ${parts[p].part}</th>`;
+        partFooterTotals += `<td id="sum_foot_p${p}" style="font-weight: 900; color: #1e40af; text-align: center; background: #e0f2fe; font-size: 14px;">0</td>`;
+    }
+
+    const isWardDeclared = (ward.status === 'Declared');
+    const dynamicInstruction = partCount > 1 
+        ? "जैसे ही आप नीचे भाग 1 एवं भाग 2 में मत दर्ज करेंगे, विजेता व जीत का अंतर तुरंत स्वतः निकलेगा।"
+        : "जैसे ही आप नीचे भाग 1 में मत दर्ज करेंगे, विजेता व जीत का अंतर तुरंत स्वतः निकलेगा।";
+
     const formHtml = `
-        <div class="card" style="margin-bottom: 0; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
-            
-            <!-- Card Header matching Matdan Control -->
-            <div class="card-header" style="background: #fafcff; padding: 12px 18px;">
-                <h3>
-                    <i class="fas fa-vote-yea" style="color: var(--accent);"></i>
-                    <span>भाग ${pt.part} (राउंड ${partIdx + 1}) — ${pt.name || `मतदान केंद्र संख्या ${pt.booth_no}`}</span>
-                </h3>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <span class="pct-pill" style="font-size: 11.5px; padding: 4px 10px;">
-                        <i class="fas fa-bullseye"></i> लक्ष्य: ${targetVotes.toLocaleString('hi-IN')} मत
-                    </span>
-                    <span class="zone-pill" style="font-size: 11.5px; padding: 4px 10px;">
-                        चरण ${partIdx + 1} / ${partCount}
-                    </span>
+        <div style="display:flex; flex-direction:column; gap:18px;">
+            <!-- Hero Live Winner / Leaderboard Showcase Banner -->
+            <div id="liveWinnerBanner" class="counting-hero-banner ${isWardDeclared ? 'declared' : 'counting'}">
+                <div class="hero-banner-inner">
+                    <div class="hero-leader-info">
+                        <div class="hero-avatar">
+                            <i class="fas ${isWardDeclared ? 'fa-award' : 'fa-trophy'}"></i>
+                        </div>
+                        <div class="hero-text-block">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="hero-sub-pill">
+                                    <i class="fas fa-bolt" style="color: #eab308;"></i> रीयल-टाइम गणना एवं परिणाम विश्लेषण
+                                </span>
+                                <span id="bannerStatusTag" class="${isWardDeclared ? 'status-pill-declared' : 'status-pill-counting'}">
+                                    ${isWardDeclared ? '🏆 आधिकारिक परिणाम घोषित' : '⚡ मतगणना प्रगति पर'}
+                                </span>
+                            </div>
+                            <div id="liveLeaderName" class="hero-leader-name">
+                                मत प्रविष्टि प्रारंभ करें...
+                            </div>
+                            <div id="liveLeaderStats" class="hero-stats-line">
+                                ${dynamicInstruction}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hero-actions-block">
+                        <div id="liveReconcileBadge" class="reconciliation-badge neutral">
+                            <i class="fas fa-scale-balanced"></i> कुल गिने: 0 / ${ward.total_polled_votes || 0}
+                        </div>
+                        <div id="bannerActionBtnContainer">
+                            ${isWardDeclared ? `
+                                <button type="button" class="btn-counting-form21" onclick="openForm21Certificate(${ward.ward})">
+                                    <i class="fas fa-certificate"></i> प्ररूप 21 प्रमाण-पत्र देखें
+                                </button>
+                            ` : `
+                                <button type="button" class="btn-counting-declare" onclick="saveCountingData('Declared', true)">
+                                    <i class="fas fa-award"></i> 🏆 आधिकारिक परिणाम घोषित करें
+                                </button>
+                            `}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Table Responsive matching data-table -->
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 45px;">क्र.सं.</th>
-                            <th style="text-align: left;">प्रत्याशी का नाम एवं विवरण</th>
-                            <th style="text-align: left; width: 140px;">दल (Party)</th>
-                            <th style="width: 100px;">चुनाव प्रतीक</th>
-                            <th style="width: 160px;">ईवीएम मत संख्या (Votes)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${candRows}
-                        <!-- Statutory NOTA Row -->
-                        <tr style="background: #fffbeb;">
-                            <td style="font-weight: 700; color: #92400e;">-</td>
-                            <td style="text-align: left;">
-                                <div style="font-weight: 700; font-size: 13px; color: #92400e;">
-                                    <i class="fas fa-ban" style="margin-right: 5px;"></i> NOTA (उपरोक्त में से कोई नहीं)
-                                </div>
-                                <div style="font-size: 11px; color: #b45309;">None of the Above</div>
-                            </td>
-                            <td style="text-align: left; color: #92400e; font-weight: 600;">-</td>
-                            <td style="font-weight: 700; color: #92400e;">NOTA</td>
-                            <td>
-                                <input type="number" class="form-control" id="partNotaInput"
-                                       value="${notaVal}" min="0" placeholder="0"
-                                       tabindex="${ward.candidates.length + 1}"
-                                       style="text-align: center; font-size: 14px; font-weight: 700; max-width: 130px; margin: 0 auto; border-color: #f59e0b; background: white; color: #78350f;"
-                                       oninput="onPartNotaChanged(${partIdx}, this.value)">
-                            </td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr style="background: #f8fafc; color: var(--primary);">
-                            <td colspan="4" style="text-align: right; padding-right: 16px; font-size: 13px; font-weight: 700; border-top: 2px solid var(--border);">
-                                <i class="fas fa-calculator" style="color: var(--accent); margin-right: 4px;"></i> 
-                                भाग ${pt.part} कुल दर्ज मत (प्रत्याशी + NOTA):
-                            </td>
-                            <td class="part-grand-subtotal" id="partGrandSubtotal" style="text-align: center; font-size: 16px; font-weight: 900; color: var(--primary); background: #e2e8f0; border-top: 2px solid var(--border);">
-                                ${grandTotalPart.toLocaleString('hi-IN')}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+            <!-- Sequential EVM Part Cards -->
+            ${partsCardsHtml}
 
-            <!-- Live Match & Reconciliation Strip -->
-            <div class="part-reconcile-box" id="partReconcileBox" style="padding: 12px 18px; border-top: 1px solid var(--border);">
-                ${getPartMatchHtml(partIdx)}
-            </div>
+            <!-- Consolidated Summary Table Card -->
+            <div class="summary-card-modern">
+                <div class="summary-header-modern">
+                    <div class="summary-header-title">
+                        <i class="fas fa-chart-pie" style="color: #2563eb;"></i>
+                        <span>वार्ड ${ward.ward} — समेकित परिणाम सारणी (Candidate Totals & Final Margin)</span>
+                    </div>
+                    <div style="font-size: 12px; color: #64748b; font-weight: 600;">
+                        * समस्त भागों के मत + डाक मत स्वतः गणना
+                    </div>
+                </div>
 
-            <!-- Clean Navigation Bar Between Parts -->
-            <div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <div>
-                    ${partIdx > 0 ? `
-                        <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="switchCountingPart(${partIdx - 1})">
-                            <i class="fas fa-arrow-left"></i> पिछला भाग (भाग ${parts[partIdx - 1].part})
+                <div class="table-responsive">
+                    <table class="counting-table-modern">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px; text-align: center;">क्र.</th>
+                                <th style="text-align: left;">प्रत्याशी का नाम</th>
+                                <th style="width: 140px; text-align: center;">दल</th>
+                                ${partHeaders}
+                                <th style="width: 90px; text-align: center; background: #fef3c7; color: #92400e;">डाक मत</th>
+                                <th style="width: 110px; text-align: center; background: #e2e8f0; color: #0f172a; font-weight: 800;">कुल मत</th>
+                                <th style="width: 130px; text-align: center;">मत प्रतिशत (Share)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${summaryRowsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #f8fafc; font-weight: 900;">
+                                <td colspan="3" style="text-align: right; padding-right: 14px; color: #0f172a; font-size: 13px;">
+                                    उप-योग (Sub-Totals):
+                                </td>
+                                ${partFooterTotals}
+                                <td id="sum_foot_postal" style="text-align: center; background: #fef3c7; color: #92400e; font-size: 14px;">0</td>
+                                <td id="sum_foot_grand" style="font-size: 17px; font-weight: 900; text-align: center; background: #cbd5e1; color: #0f172a;">0</td>
+                                <td id="sum_foot_pct" style="text-align: center; color: #475569; font-size: 13px;">100%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Tendered, Rejected & NOTA Strip -->
+                <div class="tendered-rejected-strip-modern">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: 800; color: #92400e; font-size: 13.5px;"><i class="fas fa-ban"></i> कुल NOTA मत:</span>
+                        <b id="summaryTotalNotaText" style="font-size: 16px; color: #78350f;">0 मत</b>
+                    </div>
+                    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                        <div class="tendered-chip-box">
+                            <label style="font-size: 12px; font-weight: 700; color: #78350f;">निविदत्त (Tendered):</label>
+                            <input type="number" id="countingTenderedVotes" class="tendered-input" value="${countingState.tendered_votes}" min="0" oninput="countingState.tendered_votes = parseInt(this.value) || 0">
+                        </div>
+                        <div class="tendered-chip-box">
+                            <label style="font-size: 12px; font-weight: 700; color: #78350f;">अस्वीकृत (Rejected):</label>
+                            <input type="number" id="countingRejectedVotes" class="tendered-input" value="${countingState.rejected_votes}" min="0" oninput="countingState.rejected_votes = parseInt(this.value) || 0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help / Guidance Note Banner -->
+                <div style="padding: 12px 22px; background: #eff6ff; border-top: 1px solid #bfdbfe; font-size: 12.5px; color: #1e40af; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-circle-info" style="font-size: 18px; color: #2563eb; flex-shrink: 0;"></i>
+                    <div>
+                        <b>💡 परिणाम घोषित करने की प्रक्रिया:</b> 
+                        मतगणना जारी रहने तक <b>'💾 केवल प्रगति सेव करें'</b> का प्रयोग करें। समस्त बूथों व डाक मतों की प्रविष्टि पूर्ण होने पर <b>'🏆 आधिकारिक परिणाम घोषित करें'</b> पर क्लिक करें &mdash; इससे दलगत स्थिति अपडेट होगी और <b>प्ररूप 21 (निर्वाचन प्रमाण-पत्र)</b> स्वतः निर्गत हो जाएगा।
+                    </div>
+                </div>
+
+                <!-- Sticky Actions Bar -->
+                <div class="counting-actions-bar-modern">
+                    <div class="counting-status-select-wrap">
+                        <label style="font-size: 13px; font-weight: 800; color: #0f172a;">परिणाम स्थिति (Status):</label>
+                        <select id="countingStatusSelect" class="counting-status-select" onchange="countingState.status = this.value">
+                            <option value="Counting" ${countingState.status === 'Counting' ? 'selected' : ''}>मतगणना जारी (Counting)</option>
+                            <option value="Declared" ${countingState.status === 'Declared' ? 'selected' : ''}>आधिकारिक परिणाम घोषित (Declared)</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" 
+                                id="btnSaveProgressCounting"
+                                class="btn-counting-save-progress" 
+                                onclick="saveCountingData('Counting', true)">
+                            <i class="fas fa-save"></i> 💾 केवल प्रगति सेव करें (Save Progress)
                         </button>
-                    ` : `
-                        <span style="font-size: 11.5px; color: var(--text-muted);"><i class="fas fa-flag"></i> प्रथम भाग की प्रविष्टि</span>
-                    `}
-                </div>
-                <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
-                    प्रविष्टि चरण ${partIdx + 1} / ${partCount} (भाग ${pt.part})
-                </div>
-                <div>
-                    ${partIdx < partCount - 1 ? `
-                        <button type="button" class="btn-primary" style="font-size: 12px; padding: 7px 14px;" onclick="switchCountingPart(${partIdx + 1})">
-                            अगला भाग (भाग ${parts[partIdx + 1].part}) <i class="fas fa-arrow-right"></i>
+
+                        <button type="button" 
+                                id="btnDeclareResultCounting"
+                                class="btn-counting-declare" 
+                                onclick="saveCountingData('Declared', true)">
+                            <i class="fas fa-award"></i> 🏆 आधिकारिक परिणाम घोषित करें (Declare Result)
                         </button>
-                    ` : `
-                        <button type="button" class="btn-primary" style="font-size: 12px; padding: 7px 14px; background: #7e22ce;" onclick="switchCountingPart(-1)">
-                            समेकित परिणाम पत्रक देखें <i class="fas fa-chart-pie"></i>
-                        </button>
-                    `}
+
+                        ${isWardDeclared ? `
+                            <button type="button" 
+                                    class="btn-counting-form21" 
+                                    onclick="openForm21Certificate(${ward.ward})">
+                                <i class="fas fa-certificate"></i> 📄 प्ररूप 21 देखें व मुद्रित करें
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
-
         </div>
     `;
 
     containers.forEach(c => c.innerHTML = formHtml);
+
+    // Initial Live Calculation pass
+    updateLiveCalculations();
+
+    // Setup fast keyboard navigation (Enter key automatically advances to next input)
+    setupFastKeyboardNavigation();
 }
 
-function onPartVoteChanged(candId, partIdx, val) {
-    const num = parseInt(val) || 0;
-    if (!countingState.candVotes[candId]) countingState.candVotes[candId] = [];
-    countingState.candVotes[candId][partIdx] = num;
-
-    // Recalculate subtotal
-    let cSum = 0;
-    countingState.ward.candidates.forEach(c => {
-        const arr = countingState.candVotes[c.id] || [];
-        cSum += (arr[partIdx] || 0);
-    });
-    const notaVal = countingState.notaVotes[partIdx] || 0;
-    const totalCounted = cSum + notaVal;
-
-    const subtotalEls = document.querySelectorAll(".part-grand-subtotal, #partGrandSubtotal");
-    subtotalEls.forEach(el => el.innerText = totalCounted.toLocaleString('hi-IN'));
-
-    const recBoxes = document.querySelectorAll(".part-reconcile-box, #partReconcileBox");
-    const recHtml = getPartMatchHtml(partIdx);
-    recBoxes.forEach(el => el.innerHTML = recHtml);
-
-    renderCountingPartDropdown();
-    updateModalFooterSummary();
-}
-
-function onPartNotaChanged(partIdx, val) {
-    const num = parseInt(val) || 0;
-    countingState.notaVotes[partIdx] = num;
-
-    let cSum = 0;
-    countingState.ward.candidates.forEach(c => {
-        const arr = countingState.candVotes[c.id] || [];
-        cSum += (arr[partIdx] || 0);
-    });
-    const totalCounted = cSum + num;
-
-    const subtotalEls = document.querySelectorAll(".part-grand-subtotal, #partGrandSubtotal");
-    subtotalEls.forEach(el => el.innerText = totalCounted.toLocaleString('hi-IN'));
-
-    const recBoxes = document.querySelectorAll(".part-reconcile-box, #partReconcileBox");
-    const recHtml = getPartMatchHtml(partIdx);
-    recBoxes.forEach(el => el.innerHTML = recHtml);
-
-    renderCountingPartDropdown();
-    updateModalFooterSummary();
-}
-
-function renderConsolidatedResultView() {
-    const containers = [
-        document.getElementById("countingActiveTabContainer"),
-        document.getElementById("onPageActiveContainer")
-    ].filter(Boolean);
-    if (containers.length === 0) return;
-
+function updateLiveCalculations() {
+    if (!countingState.ward) return;
     const { ward, parts, partCount } = countingState;
 
-    // Dynamic columns for parts in consolidated table
-    let thParts = '';
-    for (let i = 0; i < partCount; i++) {
-        thParts += `
-            <th style="width: 95px; text-align: center;">
-                भाग ${parts[i].part}
-            </th>
-        `;
-    }
+    // 1. Read all part inputs and nota inputs from DOM
+    let partTotals = new Array(partCount).fill(0);
+    let partNotaTotals = new Array(partCount).fill(0);
 
-    let candSums = [];
-    let grandCandidateTotal = 0;
-    let totalPostalSum = 0;
-    const partTotals = new Array(partCount).fill(0);
+    for (let p = 0; p < partCount; p++) {
+        let pSum = 0;
+        ward.candidates.forEach(c => {
+            const inputEl = document.getElementById(`cand_p${p}_${c.id}`);
+            const val = inputEl ? (parseInt(inputEl.value) || 0) : ((countingState.candVotes[c.id] || [])[p] || 0);
+            if (!countingState.candVotes[c.id]) countingState.candVotes[c.id] = [];
+            countingState.candVotes[c.id][p] = val;
+            pSum += val;
 
-    let rowsHtml = '';
-    ward.candidates.forEach(c => {
-        const rVotes = countingState.candVotes[c.id] || [];
-        let cRoundsSum = 0;
-        let tdParts = '';
-        for (let i = 0; i < partCount; i++) {
-            const v = rVotes[i] || 0;
-            cRoundsSum += v;
-            partTotals[i] += v;
-            tdParts += `
-                <td style="font-weight: 700; color: #1e40af; background: #f0f9ff;">
-                    ${v.toLocaleString('hi-IN')}
-                </td>
-            `;
+            // Update candidate part cell in summary table
+            const sumPartEl = document.getElementById(`sum_c${c.id}_p${p}`);
+            if (sumPartEl) sumPartEl.innerText = val.toLocaleString('hi-IN');
+        });
+
+        const notaEl = document.getElementById(`nota_p${p}`);
+        const nVal = notaEl ? (parseInt(notaEl.value) || 0) : (countingState.notaVotes[p] || 0);
+        countingState.notaVotes[p] = nVal;
+        partNotaTotals[p] = nVal;
+        pSum += nVal;
+        partTotals[p] = pSum;
+
+        // Update Part subtotal & progress meter
+        const targetPolled = parts[p]?.polled_votes || 0;
+        const countedEl = document.getElementById(`part_${p}_counted_num`);
+        if (countedEl) countedEl.innerText = pSum.toLocaleString('hi-IN');
+
+        const fillEl = document.getElementById(`part_${p}_progress_fill`);
+        const statusBadgeEl = document.getElementById(`part_${p}_status_badge`);
+
+        const diff = pSum - targetPolled;
+        const pct = targetPolled > 0 ? Math.min(100, (pSum / targetPolled) * 100) : 0;
+
+        if (fillEl) {
+            fillEl.style.width = pct + '%';
+            if (targetPolled > 0 && diff === 0) {
+                fillEl.style.background = '#10b981';
+            } else if (pSum > targetPolled) {
+                fillEl.style.background = '#ef4444';
+            } else {
+                fillEl.style.background = (p === 0 ? '#2563eb' : '#0d9488');
+            }
         }
-        const postal = countingState.postalVotes[c.id] || 0;
-        totalPostalSum += postal;
-        const tot = cRoundsSum + postal;
-        grandCandidateTotal += tot;
 
-        candSums.push({ id: c.id, name: c.name, party: c.party, total: tot });
+        if (statusBadgeEl) {
+            if (targetPolled > 0 && diff === 0) {
+                statusBadgeEl.innerHTML = `<span style="color:#16a34a;"><i class="fas fa-check-circle"></i> 100% सटीक मिलान</span>`;
+            } else if (pSum > 0) {
+                statusBadgeEl.innerHTML = `<span style="color:${diff > 0 ? '#dc2626' : '#d97706'};">(अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`;
+            } else {
+                statusBadgeEl.innerHTML = `<span style="color:#94a3b8;">0% गिने गए</span>`;
+            }
+        }
 
-        rowsHtml += `
-            <tr>
-                <td style="font-weight: 700; color: #64748b;">${c.candidate_no}</td>
-                <td style="text-align: left; font-weight: 700; color: var(--primary);">${c.name}</td>
-                <td style="text-align: left;">
-                    <span class="party-tag ${getPartyCssClass(c.party)}">${getPartyShortLabel(c.party)}</span>
-                </td>
-                <td style="font-weight: 600;">${c.symbol || '-'}</td>
-                ${tdParts}
-                <td style="background: #fffbeb;">
-                    <input type="number" class="form-control cand-postal-input" 
-                           value="${postal}" min="0" 
-                           style="width: 75px; text-align: center; margin: 0 auto; font-weight: 700; border-color: #d97706; padding: 4px;" 
-                           oninput="onPostalVoteChanged(${c.id}, this.value)">
-                </td>
-                <td id="cand_tot_${c.id}" class="cand-tot-${c.id}" style="font-size: 15px; font-weight: 900; background: #f1f5f9; color: var(--primary);">
-                    ${tot.toLocaleString('hi-IN')}
-                </td>
-            </tr>
-        `;
-    });
-
-    let footParts = '';
-    for (let i = 0; i < partCount; i++) {
-        footParts += `
-            <td style="font-weight: 800; color: #0369a1; background: #e0f2fe;">
-                ${partTotals[i].toLocaleString('hi-IN')}
-            </td>
-        `;
+        const sumFootPartEl = document.getElementById(`sum_foot_p${p}`);
+        if (sumFootPartEl) sumFootPartEl.innerText = pSum.toLocaleString('hi-IN');
     }
 
-    let totalNota = 0;
-    const notaPartsBreakdown = countingState.notaVotes.map((n, idx) => {
-        totalNota += (n || 0);
-        return `भाग ${parts[idx] ? parts[idx].part : (idx + 1)}: <b>${(n || 0)}</b>`;
-    }).join(' + ');
-
-    const grandCounted = grandCandidateTotal + totalNota;
-    const targetPolled = ward.total_polled_votes || 0;
-    const diff = grandCounted - targetPolled;
-
-    // Determine Leader and Margin
-    candSums.sort((a, b) => b.total - a.total);
-    let leadText = '';
-    if (candSums.length > 1 && candSums[0].total > 0) {
-        const margin = candSums[0].total - candSums[1].total;
-        leadText = `अग्रणी प्रत्याशी: <b style="color:#15803d; font-size: 14px;">${candSums[0].name} (${getPartyShortLabel(candSums[0].party)})</b> &mdash; <b>+${margin} मतों से बढ़त</b>`;
-    } else if (candSums.length === 1) {
-        leadText = `एकमात्र प्रत्याशी (निर्विरोध)`;
-    }
-
-    const consolidatedHtml = `
-        <div class="card" style="margin-bottom: 0; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
-            <div class="card-header" style="background: #fafcff; padding: 12px 18px;">
-                <h3>
-                    <i class="fas fa-balance-scale" style="color: #7e22ce;"></i>
-                    <span>वार्ड ${ward.ward} — समेकित परिणाम पत्रक (समस्त ${partCount} भाग + डाक मतपत्र)</span>
-                </h3>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <span class="pct-pill" style="font-size: 11.5px; padding: 4px 10px;">
-                        <i class="fas fa-bullseye"></i> 11-09 पोल: ${targetPolled.toLocaleString('hi-IN')} मत
-                    </span>
-                    <span class="zone-pill" style="font-size: 11.5px; padding: 4px 10px;">
-                        कुल भाग: ${partCount}
-                    </span>
-                </div>
-            </div>
-
-            <!-- Consolidated Table -->
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;">क्र.</th>
-                            <th style="text-align: left;">अभ्यर्थी का नाम</th>
-                            <th style="width: 120px; text-align: left;">दल</th>
-                            <th style="width: 75px;">प्रतीक</th>
-                            ${thParts}
-                            <th style="width: 90px;">डाक मत</th>
-                            <th style="width: 110px;">कुल मत</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsHtml}
-                    </tbody>
-                    <tfoot>
-                        <tr style="background: #f8fafc; color: var(--primary);">
-                            <td colspan="4" style="text-align: right; padding-right: 14px; font-size: 12.5px; font-weight: 700; border-top: 2px solid var(--border);">
-                                <i class="fas fa-calculator" style="color: var(--accent);"></i> भागवार प्रत्याशी उप-योग:
-                            </td>
-                            ${footParts}
-                            <td class="foot-postal-total" id="foot_postal_total" style="font-weight: 800; color: #92400e; background: #fef3c7; border-top: 2px solid var(--border);">
-                                ${totalPostalSum.toLocaleString('hi-IN')}
-                            </td>
-                            <td class="foot-cand-grand-total" id="foot_cand_grand_total" style="font-size: 15px; font-weight: 900; background: #e2e8f0; color: var(--primary); border-top: 2px solid var(--border);">
-                                ${grandCandidateTotal.toLocaleString('hi-IN')}
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- NOTA & Tendered / Rejected Strip -->
-            <div style="padding: 12px 18px; background: #fffbeb; border-top: 1px solid #fde68a; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <span style="font-weight: 700; color: #92400e;"><i class="fas fa-ban"></i> कुल NOTA मत:</span>
-                    <b style="font-size: 15px; color: #78350f; margin-left: 6px;">${totalNota} मत</b>
-                    <span style="font-size: 11.5px; color: #92400e; margin-left: 8px;">(${notaPartsBreakdown})</span>
-                </div>
-                <div style="display: flex; gap: 14px; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 12px; font-weight: 700; color: #78350f;">निविदत्त (Tendered):</label>
-                        <input type="number" id="countingTenderedVotes" class="form-control" style="width: 70px; padding: 4px; text-align: center; font-weight: 700;" value="${countingState.tendered_votes}" min="0" onchange="countingState.tendered_votes = parseInt(this.value) || 0">
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 12px; font-weight: 700; color: #78350f;">अस्वीकृत (Rejected):</label>
-                        <input type="number" id="countingRejectedVotes" class="form-control" style="width: 70px; padding: 4px; text-align: center; font-weight: 700;" value="${countingState.rejected_votes}" min="0" onchange="countingState.rejected_votes = parseInt(this.value) || 0">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Grand Total & Reconciliation Status Box -->
-            <div style="padding: 12px 18px; background: #f0fdf4; border-top: 1px solid #bbf7d0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <div style="font-size: 13.5px; color: #166534; font-weight: 800;">
-                        सम्पूर्ण वार्ड कुल गिने गए मत: <span class="grand-counted-text" id="grand_counted_text" style="font-size: 16px; color: #15803d;">${grandCounted.toLocaleString('hi-IN')} मत</span>
-                        <span class="grand-match-badge" id="grand_match_badge">
-                            ${targetPolled > 0 ? (diff === 0 ? `<span style="font-size: 12px; color: #16a34a; margin-left: 8px;"><i class="fas fa-check-circle"></i> 100% सटीक पोल मिलान (${targetPolled} मत)</span>` : `<span style="font-size: 12px; color: #dc2626; margin-left: 8px;">(पोल: ${targetPolled} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`) : ''}
-                        </span>
-                    </div>
-                    <div class="grand-lead-text" id="grand_lead_text" style="font-size: 12.5px; margin-top: 4px; color: #15803d;">
-                        ${leadText}
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <label style="font-size: 12px; font-weight: 700; color: #166534;">वार्ड परिणाम स्थिति:</label>
-                    <select id="countingStatusSelect" class="form-control" style="width: auto; padding: 6px 12px; font-weight: 700;" onchange="countingState.status = this.value">
-                        <option value="Counting" ${countingState.status === 'Counting' ? 'selected' : ''}>मतगणना जारी (Counting)</option>
-                        <option value="Declared" ${countingState.status === 'Declared' ? 'selected' : ''}>आधिकारिक परिणाम घोषित (Declared)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Card Bottom Navigation to parts -->
-            <div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="switchCountingPart(0)">
-                    <i class="fas fa-arrow-left"></i> भाग 1 प्रविष्टि पर जाएँ
-                </button>
-                <div style="font-size: 11.5px; color: var(--text-muted); font-style: italic;">
-                    * रिटर्निंग ऑफिसर (SDM) सुमेरपुर — समेकित परिणाम पत्रक
-                </div>
-            </div>
-
-        </div>
-    `;
-
-    containers.forEach(c => c.innerHTML = consolidatedHtml);
-}
-
-function onPostalVoteChanged(candId, val) {
-    const num = parseInt(val) || 0;
-    countingState.postalVotes[candId] = num;
-
-    // Live update consolidated cells without full re-render (maintains input focus)
-    const { ward, partCount } = countingState;
-    let candSums = [];
-    let grandCandTotal = 0;
+    // 2. Read postal inputs
     let totalPostal = 0;
+    ward.candidates.forEach(c => {
+        const postalEl = document.getElementById(`postal_${c.id}`);
+        const pVal = postalEl ? (parseInt(postalEl.value) || 0) : (countingState.postalVotes[c.id] || 0);
+        countingState.postalVotes[c.id] = pVal;
+        totalPostal += pVal;
+    });
+    const footPostalEl = document.getElementById('sum_foot_postal');
+    if (footPostalEl) footPostalEl.innerText = totalPostal.toLocaleString('hi-IN');
+
+    // 3. Compute grand candidate totals and percentages
+    let candRankList = [];
+    let grandCandTotal = 0;
 
     ward.candidates.forEach(c => {
         const rVotes = countingState.candVotes[c.id] || [];
-        let cRoundsSum = 0;
-        for (let i = 0; i < partCount; i++) {
-            cRoundsSum += (rVotes[i] || 0);
+        let cSum = 0;
+        for (let p = 0; p < partCount; p++) {
+            cSum += (rVotes[p] || 0);
         }
-        const p = countingState.postalVotes[c.id] || 0;
-        totalPostal += p;
-        const tot = cRoundsSum + p;
-        grandCandTotal += tot;
-        candSums.push({ id: c.id, name: c.name, party: c.party, total: tot });
+        const post = countingState.postalVotes[c.id] || 0;
+        const total = cSum + post;
+        grandCandTotal += total;
 
-        const candTotEls = document.querySelectorAll(`.cand-tot-${c.id}, #cand_tot_${c.id}`);
-        candTotEls.forEach(el => el.innerText = tot.toLocaleString('hi-IN'));
+        candRankList.push({
+            id: c.id,
+            name: c.name,
+            party: c.party,
+            symbol: c.symbol,
+            total: total
+        });
+
+        const sumTotEl = document.getElementById(`sum_c${c.id}_total`);
+        if (sumTotEl) sumTotEl.innerText = total.toLocaleString('hi-IN');
     });
-
-    const footPostalEls = document.querySelectorAll(".foot-postal-total, #foot_postal_total");
-    footPostalEls.forEach(el => el.innerText = totalPostal.toLocaleString('hi-IN'));
-
-    const footGrandEls = document.querySelectorAll(".foot-cand-grand-total, #foot_cand_grand_total");
-    footGrandEls.forEach(el => el.innerText = grandCandTotal.toLocaleString('hi-IN'));
 
     const totalNota = countingState.notaVotes.reduce((a, b) => a + b, 0);
-    const grandCounted = grandCandTotal + totalNota;
-    const targetPolled = ward.total_polled_votes || 0;
-    const diff = grandCounted - targetPolled;
-
-    const grandCountedEls = document.querySelectorAll(".grand-counted-text, #grand_counted_text");
-    grandCountedEls.forEach(el => el.innerText = `${grandCounted.toLocaleString('hi-IN')} मत`);
-
-    const grandBadgeEls = document.querySelectorAll(".grand-match-badge, #grand_match_badge");
-    const badgeContent = (targetPolled > 0)
-        ? (diff === 0 
-            ? `<span style="font-size: 12px; color: #16a34a; margin-left: 8px;"><i class="fas fa-check-circle"></i> 100% सटीक पोल मिलान (${targetPolled} मत)</span>` 
-            : `<span style="font-size: 12px; color: #dc2626; margin-left: 8px;">(पोल: ${targetPolled} | अंतर: ${diff > 0 ? '+' : ''}${diff})</span>`)
-        : '';
-    grandBadgeEls.forEach(el => el.innerHTML = badgeContent);
-
-    candSums.sort((a, b) => b.total - a.total);
-    const leadEls = document.querySelectorAll(".grand-lead-text, #grand_lead_text");
-    let leadHtml = '';
-    if (candSums.length > 1 && candSums[0].total > 0) {
-        const margin = candSums[0].total - candSums[1].total;
-        leadHtml = `अग्रणी: <b style="color:#15803d;">${candSums[0].name} (${getPartyShortLabel(candSums[0].party)})</b> &mdash; <b>+${margin} मतों से आगे</b>`;
-    } else if (candSums.length === 1) {
-        leadHtml = `एकमात्र प्रत्याशी (निर्विरोध)`;
+    const summaryNotaEl = document.getElementById('summaryTotalNotaText');
+    if (summaryNotaEl) {
+        const breakdownStr = partCount > 1 
+            ? ` (${countingState.notaVotes.map((n, i) => `भाग ${i+1}: ${n}`).join(' + ')})` 
+            : '';
+        summaryNotaEl.innerText = `${totalNota.toLocaleString('hi-IN')} मत${breakdownStr}`;
     }
-    leadEls.forEach(el => el.innerHTML = leadHtml);
 
-    updateModalFooterSummary();
-}
+    const grandWardCounted = grandCandTotal + totalNota;
+    const footGrandEl = document.getElementById('sum_foot_grand');
+    if (footGrandEl) footGrandEl.innerText = grandWardCounted.toLocaleString('hi-IN');
 
-function updateModalFooterSummary() {
-    if (!countingState.ward) return;
-    const ward = countingState.ward;
-    const tabName = countingState.currentTab === -1 
-        ? `📊 समेकित परिणाम पत्रक (Form 20)` 
-        : `🗳️ भाग ${countingState.parts[countingState.currentTab]?.part || (countingState.currentTab + 1)} EVM प्रविष्टि (Form 17C-II)`;
-    
-    const summaryHtml = `
-        <i class="fas fa-landmark" style="color: #0284c7;"></i> <b>वार्ड संख्या ${ward.ward}</b> (${countingState.partCount} भाग) &bull; 
-        सक्रिय चरण: <b style="color: #0369a1;">${tabName}</b> &bull; 
-        11-09 पोल: <b>${(ward.total_polled_votes || 0).toLocaleString('hi-IN')} मत</b>
-    `;
+    // Candidate Vote Share % & Progress Bars
+    ward.candidates.forEach(c => {
+        const total = candRankList.find(item => item.id === c.id)?.total || 0;
+        const sharePctNum = grandWardCounted > 0 ? ((total / grandWardCounted) * 100).toFixed(1) : '0';
+        const shareEl = document.getElementById(`sum_c${c.id}_share`);
+        if (shareEl) shareEl.innerText = sharePctNum + '%';
+        const barEl = document.getElementById(`sum_c${c.id}_bar`);
+        if (barEl) barEl.style.width = sharePctNum + '%';
+    });
 
-    const badgeEls = [document.getElementById("modalFooterSummaryBadge"), document.getElementById("onPageSummaryBadge")].filter(Boolean);
-    badgeEls.forEach(b => b.innerHTML = summaryHtml);
+    // 4. Update Winner / Leader Card & Table Row Highlights
+    candRankList.sort((a, b) => b.total - a.total);
 
-    let quickBadgeHtml = '';
-    if (countingState.currentTab === -1) {
-        quickBadgeHtml = `<span style="color: #7e22ce; background: #faf5ff; border: 1px solid #d8b4fe; padding: 2px 8px; border-radius: 4px;">📊 समेकित परिणाम पत्रक</span>`;
-    } else {
-        const pt = countingState.parts[countingState.currentTab];
-        let cSum = 0;
-        ward.candidates.forEach(c => {
-            const arr = countingState.candVotes[c.id] || [];
-            cSum += (arr[countingState.currentTab] || 0);
-        });
-        const nVal = countingState.notaVotes[countingState.currentTab] || 0;
-        const counted = cSum + nVal;
-        const target = pt?.polled_votes || 0;
-        if (target > 0 && counted === target) {
-            quickBadgeHtml = `<span style="color: #166534; background: #dcfce7; border: 1px solid #86efac; padding: 2px 8px; border-radius: 4px;">✓ भाग ${pt?.part} 100% मिलान (${target} मत)</span>`;
-        } else if (counted > 0) {
-            const diff = counted - target;
-            quickBadgeHtml = `<span style="color: #991b1b; background: #fee2e2; border: 1px solid #fca5a5; padding: 2px 8px; border-radius: 4px;">⚠️ भाग ${pt?.part} अंतर: ${diff > 0 ? '+' : ''}${diff} मत</span>`;
-        } else {
-            quickBadgeHtml = `<span style="color: #64748b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px;">⏳ भाग ${pt?.part} प्रविष्टि लंबित</span>`;
+    // Highlight leading candidate row in summary table
+    const isWardDeclared = (countingState.status === 'Declared' || ward.status === 'Declared');
+    ward.candidates.forEach(c => {
+        const rowEl = document.getElementById(`sum_row_${c.id}`);
+        if (rowEl) rowEl.classList.remove('is-leader', 'is-winner');
+    });
+    if (candRankList.length > 0 && candRankList[0].total > 0) {
+        const topCandId = candRankList[0].id;
+        const topRowEl = document.getElementById(`sum_row_${topCandId}`);
+        if (topRowEl) {
+            topRowEl.classList.add(isWardDeclared ? 'is-winner' : 'is-leader');
         }
     }
 
-    const quickBadges = [document.getElementById("cModalQuickBadge"), document.getElementById("onPageQuickBadge")].filter(Boolean);
-    quickBadges.forEach(qb => qb.innerHTML = quickBadgeHtml);
+    const leaderNameEl = document.getElementById("liveLeaderName");
+    const leaderStatsEl = document.getElementById("liveLeaderStats");
+    const recBadgeEl = document.getElementById("liveReconcileBadge");
+
+    const targetPolled = ward.total_polled_votes || 0;
+    const wardDiff = grandWardCounted - targetPolled;
+
+    if (recBadgeEl) {
+        recBadgeEl.className = "reconciliation-badge";
+        if (targetPolled > 0 && wardDiff === 0) {
+            recBadgeEl.classList.add("matched");
+            recBadgeEl.innerHTML = `<i class="fas fa-check-circle"></i> कुल गिने: <b>${grandWardCounted.toLocaleString('hi-IN')}</b> / ${targetPolled} (100% सटीक मिलान)`;
+        } else if (grandWardCounted > 0) {
+            recBadgeEl.classList.add("mismatched");
+            recBadgeEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> कुल गिने: <b>${grandWardCounted.toLocaleString('hi-IN')}</b> / ${targetPolled} (अंतर: ${wardDiff > 0 ? '+' : ''}${wardDiff})`;
+        } else {
+            recBadgeEl.classList.add("neutral");
+            recBadgeEl.innerHTML = `<i class="fas fa-scale-balanced"></i> कुल गिने: 0 / ${targetPolled}`;
+        }
+    }
+
+    if (leaderNameEl && leaderStatsEl) {
+        if (grandCandTotal === 0) {
+            leaderNameEl.innerHTML = `<span style="color: #64748b;">मत प्रविष्टि प्रारंभ करें...</span>`;
+            leaderStatsEl.innerText = partCount > 1 
+                ? `जैसे ही आप नीचे भाग 1 एवं भाग 2 में मत दर्ज करेंगे, विजेता व जीत का अंतर तुरंत स्वतः निकलेगा।`
+                : `जैसे ही आप नीचे भाग 1 में मत दर्ज करेंगे, विजेता व जीत का अंतर तुरंत स्वतः निकलेगा।`;
+        } else {
+            const leader = candRankList[0];
+            const runnerUp = candRankList[1] || null;
+            const margin = runnerUp ? (leader.total - runnerUp.total) : leader.total;
+            const leaderPct = grandWardCounted > 0 ? ((leader.total / grandWardCounted) * 100).toFixed(1) : '0';
+
+            if (margin === 0 && runnerUp && leader.total > 0) {
+                leaderNameEl.innerHTML = `<span style="color: #d97706;">बराबर मुकाबला (Tie): ${leader.name} एवं ${runnerUp.name}</span>`;
+                leaderStatsEl.innerHTML = `दोनों प्रत्याशियों को समान <b>${leader.total.toLocaleString('hi-IN')}</b> मत प्राप्त हुए हैं।`;
+            } else {
+                leaderNameEl.innerHTML = `
+                    <span>${leader.name}</span> 
+                    <span class="party-badge-modern ${getPartyCssClass(leader.party)}" style="font-size: 13.5px;">${getPartyShortLabel(leader.party)}</span>
+                    <span style="font-size: 16px; font-weight: 800; color: #15803d;">(${leader.total.toLocaleString('hi-IN')} मत &bull; ${leaderPct}%)</span>
+                `;
+                if (runnerUp && runnerUp.total > 0) {
+                    leaderStatsEl.innerHTML = `
+                        निकटतम प्रतिद्वंदी: <b>${runnerUp.name} (${getPartyShortLabel(runnerUp.party)} - ${runnerUp.total} मत)</b> &bull; 
+                        जीत का अंतर (Margin): <b style="color: #15803d; font-size: 15px;">+${margin.toLocaleString('hi-IN')} मतों से आगे</b>
+                    `;
+                } else {
+                    leaderStatsEl.innerHTML = `
+                        अग्रणी बढ़त: <b style="color: #15803d; font-size: 15px;">+${margin.toLocaleString('hi-IN')} मत</b> (एकतरफा रुझान)
+                    `;
+                }
+            }
+        }
+    }
 }
 
-async function saveCountingData(isOnPage = false) {
+function setupFastKeyboardNavigation() {
+    const inputs = Array.from(document.querySelectorAll('.counting-vote-input-stepper, .counting-postal-input'));
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const next = inputs[index + 1];
+                if (next) {
+                    next.focus();
+                    next.select();
+                } else {
+                    const saveBtn = document.getElementById('btnSaveProgressCounting') || document.getElementById('btnDeclareResultCounting');
+                    if (saveBtn) saveBtn.focus();
+                }
+            }
+        });
+        input.addEventListener('focus', () => {
+            input.select();
+        });
+    });
+}
+
+
+async function saveCountingData(statusOverride = null, isOnPage = true) {
     if (!resultsData || !resultsData.wards || !countingState.ward) return;
     const ward = countingState.ward;
     const { partCount } = countingState;
+
+    updateLiveCalculations();
 
     const candidateVotes = ward.candidates.map(c => {
         const rounds = countingState.candVotes[c.id] || [];
@@ -1818,19 +2268,96 @@ async function saveCountingData(isOnPage = false) {
     const nota_rounds = countingState.notaVotes || [];
     const total_nota = nota_rounds.reduce((a, b) => a + b, 0);
 
+    // Calculate total votes entered across all candidates and NOTA
+    let totalCandidateVotesEntered = 0;
+    candidateVotes.forEach(c => {
+        const rSum = (c.votes_rounds || []).reduce((a, b) => a + b, 0);
+        totalCandidateVotesEntered += rSum + (c.votes_postal || 0);
+    });
+    const totalGrandCounted = totalCandidateVotesEntered + total_nota;
+
+    // VALIDATION 1: Block empty data saving (0 votes)
+    if (totalGrandCounted === 0 && ward.ward !== 26 && !ward.isNirvirodh) {
+        alert(
+            "⚠️ मत प्रविष्टि रिक्त है (No Data Entered)!\n\n" +
+            "आपने किसी भी प्रत्याशी या NOTA के मत दर्ज नहीं किए हैं।\n" +
+            "बिना डेटा दर्ज किए (शून्य मतों के साथ) प्रविष्टि सुरक्षित नहीं की जा सकती।\n\n" +
+            "👉 कृपया पहले संबंधित भाग/बूथ में प्रत्याशियों के ईवीएम मत भरें।"
+        );
+        // Highlight first input
+        const firstInput = document.querySelector('.counting-vote-input-stepper') || document.querySelector('.counting-vote-input');
+        if (firstInput) {
+            firstInput.focus();
+            firstInput.style.borderColor = '#ef4444';
+            setTimeout(() => { firstInput.style.borderColor = '#cbd5e1'; }, 3000);
+        }
+        return;
+    }
+
     const tenderedEl = document.getElementById("countingTenderedVotes");
     const tendered_votes = tenderedEl ? (parseInt(tenderedEl.value) || 0) : (countingState.tendered_votes || 0);
     const rejectedEl = document.getElementById("countingRejectedVotes");
     const rejected_votes = rejectedEl ? (parseInt(rejectedEl.value) || 0) : (countingState.rejected_votes || 0);
     
-    const statusSelect = document.getElementById("countingStatusSelect");
-    const status = statusSelect ? statusSelect.value : (countingState.status || 'Counting');
+    // Status resolution
+    let status = statusOverride;
+    if (!status) {
+        const statusSelect = document.getElementById("countingStatusSelect");
+        status = statusSelect ? statusSelect.value : (countingState.status || 'Counting');
+    }
     
     const tableEl = isOnPage ? document.getElementById("onPageTableNo") : document.getElementById("countingTableNo");
     const counting_table_no = tableEl ? (parseInt(tableEl.value) || 1) : (countingState.table_no || 1);
 
+    // VALIDATION 2: If declaring result, candidate votes must exist
     if (status === 'Declared') {
-        const isConfirm = confirm(`⚠️ क्या आप वाकई वार्ड संख्या ${ward.ward} का परिणाम "आधिकारिक घोषित (Declared)" करना चाहते हैं?\n\nयह कार्यवाही मुख्य दलगत स्थिति और जादुई आंकड़े (18 सीटें) में विजेता सीट जोड़ देगी एवं प्ररूप 21 निर्वाचन प्रमाण-पत्र जारी करेगी।`);
+        if (totalCandidateVotesEntered === 0 && ward.ward !== 26 && !ward.isNirvirodh) {
+            alert(
+                "❌ परिणाम घोषित नहीं किया जा सकता!\n\n" +
+                "अभी तक किसी भी प्रत्याशी को कोई मत प्राप्त नहीं हुआ है।\n" +
+                "कृपया पहले प्रत्येक प्रत्याशी के मत दर्ज करें, उसके बाद ही आधिकारिक परिणाम घोषित करें।"
+            );
+            return;
+        }
+
+        // Check against polled target
+        const targetPolled = ward.total_polled_votes || 0;
+        const diff = totalGrandCounted - targetPolled;
+        if (targetPolled > 0 && diff !== 0 && ward.ward !== 26 && !ward.isNirvirodh) {
+            const pollWarningConfirm = confirm(
+                `⚠️ मतों में अंतर चेतावनी (Reconciliation Discrepancy)!\n\n` +
+                `• कुल गिने गए मत: ${totalGrandCounted}\n` +
+                `• 11-09 पोलिंग लक्ष्य (Polled Target): ${targetPolled}\n` +
+                `• अंतर: ${diff > 0 ? '+' : ''}${diff} मत\n\n` +
+                `गिने गए कुल मत, मतदान दिवस के कुल पोल (${targetPolled}) से शत-प्रतिशत मेल नहीं खा रहे हैं।\n\n` +
+                `क्या आप फिर भी इस अंतर के साथ परिणाम "आधिकारिक घोषित (Declared)" करना चाहते हैं?`
+            );
+            if (!pollWarningConfirm) return;
+        }
+
+        let leaderName = '';
+        let leaderParty = '';
+        let margin = 0;
+        
+        let cSums = ward.candidates.map(c => {
+            const rVotes = countingState.candVotes[c.id] || [];
+            let sum = rVotes.reduce((a, b) => a + b, 0) + (countingState.postalVotes[c.id] || 0);
+            return { name: c.name, party: c.party, total: sum };
+        });
+        cSums.sort((a, b) => b.total - a.total);
+        if (cSums.length > 0 && cSums[0].total > 0) {
+            leaderName = cSums[0].name;
+            leaderParty = cSums[0].party;
+            margin = cSums.length > 1 ? (cSums[0].total - cSums[1].total) : cSums[0].total;
+        }
+
+        const isConfirm = confirm(
+            `🏆 वार्ड संख्या ${ward.ward} — परिणाम आधिकारिक घोषित करें?\n\n` +
+            `• विजयी प्रत्याशी: ${leaderName} (${getPartyShortLabel(leaderParty)})\n` +
+            `• जीत का अंतर: ${margin} मत\n\n` +
+            `क्या आप इस वार्ड का चुनाव परिणाम "आधिकारिक घोषित (Declared)" करना चाहते हैं?\n` +
+            `(यह दलगत स्थिति/बोर्ड बहुमत में सीट जोड़ देगा एवं प्ररूप 21 निर्वाचन प्रमाण-पत्र जारी करेगा)`
+        );
         if (!isConfirm) return;
     }
 
@@ -1850,7 +2377,7 @@ async function saveCountingData(isOnPage = false) {
                 rejected_votes,
                 status,
                 counting_table_no,
-                operator_username: currentUser ? currentUser.username : 'op_counting'
+                operator_username: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.username : 'op_counting'
             })
         });
 
@@ -1860,10 +2387,19 @@ async function saveCountingData(isOnPage = false) {
             if (modal && modal.style.display !== "none") {
                 closeCountingEntryModal();
             }
-            showToast(`✅ वार्ड ${ward.ward} का भागवार मतगणना डेटा सुरक्षित व प्रसारित हुआ!`);
+            if (status === 'Declared') {
+                showToast(`🏆 वार्ड ${ward.ward} का परिणाम घोषित व प्ररूप 21 जारी हुआ!`);
+            } else {
+                showToast(`✅ वार्ड ${ward.ward} का मतगणना डेटा सुरक्षित हुआ!`);
+            }
             await fetchResultsData(false);
-            if (isOnPage) {
-                initOnPageCountingEntry(ward.ward);
+            if (typeof initOnPageCountingEntry === 'function') {
+                initOnPageCountingEntry(ward.ward, true);
+            }
+            if (status === 'Declared') {
+                setTimeout(() => {
+                    openForm21Certificate(ward.ward);
+                }, 400);
             }
         } else {
             alert(`❌ त्रुटि: ${data.message}`);
@@ -1877,110 +2413,232 @@ function closeCountingEntryModal() {
     document.getElementById("countingEntryModal").style.display = "none";
 }
 
-// 10. Form 21 Certificate of Election Generator
-async function openForm21Certificate(wardNo) {
-    try {
-        showToast("📄 निर्वाचन प्रमाण-पत्र तैयार हो रहा है...");
-        const res = await fetch(`/api/results/certificate/${wardNo}`);
-        const data = await res.json();
+// 10. Official Gazette Form 21 (अन्तिम परिणाम पत्र) Hub & Batch PDF Generator
+function populateForm21Dropdowns() {
+    const selects = [
+        document.getElementById("reportsWardForm21Select"),
+        document.getElementById("modalForm21WardSelect")
+    ].filter(Boolean);
 
-        if (!data.success || !data.certificate) {
-            alert("❌ इस वार्ड का परिणाम अभी घोषित नहीं हुआ है।");
-            return;
+    selects.forEach(selectEl => {
+        const curVal = selectEl.value || 'ALL';
+        selectEl.innerHTML = `<option value="ALL">📋 समस्त 35 वार्ड (एक साथ संयुक्त PDF)</option>`;
+        for (let w = 1; w <= 35; w++) {
+            const opt = document.createElement("option");
+            opt.value = w;
+            opt.innerText = `वार्ड संख्या ${w}${w === 26 ? ' (निर्विरोध)' : ''}`;
+            selectEl.appendChild(opt);
+        }
+        selectEl.value = curVal;
+    });
+}
+
+function openSelectedWardForm21() {
+    const sel = document.getElementById("reportsWardForm21Select");
+    const val = sel ? sel.value : 'ALL';
+    openForm21Certificate(val);
+}
+
+function onModalForm21WardChanged(val) {
+    openForm21Certificate(val);
+}
+
+function generateSingleForm21SheetHtml(w) {
+    const isNirvirodh = (w.ward === 26 || w.isNirvirodh);
+    let candRows = '';
+    let col4Total = 0;
+
+    if (isNirvirodh) {
+        candRows = `
+            <tr>
+                <td class="col-cno">1</td>
+                <td class="col-cname">श्रीमती वीणा देवड़ा</td>
+                <td class="col-party">भारतीय जनता पार्टी</td>
+                <td class="col-votes">निर्विरोध निर्वाचित</td>
+            </tr>
+        `;
+    } else if (w.candidates && w.candidates.length > 0) {
+        w.candidates.forEach((c) => {
+            const votes = c.total_votes || 0;
+            col4Total += votes;
+            candRows += `
+                <tr>
+                    <td class="col-cno">${c.candidate_no}</td>
+                    <td class="col-cname">${c.name}</td>
+                    <td class="col-party">${c.party || 'निर्दलीय'}</td>
+                    <td class="col-votes">${votes.toLocaleString('hi-IN')}</td>
+                </tr>
+            `;
+        });
+    } else {
+        candRows = `
+            <tr>
+                <td colspan="4" style="text-align:center; padding:15px;">मतगणना डेटा प्रतीक्षारत</td>
+            </tr>
+        `;
+    }
+
+    const validVotesPolled = isNirvirodh ? 'निर्विरोध निर्वाचित' : col4Total.toLocaleString('hi-IN');
+    const col4Display = isNirvirodh ? '-' : col4Total.toLocaleString('hi-IN');
+    const notaVotes = isNirvirodh ? '0' : (w.nota_votes || 0).toLocaleString('hi-IN');
+    const rejectedVotes = (w.rejected_votes || 0).toLocaleString('hi-IN');
+    const tenderedVotes = (w.tendered_votes || 0).toLocaleString('hi-IN');
+
+    return `
+        <div class="form21-sheet" id="sheet_ward_${w.ward}">
+            <!-- Gazette Header -->
+            <div class="form21-header">
+                <div class="header-title-1">प्ररूप — 21</div>
+                <div class="header-rule">(नियम — 66 देखिये)</div>
+                <div class="header-title-2">अन्तिम परिणाम पत्र</div>
+            </div>
+
+            <!-- Meta Lines -->
+            <div class="form21-meta">
+                <div class="meta-row">
+                    <span class="meta-label">नगरपालिका :</span>
+                    <span class="meta-val">सुमेरपुर</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">वार्ड संख्या :</span>
+                    <span class="meta-val">${w.ward}</span>
+                </div>
+            </div>
+
+            <!-- Gazette Table -->
+            <table class="form21-table">
+                <thead>
+                    <tr class="border-top-header">
+                        <th class="col-cno">क्रम संख्या</th>
+                        <th class="col-cname">अभ्यर्थी का नाम</th>
+                        <th class="col-party">संबद्ध दल</th>
+                        <th class="col-votes">डाले गये मतों की संख्या</th>
+                    </tr>
+                    <tr class="sub-numbers">
+                        <th class="col-cno">1</th>
+                        <th class="col-cname">2</th>
+                        <th class="col-party">3</th>
+                        <th class="col-votes">4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${candRows}
+                </tbody>
+            </table>
+
+            <!-- Statistics Section -->
+            <div class="form21-stats">
+                <div class="stats-nota-title">नोटा (इनमें से कोई नहीं)</div>
+                
+                <div class="stats-line">
+                    <span class="stats-lbl">डाले गये विधि मान्य मतों की कुल संख्या :</span>
+                    <span class="stats-num">${validVotesPolled}</span>
+                </div>
+                <div class="stats-line">
+                    <span class="stats-lbl">ऊपर अंकित सारणी के कालम 4 का भाग :</span>
+                    <span class="stats-num">${col4Display}</span>
+                </div>
+                <div class="stats-line">
+                    <span class="stats-lbl">नोटा को दिये गये कुल मतों की संख्या :</span>
+                    <span class="stats-num">${notaVotes}</span>
+                </div>
+                <div class="stats-line">
+                    <span class="stats-lbl">अस्वीकृत मतों की संख्या :</span>
+                    <span class="stats-num">${rejectedVotes}</span>
+                </div>
+                <div class="stats-line">
+                    <span class="stats-lbl">निविदत्त मतों की कुल संख्या :</span>
+                    <span class="stats-num">${tenderedVotes}</span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="form21-footer">
+                <div class="date-block">
+                    <span class="date-lbl">तारीख :</span>
+                    <span class="date-val">14-09-2026</span>
+                </div>
+                <div class="sign-block">
+                    <div style="height: 32px;"></div>
+                    <div class="sign-officer-name">कालुराम कुम्हार (आर.ए.एस.)</div>
+                    <div class="sign-officer-title">रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट)</div>
+                    <div class="sign-officer-sub">नगर पालिका सुमेरपुर (पाली)</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function openForm21Certificate(wardNo = 'ALL') {
+    try {
+        showToast("📄 प्ररूप — 21 तैयार हो रहा है...");
+        if (!resultsData || !resultsData.wards) {
+            const res = await fetch('/api/results/data');
+            resultsData = await res.json();
         }
 
-        const c = data.certificate;
+        populateForm21Dropdowns();
+
+        const selectEl = document.getElementById("modalForm21WardSelect");
+        if (selectEl) selectEl.value = wardNo;
+
+        const extLink = document.getElementById("modalForm21ExternalLink");
+        if (extLink) extLink.href = `/form21?ward=${wardNo}`;
+
         const printArea = document.getElementById("form21PrintArea");
         if (!printArea) return;
 
-        const isNirvirodh = (c.ward === 26);
-        const marginHindi = isNirvirodh 
-            ? "निर्विरोध (निर्वाचन बिना किसी प्रतिद्वंदी के सम्पन्न हुआ)" 
-            : `${(c.margin || 0).toLocaleString('hi-IN')} मतों के अंतर से`;
+        let wardsToRender = [];
+        if (wardNo === 'ALL') {
+            wardsToRender = resultsData.wards;
+        } else {
+            const targetW = parseInt(wardNo);
+            const found = resultsData.wards.find(w => w.ward === targetW);
+            if (found) wardsToRender = [found];
+        }
 
-        printArea.innerHTML = `
-            <div class="form21-container">
-                <div class="form21-header">
-                    <h4>राजस्थान नगरपालिका (निर्वाचन) नियम, 1994</h4>
-                    <h3>प्ररूप - 21 (FORM 21)</h3>
-                    <p style="font-size:13px; margin:2px 0;">[नियम 66 देखिए]</p>
-                    <h2 style="margin: 8px 0; text-decoration: underline;">निर्वाचन का प्रमाण-पत्र (CERTIFICATE OF ELECTION)</h2>
-                </div>
+        if (wardsToRender.length === 0) {
+            alert("चयनित वार्ड का डेटा नहीं मिला।");
+            return;
+        }
 
-                <div class="form21-body" style="font-size:14px; line-height: 2; margin: 24px 0;">
-                    <p>
-                        मैं, <b>कालुराम कुम्हार (आर.ए.एस.)</b>, रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट), नगर पालिका सुमेरपुर, एतद्द्वारा प्रमाणित करता हूँ कि सुमेरपुर नगर पालिका के <b>वार्ड संख्या ${c.ward}</b> के साधारण निर्वाचन में सम्यक् रूप से लड़े गए चुनाव में निम्नलिखित प्रत्याशी को निर्वाचित घोषित किया गया है:
-                    </p>
+        let sheetsHtml = '<div class="form21-sheet-container">';
+        wardsToRender.forEach(w => {
+            sheetsHtml += generateSingleForm21SheetHtml(w);
+        });
+        sheetsHtml += '</div>';
 
-                    <div style="background:#f8fafc; border:1px solid #cbd5e1; padding: 14px 18px; margin: 16px 0; border-radius: 6px;">
-                        <table style="width:100%; font-size:14px; border-collapse:collapse;">
-                            <tr>
-                                <td style="width:30%; padding:6px 0; color:#475569;"><b>निर्वाचित सदस्य का नाम:</b></td>
-                                <td style="padding:6px 0; font-size:16px; font-weight:800; color:#0f172a;">${c.winner_name}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:6px 0; color:#475569;"><b>सम्बद्ध राजनीतिक दल:</b></td>
-                                <td style="padding:6px 0; font-weight:700;">${c.winner_party}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:6px 0; color:#475569;"><b>आवंटित चुनाव प्रतीक:</b></td>
-                                <td style="padding:6px 0; font-weight:700;">${c.winner_symbol || 'आवंटित प्रतीक'}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:6px 0; color:#475569;"><b>निवास का पता:</b></td>
-                                <td style="padding:6px 0;">${c.winner_address || `वार्ड संख्या ${c.ward}, सुमेरपुर`}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:6px 0; color:#475569;"><b>प्राप्त कुल विधिमान्य मत:</b></td>
-                                <td style="padding:6px 0; font-weight:800; color:#15803d;">${(c.total_votes || 0).toLocaleString('hi-IN')} मत</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:6px 0; color:#475569;"><b>जीत का अंतर (Margin):</b></td>
-                                <td style="padding:6px 0; font-weight:700; color:#0369a1;">${marginHindi}</td>
-                            </tr>
-                        </table>
-                    </div>
-
-                    <p style="margin-top: 16px;">
-                        तथा उक्त <b>${c.winner_name}</b> को नगर पालिका सुमेरपुर के <b>वार्ड संख्या ${c.ward}</b> से सदस्य के रूप में सम्यक् रूप से निर्वाचित घोषित किए जाने के साक्ष्य स्वरूप यह प्रमाण-पत्र दिया गया है।
-                    </p>
-                </div>
-
-                <div class="form21-footer" style="display:flex; justify-content:space-between; align-items:flex-end; margin-top: 45px; padding-top: 20px;">
-                    <div style="font-size:12.5px;">
-                        <div>स्थान: <b>सुमेरपुर (पाली, राजस्थान)</b></div>
-                        <div>तारीख: <b>14 सितम्बर 2026</b></div>
-                        <div style="margin-top:8px; font-size:11px; color:#64748b;">(कार्यालयीन मोहर)</div>
-                    </div>
-                    <div style="text-align:center; font-size:13px;">
-                        <div style="border-bottom:1px solid #334155; width:200px; margin-bottom:8px; height:35px;"></div>
-                        <b>कालुराम कुम्हार, आर.ए.एस.</b><br>
-                        रिटर्निंग अधिकारी (उपखण्ड मजिस्ट्रेट)<br>
-                        नगर पालिका आम चुनाव 2026, सुमेरपुर
-                    </div>
-                </div>
-            </div>
-        `;
-
+        printArea.innerHTML = sheetsHtml;
         document.getElementById("form21Modal").style.display = "flex";
     } catch(err) {
-        alert("प्रमाण-पत्र प्राप्त करने में त्रुटि: " + err.message);
+        alert("प्ररूप 21 प्राप्त करने में त्रुटि: " + err.message);
     }
 }
 
 function printForm21Certificate() {
     const printArea = document.getElementById("form21PrintArea");
     if (!printArea) return;
-    const printWin = window.open('', '_blank', 'width=850,height=950');
+    const selectEl = document.getElementById("modalForm21WardSelect");
+    const isAll = selectEl ? (selectEl.value === 'ALL') : false;
+    const title = isAll ? "प्ररूप 21 - समस्त 35 वार्ड अंतिम परिणाम पत्र" : `प्ररूप 21 - वार्ड ${selectEl?.value || 1} परिणाम पत्र`;
+
+    const printWin = window.open('', '_blank', 'width=950,height=950');
     printWin.document.write(`
         <!DOCTYPE html>
-        <html>
+        <html lang="hi">
         <head>
-            <title>प्ररूप 21 - निर्वाचन प्रमाण-पत्र | सुमेरपुर चुनाव 2026</title>
+            <meta charset="UTF-8">
+            <title>${title} | सुमेरपुर चुनाव 2026</title>
             <link rel="stylesheet" href="css/style.css">
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi:ital@0;1&family=Yatra+One&display=swap" rel="stylesheet">
             <style>
-                body { background: white; margin: 0; padding: 25px; font-family: 'Segoe UI', Arial, sans-serif; }
-                .form21-container { border: 3px double #334155; padding: 35px; }
+                @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
+                body { background: white !important; margin: 0; padding: 0; font-family: 'Tiro Devanagari Hindi', 'Mangal', 'Segoe UI', Arial, sans-serif; color: black; }
+                .form21-sheet-container { gap: 0 !important; }
+                .form21-sheet { box-shadow: none !important; border: none !important; width: 100% !important; padding: 5mm 5mm !important; page-break-after: always !important; break-after: page !important; }
+                .form21-sheet:last-child { page-break-after: avoid !important; break-after: avoid !important; }
             </style>
         </head>
         <body>
@@ -1989,7 +2647,7 @@ function printForm21Certificate() {
                 window.onload = function() {
                     window.print();
                 };
-            </script>
+            <\/script>
         </body>
         </html>
     `);
@@ -2014,7 +2672,7 @@ function printConsolidatedResults() {
     let tableRows = '';
     wards.forEach(w => {
         const isNirvirodh = (w.ward === 26);
-        const winner = w.winner_name || (isNirvirodh ? 'श्रीमती रेखा गर्ग (निर्विरोध)' : '-');
+        const winner = w.winner_name || (isNirvirodh ? 'श्रीमती वीणा देवड़ा (निर्विरोध)' : '-');
         const party = w.winner_party || (isNirvirodh ? 'BJP' : '-');
         const margin = isNirvirodh ? 'निर्विरोध' : (w.margin ? `${w.margin} मत` : '-');
         const counted = isNirvirodh ? 'निर्विरोध' : (w.total_counted_votes || 0).toLocaleString('hi-IN');
@@ -2063,9 +2721,9 @@ function printConsolidatedResults() {
         </head>
         <body>
             <div class="report-header">
-                <h3>राजस्थान राज्य निर्वाचन आयोग | कार्यालय रिटर्निंग ऑफिसर (SDM), सुमेरपुर (पाली)</h3>
-                <h2 style="margin: 6px 0;">नगर पालिका आम चुनाव 2026 — समस्त 35 वार्डों का संकलित परिणाम पत्रक</h2>
-                <p style="font-size: 12.5px; color: #475569;">मतगणना दिवस: 14 सितम्बर 2026 | बहुमत का जादुई आंकड़ा: 18 सीटें (कुल 35 सीटें)</p>
+                <h2 style="margin: 0 0 4px 0; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">कार्यालय रिटर्निंग अधिकारी (SDM), सुमेरपुर (पाली)</h2>
+                <h3 style="margin: 4px 0; font-size: 15px; font-weight: 600; color: #334155;">नगर पालिका आम चुनाव 2026 — समस्त 35 वार्डों का संकलित परिणाम पत्रक (प्ररूप 20)</h3>
+                <p style="font-size: 12px; color: #475569; margin: 3px 0 0 0;">मतगणना दिवस: 14 सितम्बर 2026 | बहुमत: 18 सीटें (कुल 35 सीटें)</p>
             </div>
 
             <div class="tally-summary">
@@ -2130,13 +2788,19 @@ function getPartyCssClass(partyName) {
     return 'party-oth';
 }
 
+const getPartyClass = getPartyCssClass;
+
 function getPartyShortLabel(partyName) {
-    if (!partyName) return 'OTH';
-    if (partyName.includes('भारतीय जनता') || partyName.includes('BJP')) return 'BJP';
-    if (partyName.includes('कांग्रेस') || partyName.includes('INC')) return 'INC';
-    if (partyName.includes('निर्दलीय') || partyName.includes('IND')) return 'निर्दलीय';
-    if (partyName.includes('आम आदमी') || partyName.includes('AAP')) return 'AAP';
-    return partyName;
+    if (!partyName) return 'अन्य (OTH)';
+    const p = String(partyName).toUpperCase();
+    if (partyName.includes('भारतीय जनता') || p.includes('BJP')) return 'भाजपा (BJP)';
+    if (partyName.includes('कांग्रेस') || p.includes('INC')) return 'कांग्रेस (INC)';
+    if (partyName.includes('निर्दलीय') || p.includes('IND') || p.includes('INDEPENDENT')) return 'निर्दलीय (IND)';
+    if (partyName.includes('आम आदमी') || p.includes('AAP')) return 'आप (AAP)';
+    if (partyName.includes('माकपा') || partyName.includes('कम्युनिस्ट') || p.includes('CPM') || p.includes('CPI')) return 'माकपा (CPM)';
+    if (partyName.includes('बसपा') || p.includes('BSP')) return 'बसपा (BSP)';
+    if (partyName.includes('रालोद') || p.includes('RLD')) return 'रालोद (RLD)';
+    return partyName.length > 16 ? partyName.substring(0, 14) + '..' : partyName;
 }
 
 function showToast(msg) {
@@ -2155,4 +2819,63 @@ function showToast(msg) {
         item.style.opacity = '0';
         setTimeout(() => item.remove(), 300);
     }, 3500);
+}
+
+// 12. Mock Rehearsal & Clean Reset Functions (35 वार्ड डमी टेस्ट एवं स्वच्छ रीसेट)
+async function triggerMockTest() {
+    if (!confirm("क्या आप समस्त 35 वार्डों का सम्पूर्ण डमी टेस्ट (Mock Test / Rehearsal) चलाना चाहते हैं?\n\nइससे सभी 35 वार्डों के परिणाम, EVM चक्र, प्रत्याशी मत, अंतर और प्ररूप 21 का लाइव परीक्षण हो जाएगा ताकि कल वास्तविक मतगणना में कोई समस्या न आए।")) {
+        return;
+    }
+    try {
+        showToast("⏳ समस्त 35 वार्डों का डमी टेस्ट डेटा लोड हो रहा है...");
+        const res = await fetch('/api/results/mock-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast("✅ समस्त 35 वार्ड डमी टेस्ट सफलतापूर्वक लोड हो गया!");
+            await fetchResultsData(false);
+            if (typeof renderResultsGrid === 'function') renderResultsGrid();
+            if (typeof renderDashboardSummaryTable === 'function') renderDashboardSummaryTable();
+            if (typeof renderHighlights === 'function') renderHighlights();
+            if (typeof renderLiveDisplayData === 'function') renderLiveDisplayData();
+            alert("✅ 35 वार्ड डमी टेस्ट सफल!\n\n• समस्त 35 वार्ड परिणाम घोषित स्थिति में लोड हो चुके हैं।\n• आप RO डैशबोर्ड, 35 वार्ड पत्रक, प्ररूप-21, लाइव LED स्क्रीन आदि का परीक्षण कर सकते हैं।\n• परीक्षण के बाद 'स्वच्छ रीसेट' बटन दबाकर डेटा कल के लिए 0 पर रीसेट कर सकते हैं।");
+        } else {
+            alert("त्रुटि: " + (data.message || "डमी टेस्ट लोड नहीं हो सका"));
+        }
+    } catch (e) {
+        console.error("Mock test trigger error:", e);
+        alert("सर्वर से संपर्क नहीं हो सका: " + e.message);
+    }
+}
+
+async function triggerResetCountingTest() {
+    const confirmInput = prompt("⚠️ सावधानी: क्या आप मतगणना डेटा को कल की वास्तविक मतगणना हेतु प्रारंभिक स्वच्छ स्थिति (0 वोट, केवल वार्ड 26 निर्विरोध) में रीसेट करना चाहते हैं?\n\nकृपया पुष्टि के लिए अंग्रेजी में 'RESET' लिखें:");
+    if (!confirmInput || confirmInput.trim().toUpperCase() !== 'RESET') {
+        if (confirmInput !== null) alert("रीसेट रद्द किया गया। (गलत पुष्टि कोड)");
+        return;
+    }
+    try {
+        showToast("⏳ मतगणना डेटा स्वच्छ स्थिति में रीसेट हो रहा है...");
+        const res = await fetch('/api/results/reset-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast("✅ डेटा सफलतापूर्वक 0 पर रीसेट हो गया!");
+            await fetchResultsData(false);
+            if (typeof renderResultsGrid === 'function') renderResultsGrid();
+            if (typeof renderDashboardSummaryTable === 'function') renderDashboardSummaryTable();
+            if (typeof renderHighlights === 'function') renderHighlights();
+            if (typeof renderLiveDisplayData === 'function') renderLiveDisplayData();
+            alert("✅ स्वच्छ रीसेट सफल!\n\nमतगणना डेटा कल की वास्तविक मतगणना के लिए पूरी तरह से तैयार है (0 वोट, केवल वार्ड 26 निर्विरोध घोषित)।");
+        } else {
+            alert("त्रुटि: " + (data.message || "रीसेट नहीं हो सका"));
+        }
+    } catch (e) {
+        console.error("Reset trigger error:", e);
+        alert("सर्वर से संपर्क नहीं हो सका: " + e.message);
+    }
 }

@@ -727,7 +727,10 @@
                         <option value="6">जोन 6 (बूथ 33-36 | 4 बूथ)</option>
                     </select>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <button class="btn-secondary" style="background:#fef3c7; color:#b45309; border:1.5px solid #f59e0b; padding:8px 14px; font-weight:700; font-size:12.5px; border-radius:6px; cursor:pointer;" onclick="quickUnlockZoneBooths()" title="मॉक पोल और 7:15 प्रारंभ दोनों 'Yes' करके इनपुट अनलॉक करें">
+                        <i class="fas fa-lock-open"></i> ⚡ सभी इनपुट अनलॉक करें (मॉक पोल + 7:15 Yes)
+                    </button>
                     <button class="btn-primary" style="background:#10b981; padding:9px 18px; font-weight:600;" onclick="saveAllZoneBooths()">
                         <i class="fas fa-save"></i> ज़ोन के समस्त बूथों का डेटा एक साथ सुरक्षित करें (Save All)
                     </button>
@@ -1096,6 +1099,20 @@
                                 <i class="fas fa-cloud-arrow-up"></i> 📤 फ़ाइल से रीस्टोर करें
                             </button>
                             <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="handleRestoreFileSelected(event)">
+                        </div>
+                    <!-- 5. Counting Results Clean Reset (कल 14-09 की मतगणना हेतु) -->
+                    <div style="background:#fff7ed; padding:18px; border-radius:10px; border:1px solid #fdba74;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <h4 style="margin:0; color:#c2410c;"><i class="fas fa-trophy"></i> मतगणना परिणाम डेटा स्वच्छ रीसेट (14-09)</h4>
+                            <span class="status-badge" style="background:#ffedd5; color:#c2410c; border:1px solid #fed7aa; font-size:11px;">मतगणना मोड</span>
+                        </div>
+                        <p style="font-size:12px; color:#9a3412; margin-bottom:14px;">
+                            14 सितम्बर की वास्तविक मतगणना से पूर्व समस्त 35 वार्डों का मतगणना डेटा स्वच्छ रीसेट (0 वोट, केवल वार्ड 26 निर्विरोध) करें।
+                        </p>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn-primary" style="background:#ea580c; border-color:#ea580c; font-weight:700;" onclick="executeCountingDataReset()">
+                                <i class="fas fa-rotate-left"></i> 🏆 मतगणना डेटा स्वच्छ रीसेट करें (0 वोट)
+                            </button>
                         </div>
                     </div>
                 </div>
