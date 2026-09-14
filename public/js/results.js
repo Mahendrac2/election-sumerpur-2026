@@ -285,6 +285,7 @@ function updateAuthUI() {
             };
         }
         if (resetBtn) resetBtn.style.display = "none";
+        if (entryLink) entryLink.style.display = "none";
     }
 }
 
