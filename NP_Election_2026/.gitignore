@@ -1,0 +1,42 @@
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+.env
+New folder/
+*.tmp
+*.bak*
+temp_clone/
+mingit.zip
+server_from_github.js
+database_from_github.js
+history_copy*
+
+# Scratch & Raw Files
+backup_before_sync/
+NP Sumerpur-2026.xlsx
+New Text Document.txt
+build.py
+election - Copy.html
+election.html
+election.txt
+generate.py
+nagar-palika-sumerpur-dashboard.html
+public/api_results_sample.json
+live_logs_backup.json
+live_results_data_backup.json
+live_users_backup.json
+results_store_backup_clean.json
+start_portal.bat
+
+# SQLite Databases & Backups (Protected Local Storage - Never overwrite on git pull/push)
+*.db
+*.sqlite
+*.db-journal
+*.db-wal
+election_sumerpur*.db
+
+# Local tunnel URLs and runtime files
+public_url.txt

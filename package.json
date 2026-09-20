@@ -1,20 +1,11 @@
 {
-  "name": "election",
+  "name": "election-root",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "sqlite3": "^6.0.1"
+    "postinstall": "cd NP_Election_2026 && npm install",
+    "build": "cd NP_Election_2026 && npm install",
+    "start": "cd NP_Election_2026 && npm start",
+    "dev": "cd NP_Election_2026 && npm start"
   }
 }

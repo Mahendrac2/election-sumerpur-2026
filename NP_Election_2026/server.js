@@ -8,8 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Server-Sent Events (SSE) clients registry for instant live sync
@@ -855,13 +855,36 @@ app.get('/voting', (req, res) => res.redirect('/'));
 // =========================================================================
 const fs = require('fs');
 const resultsStorePath = path.join(__dirname, 'results_store.json');
+const liveResultsSeedPath = path.join(__dirname, 'live_results_seed.json');
 
 function getResultsStore() {
     try {
+        let store = null;
         if (fs.existsSync(resultsStorePath)) {
             const data = fs.readFileSync(resultsStorePath, 'utf8');
-            return JSON.parse(data);
+            store = JSON.parse(data);
         }
+
+        // AUTO-HEAL: If results_store has 0 counted votes, but live_results_seed has real counted data, auto-restore!
+        const totalCounted = store && store.summary ? (store.summary.totalCountedVotes || store.total_counted_votes || 0) : 0;
+        const declaredCount = store ? (store.declared_count || (store.summary ? store.summary.declaredWards : 0) || 0) : 0;
+        
+        if ((!store || (totalCounted === 0 && declaredCount <= 1)) && fs.existsSync(liveResultsSeedPath)) {
+            try {
+                const seedData = JSON.parse(fs.readFileSync(liveResultsSeedPath, 'utf8'));
+                const seedCounted = seedData.summary ? (seedData.summary.totalCountedVotes || seedData.total_counted_votes || 0) : 0;
+                const seedDeclared = seedData.declared_count || (seedData.summary ? seedData.summary.declaredWards : 0) || 0;
+                if (seedCounted > 0 || seedDeclared > 1) {
+                    console.log(`⚡ [AUTO-HEAL RESULTS] Render/Server restart detected. Re-populating empty results_store with saved seed (${seedCounted} counted votes, ${seedDeclared} declared wards)...`);
+                    store = seedData;
+                    fs.writeFileSync(resultsStorePath, JSON.stringify(store, null, 2), 'utf8');
+                }
+            } catch(seedErr) {
+                console.error("Error auto-healing from live_results_seed:", seedErr);
+            }
+        }
+
+        return store;
     } catch(e) {
         console.error("Error reading results store:", e);
     }
@@ -874,10 +897,57 @@ function saveResultsStore(data) {
             fs.copyFileSync(resultsStorePath, resultsStorePath + '.bak');
         }
         fs.writeFileSync(resultsStorePath, JSON.stringify(data, null, 2), 'utf8');
+
+        // SAFEGUARD: If results contain live entries or declared wards, safeguard to live_results_seed.json
+        const totalCounted = data && data.summary ? (data.summary.totalCountedVotes || data.total_counted_votes || 0) : 0;
+        const declaredCount = data ? (data.declared_count || (data.summary ? data.summary.declaredWards : 0) || 0) : 0;
+        if (totalCounted > 0 || declaredCount > 1) {
+            fs.writeFileSync(liveResultsSeedPath, JSON.stringify(data, null, 2), 'utf8');
+        }
     } catch(e) {
         console.error("Error saving results store:", e);
     }
 }
+
+// Admin / Sync API: Restore Results Snapshot (2-Way Cloud Sync Engine for Counting)
+app.post('/api/admin/restore-results', (req, res) => {
+    const { resultsStore, syncKey, roUsername, roPassword } = req.body;
+    
+    // Auth: Either secure sync key or RO admin credentials
+    const isSyncKeyValid = (syncKey === 'SUMERPUR_SECURE_SYNC_2026');
+    if (!isSyncKeyValid) {
+        if (!roUsername || !roPassword) {
+            return res.status(401).json({ success: false, message: "अनधिकृत: सुरक्षा कुंजी या RO क्रेडेंशियल्स आवश्यक हैं।" });
+        }
+        db.get("SELECT * FROM users WHERE username = ? AND role = 'ro'", [roUsername], (err, roUser) => {
+            if (err || !roUser || roUser.password !== roPassword) {
+                return res.status(403).json({ success: false, message: "अमान्य RO क्रेडेंशियल्स" });
+            }
+            proceedRestoreResults();
+        });
+    } else {
+        proceedRestoreResults();
+    }
+
+    function proceedRestoreResults() {
+        if (!resultsStore || !resultsStore.wards || !Array.isArray(resultsStore.wards)) {
+            return res.status(400).json({ success: false, message: "अमान्य परिणाम डेटा प्रारूप" });
+        }
+        saveResultsStore(resultsStore);
+        broadcastUpdate('results_update', {
+            ward: 'ALL',
+            status: 'Synced',
+            summary: resultsStore.summary
+        });
+        const cnt = resultsStore.summary ? resultsStore.summary.totalCountedVotes : 'N/A';
+        console.log(`✅ [Results Sync] Results store successfully restored and synchronized! Total counted: ${cnt}`);
+        return res.json({
+            success: true,
+            message: "मतगणना परिणाम सफलतापूर्वक रीस्टोर एवं सिंक कर दिए गए!",
+            summary: resultsStore.summary
+        });
+    }
+});
 
 // Page route for /results
 app.get('/results', (req, res) => {
