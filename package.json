@@ -1,11 +1,12 @@
 {
   "name": "election-sumerpur-2026",
   "version": "1.0.0",
+  "main": "index.js",
   "private": true,
   "scripts": {
     "postinstall": "cd NP_Election_2026 && npm install",
     "build": "cd NP_Election_2026 && npm install",
-    "start": "node server.js",
+    "start": "node index.js",
     "dev": "cd NP_Election_2026 && npm start"
   },
   "dependencies": {
