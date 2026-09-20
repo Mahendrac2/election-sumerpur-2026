@@ -1,11 +1,16 @@
 {
-  "name": "election-root",
+  "name": "election-sumerpur-2026",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "postinstall": "cd NP_Election_2026 && npm install",
     "build": "cd NP_Election_2026 && npm install",
-    "start": "cd NP_Election_2026 && npm start",
+    "start": "node server.js",
     "dev": "cd NP_Election_2026 && npm start"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "sqlite3": "5.1.7"
   }
 }

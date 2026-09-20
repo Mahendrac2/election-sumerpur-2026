@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>पंचायती राज परिणाम पोर्टल 2026 | सरपंच एवं PS सदस्य परिणाम</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="gov-header bg-dark">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="emblem-box">
+                    <i class="fas fa-trophy" style="font-size: 32px; color: #f59e0b;"></i>
+                </div>
+                <div>
+                    <h1>कार्यालय रिटर्निंग ऑफिसर / निर्वाचक रजिस्ट्रीकरण अधिकारी</h1>
+                    <h2>पंचायती राज आम चुनाव 2026 — मतगणना, लाइव परिणाम एवं निर्वाचन घोषणा</h2>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="live-badge"><i class="fas fa-circle text-success"></i> लाइव मतगणना सिंक</div>
+                <a href="/" class="btn-top-switch"><i class="fas fa-arrow-left"></i> मतदान पोर्टल</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="filter-bar">
+        <div class="container filter-container">
+            <div class="filter-item">
+                <label><i class="fas fa-award"></i> परिणाम श्रेणी चुनें:</label>
+                <select id="resultTypeSelect" class="form-select">
+                    <option value="sarpanch">🌾 ग्राम पंचायत सरपंच पद परिणाम</option>
+                    <option value="ps_member">🏛️ पंचायत समिति सदस्य परिणाम</option>
+                    <option value="zp_member">🏛️ जिला परिषद सदस्य परिणाम</option>
+                </select>
+            </div>
+            <div class="filter-item">
+                <label><i class="fas fa-filter"></i> ग्राम पंचायत / वार्ड फ़िल्टर:</label>
+                <select id="resultEntitySelect" class="form-select">
+                    <option value="">-- समस्त परिणाम --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <main class="container main-content">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon bg-blue"><i class="fas fa-landmark"></i></div>
+                <div>
+                    <div class="kpi-label">कुल ग्राम पंचायतें</div>
+                    <div class="kpi-val">10</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon bg-green"><i class="fas fa-check-double"></i></div>
+                <div>
+                    <div class="kpi-label">घोषित परिणाम</div>
+                    <div class="kpi-val" id="declaredCount">0</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon bg-orange"><i class="fas fa-spinner"></i></div>
+                <div>
+                    <div class="kpi-label">मतगणना जारी</div>
+                    <div class="kpi-val" id="countingCount">0</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon bg-purple"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="kpi-label">प्रतीक्षारत पंचायतें</div>
+                    <div class="kpi-val" id="pendingCount">10</div>
+                </div>
+            </div>
+        </div>
+
+        <section class="gp-grid-section">
+            <h3 class="section-title"><i class="fas fa-square-poll-vertical"></i> ग्राम पंचायतवार सरपंच परिणाम पत्रक</h3>
+            <div id="resultsListContainer" class="gp-cards-grid">
+                <!-- JavaScript द्वारा परिणाम कार्ड्स रेंडर होंगे -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        fetch('/api/pri/gram-panchayats')
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const container = document.getElementById('resultsListContainer');
+                    container.innerHTML = '';
+                    data.gram_panchayats.forEach(gp => {
+                        const card = document.createElement('div');
+                        card.className = 'gp-card';
+                        card.innerHTML = `
+                            <div class="gp-card-header">
+                                <h4>ग्राम पंचायत ${gp.name}</h4>
+                                <span class="badge-status badge-pending">प्रतीक्षारत</span>
+                            </div>
+                            <div class="gp-card-body">
+                                <p><b>आरक्षण वर्ग:</b> ${gp.sarpanch_reservation}</p>
+                                <p><b>कुल मतदाता:</b> ${gp.total_electors.toLocaleString('en-IN')}</p>
+                                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                                    <span style="font-size: 12px; color: #64748b;">विजेता सरपंच:</span>
+                                    <div style="font-size: 15px; font-weight: bold; color: #0f172a; margin-top: 4px;">मतगणना प्रतीक्षारत</div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            });
+    </script>
+</body>
+</html>

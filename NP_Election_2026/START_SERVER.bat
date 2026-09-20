@@ -1,5 +1,6 @@
 @echo off
-title 🏛️ Sumerpur Municipal Election 2026 - Server & Remote Tunnel
+chcp 65001 >nul
+title Sumerpur Municipal Election 2026 - Server
 color 0A
 cd /d "%~dp0"
 echo ========================================================================

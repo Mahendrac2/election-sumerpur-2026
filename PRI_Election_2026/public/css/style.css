@@ -1,0 +1,346 @@
+:root {
+    --primary: #0a2540;
+    --primary-dark: #061727;
+    --accent: #d97706;
+    --success: #16a34a;
+    --danger: #dc2626;
+    --warning: #f59e0b;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.gov-header {
+    background: linear-gradient(135deg, #0a2540 0%, #1e3a8a 100%);
+    color: #ffffff;
+    padding: 16px 0;
+    border-bottom: 4px solid #f59e0b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.gov-header.bg-dark {
+    background: linear-gradient(135deg, #090e1a 0%, #111827 100%);
+    border-bottom: 4px solid #10b981;
+}
+
+.header-content {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.emblem-box {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.gov-header h1 {
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.gov-header h2 {
+    font-size: 13px;
+    font-weight: 400;
+    color: #cbd5e1;
+    margin-top: 2px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.live-badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid #10b981;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-top-switch {
+    background: #f59e0b;
+    color: #0f172a;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-top-switch:hover {
+    background: #d97706;
+    color: #ffffff;
+}
+
+/* Filter Bar */
+.filter-bar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-item label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.form-select {
+    padding: 7px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: #f8fafc;
+    color: var(--text-main);
+    outline: none;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    border-color: var(--accent);
+}
+
+.filter-stats {
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.badge-stat {
+    background: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #475569;
+}
+
+/* KPI Cards */
+.main-content {
+    padding: 24px 20px;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #ffffff;
+}
+
+.bg-blue { background: #2563eb; }
+.bg-green { background: #16a34a; }
+.bg-orange { background: #ea580c; }
+.bg-purple { background: #7c3aed; }
+
+.kpi-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.kpi-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-top: 2px;
+}
+
+/* Section Title */
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* GP Cards Grid */
+.gp-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+}
+
+.gp-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+}
+
+.gp-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+
+.gp-card-header {
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gp-card-header h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.badge-res {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-status {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-status.badge-pending {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.gp-card-body {
+    padding: 16px;
+    font-size: 13px;
+}
+
+.gp-card-body p {
+    margin-bottom: 6px;
+    color: #475569;
+}
+
+.progress-bar-wrap {
+    background: #e2e8f0;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 12px 0 8px;
+}
+
+.progress-bar-fill {
+    background: #16a34a;
+    height: 100%;
+}
+
+.gp-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .filter-stats {
+        margin-left: 0;
+        width: 100%;
+    }
+}
